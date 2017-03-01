@@ -183,7 +183,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-k",
                         "--kernelopts",
-                        help = ("Specify the kernel boot options to use (eg. ro "
+                        help = ("Specify the kernel boot options to use (eg. "
                                 "quiet splash). Default is to read from the "
                                 "config file in /etc/default/kernelstub. "
                                 "Options MUST be specified either in the config "
