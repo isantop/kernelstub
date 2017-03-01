@@ -338,7 +338,7 @@ def main():
         error = ("Could not copy the current Kernel Command line into the ESP. "
                  "You should manually copy the contents of /proc/cmdline into "
                  "the ESP to ensure you can get to it in an emergency. This is "
-                 "a non-critical error, so continuing without it."
+                 "a non-critical error, so continuing without it.")
         logging.warning(error)
         pass
     return 0
