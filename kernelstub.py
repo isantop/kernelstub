@@ -161,6 +161,7 @@ def copy_files(src, dest, simulate): # Copy file src into dest
             return True
         except:
             logging.error("Copy failed! Things may not work...")
+            raise FileOpsError("Could not copy one or more files.")
             return False
 
 def ensure_dir(file_path):
@@ -258,7 +259,7 @@ def main():
                      "your required kernel parameters and rerun kernelstub "
                      "again!\n\n")
             logging.critical(error)
-            return 1
+            raise KernelOptsError("No Kernel Parameters found")
     else:
         kernelOpts = args.kernelopts
     # Drive and partition information
@@ -289,7 +290,7 @@ def main():
     initrdName = "initrd.img"
     initrdDest = workDir + initrdName
     
-    ensure_dir(workDir)
+    ensure_dir(workDir) # Make sure the destination exists on the ESP
 
     logging.info("NVRAM entry index: " + str(entryIndex))
     logging.info("Boot Number:       " + orderNum)
@@ -301,23 +302,45 @@ def main():
     logging.info("OS running is:     " + osName + " " + osVer)
     logging.info("Kernel Params:     " + kernelOpts)
     logging.info("Now running the commands\n")
+    try:
+        copy_files(linuxPath, linuxDest, noRun)
+    except FileOpsError:
+        error = ("Could not copy the Kernel Image  into the ESP! This "
+                 "indicates a very bad problem and it is unsafe to continue. "
+                 "Aborting now...")
+        logging.critical(error)
+        return 2
+    try:
+        copy_files(initrdPath, initrdDest, noRun)
+    except FileOpsError:
+        error = ("Could not copy the initrd.img  into the ESP! This indicates "
+                 "a very bad problem and it is unsafe to continue. Aborting "
+                 "now...")
+        logging.critical(error)
+        return 3
     if entryIndex >= 0:
         logging.info("Deleting old boot entry")
         logging.info("New NVRAM:\n\n" + del_boot_entry(orderNum, noRun) + "\n")
     else:
         logging.info("No old entry to remove, skipping.")
     #print(del_boot_entry(orderNum))
-    copy_files(linuxPath, linuxDest, noRun)
-    copy_files(initrdPath, initrdDest, noRun)
     logging.info("New NVRAM:\n\n" + add_boot_entry("/dev/" + driveName, 
-                                         espNum, 
-                                         osLabel, 
-                                         "/EFI/" + osDirName + linuxName,
-                                         rootUuid, 
-                                         "EFI/" + osDirName + initrdName,
-                                         kernelOpts,
-                                         noRun) + "\n")
-    copy_files("/proc/cmdline", workDir + "cmdline.txt", noRun)
+                                                   espNum, 
+                                                   osLabel, 
+                                                   "/EFI/" + osDirName + linuxName,
+                                                   rootUuid, 
+                                                   "EFI/" + osDirName + initrdName,
+                                                   kernelOpts,
+                                                   noRun) + "\n")
+    try:
+        copy_files("/proc/cmdline", workDir + "cmdline.txt", noRun)
+    except FileOpsError:
+        error = ("Could not copy the current Kernel Command line into the ESP. "
+                 "You should manually copy the contents of /proc/cmdline into "
+                 "the ESP to ensure you can get to it in an emergency. This is "
+                 "a non-critical error, so continuing without it."
+        logging.warning(error)
+        pass
     return 0
 
 if __name__ == '__main__':
