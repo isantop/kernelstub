@@ -141,7 +141,7 @@ def del_boot_entry(index, sim): # Delete an entry from the NVRAM
 def add_boot_entry(device, partition, label, loader, root, initrd, cmdline, sim): 
     command = ('efibootmgr -d ' + device + ' -p ' + partition + ' -c -L "' + 
                label + '" -l ' + loader + ' -u "root=UUID=' + root + ' initrd=' + 
-               initrd + ' ' + cmdline + '"')
+               initrd + ' ro ' + cmdline + '"')
     return run_command(command, sim)
 
 def get_file_path(search): # Get path to file string, for copying stuff
