@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
- kernelstub Version 2.0
+ kernelstub Version 0.2
 
  The automatic manager for using the Linux Kernel EFI Stub to boot
  
