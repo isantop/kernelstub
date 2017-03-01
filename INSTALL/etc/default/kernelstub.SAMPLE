@@ -1,0 +1,16 @@
+ro quiet splash nomodeset
+
+# This file is a sample kernelstub config file. Only the first line is read. 
+# And other lines are ignored.
+
+# Place any boot options you need for your kernel into the correct config file
+# i.e. /etc/default/kernelstub
+
+# kernelstub will not perform ANY action without a config file in place.
+
+# If you don't know your kernel boot parameters, you can find them in:
+# /proc/cmdline. You will not need to include any "root=", "initrd=", or
+# "boot-image=" options. 
+
+# You can also get the correct lines by looking at the /etc/default/grub
+# file, at the GRUB_CMDLINE_LINUX and GRUB_CMDLINE_LINUX_DEFAULT sections

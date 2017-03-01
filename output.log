@@ -1,0 +1,46 @@
+03-01 10:16 root         DEBUG    Running command: blkid /dev/nvme0n1p2
+03-01 10:16 root         DEBUG    Running command: efibootmgr
+03-01 10:16 root         INFO     Found OS Entry
+03-01 10:16 root         INFO     OS Entry is:       Boot0000* Ubuntu 16.10
+03-01 10:16 root         DEBUG    Running command: ls /boot/vmlinuz* | tail -1
+03-01 10:16 root         DEBUG    Running command: ls /boot/initrd.img* | tail -1
+03-01 10:16 root         INFO     NVRAM entry index: 3
+03-01 10:16 root         INFO     Boot Number:       0000
+03-01 10:16 root         INFO     Drive name is      nvme0n1
+03-01 10:16 root         INFO     Root FS is on      nvme0n1p2
+03-01 10:16 root         INFO     ESP data is on     nvme0n1p1
+03-01 10:16 root         INFO     ESP partition #:   1
+03-01 10:16 root         INFO     Root FS UUID is:   23f15da6-f105-4d41-b1a9-eb783dc49f4c
+03-01 10:16 root         INFO     OS running is:     Ubuntu 16.10
+03-01 10:16 root         INFO     Kernel Params:     ro quiet net.ifnames=0
+
+03-01 10:16 root         INFO     Now running the commands
+
+03-01 10:16 root         INFO     Deleting old boot entry
+03-01 10:16 root         DEBUG    Running command: efibootmgr -B -b 0000
+03-01 10:16 root         INFO     New NVRAM:
+
+BootCurrent: 0000
+Timeout: 1 seconds
+BootOrder: 0002,0001,0003,0004
+Boot0001* Windows Boot Manager
+Boot0002* ubuntu
+Boot0003* UEFI: IP4 Realtek PCIe GBE Family Controller
+Boot0004* UEFI: IP6 Realtek PCIe GBE Family Controller
+
+03-01 10:16 root         INFO     Copying /boot/vmlinuz-4.8.0-39-generic into /boot/efi/EFI/Ubuntu-kernelstub/LINUX64.efi
+03-01 10:16 root         INFO     Copying /boot/initrd.img-4.8.0-39-generic into /boot/efi/EFI/Ubuntu-kernelstub/initrd.img
+03-01 10:16 root         DEBUG    Running command: efibootmgr -d /dev/nvme0n1 -p 1 -c -L "Ubuntu 16.10" -l /EFI/Ubuntu-kernelstub/LINUX64.efi -u "root=UUID=23f15da6-f105-4d41-b1a9-eb783dc49f4c initrd=EFI/Ubuntu-kernelstub/initrd.img ro quiet net.ifnames=0
+"
+03-01 10:16 root         INFO     New NVRAM:
+
+BootCurrent: 0000
+Timeout: 1 seconds
+BootOrder: 0000,0002,0001,0003,0004
+Boot0001* Windows Boot Manager
+Boot0002* ubuntu
+Boot0003* UEFI: IP4 Realtek PCIe GBE Family Controller
+Boot0004* UEFI: IP6 Realtek PCIe GBE Family Controller
+Boot0000* Ubuntu 16.10
+
+03-01 10:16 root         INFO     Copying /proc/cmdline into /boot/efi/EFI/Ubuntu-kernelstub/cmdline.txt
