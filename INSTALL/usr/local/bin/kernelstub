@@ -144,8 +144,8 @@ def add_boot_entry(device, partition, label, loader, root, initrd, cmdline, sim)
                initrd + ' ro ' + cmdline + '"')
     return run_command(command, sim)
 
-def get_file_path(search): # Get path to file string, for copying stuff
-    command = "ls /boot/" + search + "* | tail -1"
+def get_file_path(path, search): # Get path to file string, for copying stuff
+    command = "ls " + path + " " + search + "* | tail -1"
     return run_command(command, False)
 
 def copy_files(src, dest, simulate): # Copy file src into dest
@@ -164,21 +164,22 @@ def copy_files(src, dest, simulate): # Copy file src into dest
             raise FileOpsError("Could not copy one or more files.")
             return False
 
-def ensure_dir(file_path):
+def ensure_dir(file_path): # Make sure a file exists, and make it if it doesn't
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def check_config(path): # check if the config file exists
+def check_config(path): # check if the config file exists, read it
     if os.path.isfile(path) == True:
         f = open(path, "r")
         opts = f.readline()
         f.close()
         return opts
     else:
+        raise ConfigError("Missing configuration, cannot continue")
         return "InvalidConfig"
 
-def main():
+def main(): # Do the thing
     # Set up argument processing
     parser = argparse.ArgumentParser()
     parser.add_argument("-k",
@@ -210,7 +211,7 @@ def main():
                                 "them. This is useful for testing."))
     args = parser.parse_args() 
     
-    # Set up logging
+    # Figure out runtime options
     if args.verbose == True:
         console_level = "INFO"
     else:
@@ -228,6 +229,7 @@ def main():
     else:
         noRun = False
     
+    # Set up logging
     if args.log:
         logFile = args.log
     else:
@@ -239,18 +241,16 @@ def main():
                         filemode='w')
     console = logging.StreamHandler()
     console.setLevel(console_level)
-    # set a format which is simpler for console use
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    # tell the handler to use this format
     console.setFormatter(formatter)
-    # add the handler to the root logger
     logging.getLogger('').addHandler(console)
     
     # First check for kernel parameters. Without them, stop and fail
     if not args.kernelopts:
         configPath = "/etc/default/kernelstub"
-        kernelOpts = check_config(configPath)
-        if kernelOpts == "InvalidConfig":
+        try:
+            kernelOpts = check_config(configPath)
+        except ConfigError:
             error = ("kernelOpts was 'InvalidConfig'\n\n"
                      "This probably means that the config file doesn't exist "
                      "and you didn't specify any boot options on the command "
@@ -260,8 +260,10 @@ def main():
                      "again!\n\n")
             logging.critical(error)
             raise KernelOptsError("No Kernel Parameters found")
+            return 3
     else:
         kernelOpts = args.kernelopts
+    
     # Drive and partition information
     driveName = get_drive_name("/")
     rootFs = get_part_name("/")
@@ -283,15 +285,16 @@ def main():
     # Directory Information
     osDirName = osName + "-kernelstub/"
     workDir = "/boot/efi/EFI/" + osDirName
-    linuxPath = get_file_path("vmlinuz")
-    linuxName = "LINUX64.efi"
+    linuxPath = get_file_path("/boot/", "vmlinuz")
+    linuxName = "linux64.efi"
     linuxDest = workDir + linuxName
-    initrdPath = get_file_path("initrd.img")
+    initrdPath = get_file_path("/boot/", "initrd.img")
     initrdName = "initrd.img"
     initrdDest = workDir + initrdName
     
     ensure_dir(workDir) # Make sure the destination exists on the ESP
 
+    # Log some helpful information, to file and optionally console
     logging.info("NVRAM entry index: " + str(entryIndex))
     logging.info("Boot Number:       " + orderNum)
     logging.info("Drive name is      " + driveName)
@@ -301,6 +304,8 @@ def main():
     logging.info("Root FS UUID is:   " + rootUuid)
     logging.info("OS running is:     " + osName + " " + osVer)
     logging.info("Kernel Params:     " + kernelOpts)
+    
+    # Do stuff
     logging.info("Now running the commands\n")
     try:
         copy_files(linuxPath, linuxDest, noRun)
@@ -310,6 +315,7 @@ def main():
                  "Aborting now...")
         logging.critical(error)
         return 2
+    
     try:
         copy_files(initrdPath, initrdDest, noRun)
     except FileOpsError:
@@ -318,12 +324,13 @@ def main():
                  "now...")
         logging.critical(error)
         return 3
+    
+    # Check for an existing NVRAM entry and remove it if present
     if entryIndex >= 0:
         logging.info("Deleting old boot entry")
         logging.info("New NVRAM:\n\n" + del_boot_entry(orderNum, noRun) + "\n")
     else:
         logging.info("No old entry to remove, skipping.")
-    #print(del_boot_entry(orderNum))
     logging.info("New NVRAM:\n\n" + add_boot_entry("/dev/" + driveName, 
                                                    espNum, 
                                                    osLabel, 
@@ -332,6 +339,7 @@ def main():
                                                    "EFI/" + osDirName + initrdName,
                                                    kernelOpts,
                                                    noRun) + "\n")
+    
     try:
         copy_files("/proc/cmdline", workDir + "cmdline.txt", noRun)
     except FileOpsError:
