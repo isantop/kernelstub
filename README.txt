@@ -101,9 +101,6 @@ CONFIGURATION
  
  If you're unsure what kernel parameters you will need, you can get the ones 
  used in the current boot by looking at the GRUB_CMDLINE_LINUX_DEFAULT and the
- GRUB_CMDLINE_LINUX options in /etc/default/grub. However, please be aware 
- that kernelstub will supply the boot-image, root, initrd, and ro options 
- automatically, so you only need to include any other options. Generally these 
- include "quiet splash" or other compatibility tweaks like "nomodeset". You can 
- also find the parameters in the /etc/default/grub file, in the GRUB_CMDLINE_
- LINUX_DEFAULT and GRUB_CMDLINE_LINUX options. 
+ GRUB_CMDLINE_LINUX options in /etc/default/grub. Generally these include "quiet
+ splash" or other compatibility tweaks like "nomodeset". You may also find these
+ options in the /proc/cmdline file.
