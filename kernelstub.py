@@ -114,7 +114,7 @@ def get_uuid(fs): # Get a UUID from a filesystem dev name
     fsUuid = str(blockList[index])
     return fsUuid
 
-def get_os_name(lsbDict): # Get the name of the current OS, eg 'Ubuntu', or None
+def get_os_name(lsbDict): # Get name of the current OS, eg 'Ubuntu', or None
     osName = lsbDict.get('ID', None)
     return osName
 
@@ -147,8 +147,8 @@ def add_boot_entry(device,
                    cmdline, 
                    sim): 
     command = ('efibootmgr -d ' + device + ' -p ' + partition + ' -c -L "' + 
-               label + '" -l ' + loader + ' -u "root=UUID=' + root + ' initrd=' + 
-               initrd + ' ro ' + cmdline + '"')
+               label + '" -l ' + loader + ' -u "root=UUID=' + root + 
+               ' initrd=' + initrd + ' ro ' + cmdline + '"')
     return run_command(command, sim)
 
 def get_file_path(path, search): # Get path to file string, for copying stuff
@@ -194,9 +194,9 @@ def main(): # Do the thing
                         help = ("Specify the kernel boot options to use (eg. "
                                 "quiet splash). Default is to read from the "
                                 "config file in /etc/default/kernelstub. "
-                                "Options MUST be specified either in the config "
-                                "file or using this option, otherwise no action "
-                                "will be taken!"))
+                                "Options MUST be specified either in the "
+                                "config file or using this option, otherwise "
+                                "no action will be taken!"))
     parser.add_argument("-l",
                         "--log", 
                         help = ("Path to the log file. Default is "
@@ -214,8 +214,8 @@ def main(): # Do the thing
     parser.add_argument("-s",
                         "--simulate",
                         action="store_true",
-                        help = ("Don't actually run any commands, just simulate "
-                                "them. This is useful for testing."))
+                        help = ("Don't actually run any commands, just "
+                                "simulate them. This is useful for testing."))
     args = parser.parse_args() 
     
     # Figure out runtime options
@@ -241,11 +241,12 @@ def main(): # Do the thing
         logFile = args.log
     else:
         logFile = "/var/log/kernelstub.log"
-    logging.basicConfig(level=file_level,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                        datefmt='%m-%d %H:%M',
-                        filename=logFile,
-                        filemode='w')
+    logging.basicConfig(level = file_level,
+                        format = ('%(asctime)s %(name)-12s '
+                                  '"%(levelname)-8s %(message)s'),
+                        datefmt = '%m-%d %H:%M',
+                        filename = logFile,
+                        filemode = 'w')
     console = logging.StreamHandler()
     console.setLevel(console_level)
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
