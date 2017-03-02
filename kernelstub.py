@@ -53,7 +53,7 @@ import argparse
 import subprocess
 import lsb_release
 
-def run_command(command, simulate):
+def run_command(command, simulate): # Run or simulate a command
     logging.debug("Running command: "  + command)
     if simulate == True:
         output = "Simulating: " + command
@@ -122,7 +122,7 @@ def get_os_version(lsbDict): # Get the version number, eg '16.10', or None
     osVersion = lsbDict.get('RELEASE', None)
     return osVersion
 
-def find_os_entry(nvram, osLabel):
+def find_os_entry(nvram, osLabel): # Locate an existing NVRAM entry
     findIndex = 0
     for i in nvram:
             if osLabel in i:
@@ -138,7 +138,14 @@ def del_boot_entry(index, sim): # Delete an entry from the NVRAM
     return run_command(command, sim)
 
 # Add an entry to the NVRAM with the specified opts
-def add_boot_entry(device, partition, label, loader, root, initrd, cmdline, sim): 
+def add_boot_entry(device, 
+                   partition, 
+                   label, 
+                   loader, 
+                   root, 
+                   initrd, 
+                   cmdline, 
+                   sim): 
     command = ('efibootmgr -d ' + device + ' -p ' + partition + ' -c -L "' + 
                label + '" -l ' + loader + ' -u "root=UUID=' + root + ' initrd=' + 
                initrd + ' ro ' + cmdline + '"')
