@@ -188,9 +188,10 @@ def check_config(path): # check if the config file exists, read it
 
 def main(): # Do the thing
     # Set up argument processing
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-k",
-                        "--kernelopts",
+    parser = argparse.ArgumentParser(
+        description = "Automatic Kernel EFIstub manager")
+    parser.add_argument("-c",
+                        "--cmdline",
                         help = ("Specify the kernel boot options to use (eg. "
                                 "quiet splash). Default is to read from the "
                                 "config file in /etc/default/kernelstub. "
@@ -206,6 +207,15 @@ def main(): # Do the thing
                         help = ("Sets the information level for the log file. "
                                 "Default is INFO. Valid options are DEBUG, "
                                 "INFO, WARNING, ERROR, and CRITICAL."))
+    parser.add_argument("-k",
+                        "--kernelpath",
+                        help = ("Manually specify the path to the kernel image."
+                                " This is useful if kernelstub can't find your "
+                                "kernel automatically."))
+    parser.add_argument("-i",
+                        "--initrdpath",
+                        help = ("Manually specify the path to the initrd image."
+                                " Similar as for -k."))
     parser.add_argument("-v",
                         "--verbose",
                         action="store_true",
@@ -218,12 +228,7 @@ def main(): # Do the thing
                                 "simulate them. This is useful for testing."))
     args = parser.parse_args() 
     
-    # Figure out runtime options
-    if args.verbose == True:
-        console_level = "INFO"
-    else:
-        console_level = "WARNING"
-    
+    # Set up logging
     if args.log_level:
         file_level = getattr(logging, args.log_level.upper(), None)
         if not isinstance(file_level, int):
@@ -231,14 +236,13 @@ def main(): # Do the thing
     else:
         file_level = "INFO"
     
-    if args.simulate:
-        noRun = True
+    if args.verbose == True:
+        console_level = "INFO"
     else:
-        noRun = False
+        console_level = "WARNING"
     
-    # Set up logging
     if args.log:
-        logFile = args.log
+            logFile = args.log
     else:
         logFile = "/var/log/kernelstub.log"
     logging.basicConfig(level = file_level,
@@ -252,14 +256,32 @@ def main(): # Do the thing
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
+
+    # Figure out runtime options
+    if args.simulate:
+        noRun = True
+    else:
+        noRun = False
+    
+    if args.kernelpath:
+        linuxPath = args.kernelpath
+    else:
+        #logging.info("No kernel specified, attempting automatic discovery")
+        linuxPath = get_file_path("/boot/", "vmlinuz")
+    
+    if args.initrdpath:
+        initrdPath = args.initrdpath
+    else:
+        #logging.info("No initrd specified, attempting automatic discovery")
+        initrdPath = get_file_path("/boot/", "initrd.img")
     
     # First check for kernel parameters. Without them, stop and fail
-    if not args.kernelopts:
+    if not args.cmdline:
         configPath = "/etc/default/kernelstub"
         try:
             kernelOpts = check_config(configPath)
         except ConfigError:
-            error = ("kernelOpts was 'InvalidConfig'\n\n"
+            error = ("cmdline was 'InvalidConfig'\n\n"
                      "This probably means that the config file doesn't exist "
                      "and you didn't specify any boot options on the command "
                      "line.\n"
@@ -267,10 +289,10 @@ def main(): # Do the thing
                      "your required kernel parameters and rerun kernelstub "
                      "again!\n\n")
             logging.critical(error)
-            raise KernelOptsError("No Kernel Parameters found")
+            raise CmdLineError("No Kernel Parameters found")
             return 3
     else:
-        kernelOpts = args.kernelopts
+        kernelOpts = args.cmdline
     
     # Drive and partition information
     driveName = get_drive_name("/")
@@ -293,10 +315,8 @@ def main(): # Do the thing
     # Directory Information
     osDirName = osName + "-kernelstub/"
     workDir = "/boot/efi/EFI/" + osDirName
-    linuxPath = get_file_path("/boot/", "vmlinuz")
     linuxName = "linux64.efi"
     linuxDest = workDir + linuxName
-    initrdPath = get_file_path("/boot/", "initrd.img")
     initrdName = "initrd.img"
     initrdDest = workDir + initrdName
     
