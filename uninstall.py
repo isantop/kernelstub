@@ -130,6 +130,8 @@ def main():
     os.remove(initrdDest)
     os.remove(linuxDest)
     os.remove(cmdDest)
+    os.remove("/etc/kernel/postinst.d/zz-kernelstub")
+    os.remove("/etc/initramfs/postupdate.d/zz-kernelstub")
     
     return 0
 

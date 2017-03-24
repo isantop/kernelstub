@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+kernelstub --verbose --initrdpath $2

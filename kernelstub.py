@@ -266,13 +266,13 @@ def main(): # Do the thing
     if args.kernelpath:
         linuxPath = args.kernelpath
     else:
-        #logging.info("No kernel specified, attempting automatic discovery")
+        logging.info("No kernel specified, attempting automatic discovery")
         linuxPath = get_file_path("/boot/", "vmlinuz")
     
     if args.initrdpath:
         initrdPath = args.initrdpath
     else:
-        #logging.info("No initrd specified, attempting automatic discovery")
+        logging.info("No initrd specified, attempting automatic discovery")
         initrdPath = get_file_path("/boot/", "initrd.img")
     
     # First check for kernel parameters. Without them, stop and fail
