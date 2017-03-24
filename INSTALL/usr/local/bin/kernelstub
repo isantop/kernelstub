@@ -152,7 +152,7 @@ def add_boot_entry(device,
     return run_command(command, sim)
 
 def get_file_path(path, search): # Get path to file string, for copying stuff
-    command = "ls " + path + " " + search + "* | tail -1"
+    command = "ls " + path + search + "* | tail -1"
     return run_command(command, False)
 
 def copy_files(src, dest, simulate): # Copy file src into dest
