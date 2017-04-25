@@ -1,0 +1,17 @@
+Source: kernelstub
+Maintainer: Ian Santopietro <isantop@gmail.com>
+Section: python
+Priority: optional
+Build-Depends: python3-all, debhelper (>= 7.4.3)
+Standards-Version: 3.9.1
+
+
+
+
+
+Package: kernelstub
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Automatic kernel efistub manager for UEFI
+
+

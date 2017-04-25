@@ -127,11 +127,24 @@ def main():
         logging.info("New NVRAM:\n\n" + del_boot_entry(orderNum, False) + "\n")
     else:
         logging.info("No old entry to remove, skipping.")
-    os.remove(initrdDest)
-    os.remove(linuxDest)
-    os.remove(cmdDest)
-    os.remove("/etc/kernel/postinst.d/zz-kernelstub")
-    os.remove("/etc/initramfs/postupdate.d/zz-kernelstub")
+    try:
+        os.remove(initrdDest)
+    except:
+        pass
+    try:
+        os.remove(linuxDest)
+    except:
+        pass
+    try:
+        os.remove(cmdDest)
+    except:
+        pass
+    try:
+        os.remove("/etc/kernel/postinst.d/zz-kernelstub")
+        os.remove("/etc/initramfs/post-update.d/zz-kernelstub")
+    except:
+        pass
+    os.remove("/usr/local/bin/kernelstub")
     
     return 0
 

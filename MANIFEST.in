@@ -1,0 +1,3 @@
+include kernelstub/data/initramfs/zz-kernelstub
+include kernelstub/data/kernel/zz-kernelstub
+include kernelstub/data/kernelstub.SAMPLE

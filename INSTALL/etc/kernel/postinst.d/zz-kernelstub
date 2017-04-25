@@ -1,4 +1,0 @@
-#!/bin/bash
-
-
-kernelstub --verbose --kernelpath $2

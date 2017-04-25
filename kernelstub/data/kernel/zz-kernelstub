@@ -1,0 +1,5 @@
+#!/bin/bash
+
+INITRD="/boot/initrd.img-$1"
+
+kernelstub --verbose --kernelpath $2 --initrdpath $INITRD
