@@ -1,3 +1,11 @@
+kernelstub (1.0.0) artful; urgency=medium
+
+  * 1.0 release.
+  * New ISC license instead of BSD.
+  * First release from Git.
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 08 Nov 2017 09:47:42 -0700
+
 kernelstub (0.19) zesty; urgency=medium
 
   * Improve reliability on old-kernel removal
