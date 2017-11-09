@@ -1,0 +1,3 @@
+[KERNELSTUB]
+KernelOptions = quiet splash
+SecureBoot = no

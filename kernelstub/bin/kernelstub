@@ -42,6 +42,18 @@ import logging
 import argparse
 import subprocess
 import lsb_release
+import configparser
+
+configDefault = '/etc/default/kernelstub'
+
+class ConfigError(Exception):
+    pass
+
+class FileOpsError(Exception):
+    pass
+
+class CmdLineError(Exception):
+    pass
 
 def run_command(command, simulate): # Run or simulate a command
     logging.debug("Running command: "  + command)
@@ -166,22 +178,40 @@ def ensure_dir(file_path): # Make sure a file exists, and make it if it doesn't
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def check_config(path): # check if the config file exists, read it
+def check_config(path): # check if the config file exists and is valid
     if os.path.isfile(path) == True:
-        f = open(path, "r")
-        opts = f.readline()
-        f.close()
-        return opts
+        config = configparser.ConfigParser()
+        print(config.read(path))
+        print(str('KERNELSTUB' in config))
+        if str('KERNELSTUB' in config) == "True":
+            msg = "Good Config"
+        else:
+            msg = "Configuration is malformed, please check."
+            raise ConfigError("Configuration file is malformed, please check.")
     else:
-        raise ConfigError("Missing configuration, cannot continue")
-        return "InvalidConfig"
+        msg = "Missing configuration, cannot continue"
+        raise ConfigError("Missing configuration file, cannot continue")
+    
+    print(msg)
+    return msg
+
+def read_config(path, cfg_option):
+    config = configparser.ConfigParser()
+    config.read(path)
+    cfg_value = config['KERNELSTUB'][cfg_option]
+    return cfg_value
 
 def main(): # Do the thing
+    global configPath
     # Set up argument processing
     parser = argparse.ArgumentParser(
         description = "Automatic Kernel EFIstub manager")
     parser.add_argument("-c",
-                        "--cmdline",
+                        "--config", 
+                        help = ("Path to the config file. Default is "
+                                "/etc/default/kernelstub"))
+    parser.add_argument("-o",
+                        "--options",
                         help = ("Specify the kernel boot options to use (eg. "
                                 "quiet splash). Default is to read from the "
                                 "config file in /etc/default/kernelstub. "
@@ -267,11 +297,11 @@ def main(): # Do the thing
     
     # First check for kernel parameters. Without them, stop and fail
     if not args.cmdline:
-        configPath = "/etc/default/kernelstub"
-        try:
-            kernelOpts = check_config(configPath)
-        except ConfigError:
-            error = ("cmdline was 'InvalidConfig'\n\n"
+        print(check_config(configPath))
+        kernelOpts = read_config(configPath, "KernelOptions")
+            
+        """except ConfigError:
+            error = ("ConfigFile was broken\n\n"
                      "This probably means that the config file doesn't exist "
                      "and you didn't specify any boot options on the command "
                      "line.\n"
@@ -279,8 +309,7 @@ def main(): # Do the thing
                      "your required kernel parameters and rerun kernelstub "
                      "again!\n\n")
             logging.critical(error)
-            raise CmdLineError("No Kernel Parameters found")
-            return 3
+            return 3"""
     else:
         kernelOpts = args.cmdline
     
