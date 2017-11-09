@@ -2,8 +2,10 @@ Source: kernelstub
 Maintainer: Ian Santopietro <isantop@gmail.com>
 Section: python
 Priority: optional
-Build-Depends: python3-all, debhelper (>= 7.4.3)
-Standards-Version: 3.9.1
+Build-Depends: python3-all,
+               dh-python,
+               debhelper (>= 10)
+Standards-Version: 4.1.1
 
 
 
@@ -11,7 +13,15 @@ Standards-Version: 3.9.1
 
 Package: kernelstub
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, efibootmgr, util-linux
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         efibootmgr,
+         util-linux (>= 2.27)
 Description: Automatic kernel efistub manager for UEFI
-
+ This program will automatically keep a copy of the Linux Kernel image and your
+ initrd.img located on your EFI System Partition (ESP) on an EFI-compatible
+ system. The benefits of this approach include being able to boot Linux directly
+ and bypass the GRUB bootloader in many cases, which can save 4-6 seconds during
+ boot on a system with a fast drive. Please note that there are no guarantees
+ about boot time saved using this method.
 

@@ -31,5 +31,6 @@ setup(name='kernelstub',
     data_files=[
         ('/etc/kernel/postinst.d', ['kernelstub/data/kernel/zz-kernelstub']),
         ('/etc/initramfs/post-update.d', ['kernelstub/data/initramfs/zz-kernelstub']),
-        ('/etc/default', ['kernelstub/data/kernelstub.SAMPLE'])]
+        ('/etc/default', ['kernelstub/data/kernelstub']),
+        ('/usr/bin', ['kernelstub/kernelstub'])]
     )

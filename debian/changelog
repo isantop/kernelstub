@@ -1,3 +1,10 @@
+kernelstub (2.0.0) artful; urgency=medium
+
+  * Changes to argument structure (breaking).
+  * Reworked Config file with new parser.
+
+ -- Ian Santopietro <ian@system76.com>  Thu, 09 Nov 2017 11:47:01 -0700
+
 kernelstub (1.0.0) artful; urgency=medium
 
   * 1.0 release.
