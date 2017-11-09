@@ -181,8 +181,12 @@ def ensure_dir(file_path): # Make sure a file exists, and make it if it doesn't
 def check_config(path): # check if the config file exists and is valid
     if os.path.isfile(path) == True:
         config = configparser.ConfigParser()
-        print(config.read(path))
-        print(str('KERNELSTUB' in config))
+        
+        try:
+            config.read(path)
+        except configparser.MissingSectionHeaderError:
+            raise ConfigError("Configuration file is malformed, please check.")
+        
         if str('KERNELSTUB' in config) == "True":
             msg = "Good Config"
         else:
@@ -192,7 +196,6 @@ def check_config(path): # check if the config file exists and is valid
         msg = "Missing configuration, cannot continue"
         raise ConfigError("Missing configuration file, cannot continue")
     
-    print(msg)
     return msg
 
 def read_config(path, cfg_option):
@@ -208,8 +211,26 @@ def main(): # Do the thing
         description = "Automatic Kernel EFIstub manager")
     parser.add_argument("-c",
                         "--config", 
-                        help = ("Path to the config file. Default is "
-                                "/etc/default/kernelstub"))
+                        help = ("Path to the config file. Default is " + 
+                                configDefault))
+    parser.add_argument("-i",
+                        "--initrdpath",
+                        help = ("Manually specify the path to the initrd image."
+                                "This is useful if kernelstub can't find your "
+                                "Initrd automatically."))
+    parser.add_argument("-k",
+                        "--kernelpath",
+                        help = ("Manually specify the path to the kernel image."
+                                "Similar to -i"))
+    parser.add_argument("-l",
+                        "--log", 
+                        help = ("Path to the log file. Default is "
+                                "/var/log/kernelstub.log"))
+    parser.add_argument("-L",
+                        "--log-level",
+                        help = ("Sets the information level for the log file. "
+                                "Default is INFO. Valid options are DEBUG, "
+                                "INFO, WARNING, ERROR, and CRITICAL."))
     parser.add_argument("-o",
                         "--options",
                         help = ("Specify the kernel boot options to use (eg. "
@@ -218,34 +239,16 @@ def main(): # Do the thing
                                 "Options MUST be specified either in the "
                                 "config file or using this option, otherwise "
                                 "no action will be taken!"))
-    parser.add_argument("-l",
-                        "--log", 
-                        help = ("Path to the log file. Default is "
-                                "/var/log/kernelstub.log"))
-    parser.add_argument("-lv",
-                        "--log-level",
-                        help = ("Sets the information level for the log file. "
-                                "Default is INFO. Valid options are DEBUG, "
-                                "INFO, WARNING, ERROR, and CRITICAL."))
-    parser.add_argument("-k",
-                        "--kernelpath",
-                        help = ("Manually specify the path to the kernel image."
-                                " This is useful if kernelstub can't find your "
-                                "kernel automatically."))
-    parser.add_argument("-i",
-                        "--initrdpath",
-                        help = ("Manually specify the path to the initrd image."
-                                " Similar as for -k."))
-    parser.add_argument("-v",
-                        "--verbose",
-                        action="store_true",
-                        help = ("Displays extra information about the actions "
-                                "being performed. "))
     parser.add_argument("-s",
                         "--simulate",
                         action="store_true",
                         help = ("Don't actually run any commands, just "
                                 "simulate them. This is useful for testing."))
+    parser.add_argument("-v",
+                        "--verbose",
+                        action="store_true",
+                        help = ("Displays extra information about the actions "
+                                "being performed. "))
     args = parser.parse_args() 
     
     # Set up logging
@@ -283,6 +286,11 @@ def main(): # Do the thing
     else:
         noRun = False
     
+    if args.config:
+        configPath=args.config
+    else:
+        configPath=configDefault
+    
     if args.kernelpath:
         linuxPath = args.kernelpath
     else:
@@ -296,7 +304,7 @@ def main(): # Do the thing
         initrdPath = get_file_path("/boot/", "initrd.img")
     
     # First check for kernel parameters. Without them, stop and fail
-    if not args.cmdline:
+    if not args.options:
         print(check_config(configPath))
         kernelOpts = read_config(configPath, "KernelOptions")
             
@@ -311,7 +319,7 @@ def main(): # Do the thing
             logging.critical(error)
             return 3"""
     else:
-        kernelOpts = args.cmdline
+        kernelOpts = args.options
     
     # Drive and partition information
     driveName = get_drive_name("/")
