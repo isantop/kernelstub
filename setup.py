@@ -20,7 +20,7 @@ THIS SOFTWARE.
 from distutils.core import setup
 
 setup(name='kernelstub',
-    version='1.0.0',
+    version='2.0.1',
     description='Automatic kernel efistub manager for UEFI',
     url='https://launchpad.net/kernelstub',
     author='Ian Santopietro',
@@ -33,6 +33,6 @@ setup(name='kernelstub',
         ('/etc/initramfs/post-update.d', ['kernelstub/data/initramfs/zz-kernelstub']),
         ('/etc/default', ['kernelstub/data/kernelstub']),
         ('/usr/bin', ['kernelstub/kernelstub']),
-        ('/usr/share/man/man1'), ['kernelstub/data/kernelstub.1.gz']),
-        ('/usr/share/man/man1'), ['kernelstub/data/kernelstub_config.5.gz'])]
+        ('/usr/share/man/man1', ['kernelstub/data/kernelstub.1.gz']),
+        ('/usr/share/man/man5', ['kernelstub/data/kernelstub_config.5.gz'])]
     )

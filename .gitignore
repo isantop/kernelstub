@@ -1,2 +1,4 @@
 *~
 output.log
+build/
+debian/kernelstub

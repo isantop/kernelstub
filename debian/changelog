@@ -1,3 +1,9 @@
+kernelstub (2.0.1) UNRELEASED; urgency=medium
+
+  * Add man pages
+
+ -- Ian Santopietro <ian@system76.com>  Fri, 10 Nov 2017 10:20:56 -0700
+
 kernelstub (2.0.0) artful; urgency=medium
 
   * Changes to argument structure (breaking).
