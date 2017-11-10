@@ -48,26 +48,37 @@ USAGE
  
  usage: kernelstub [-h] [-k KERNELOPTS] [-l LOG] [-lv LOG_LEVEL] [-v] [-s]
 
- optional arguments:
-   -h, --help            show this help message and exit
-   -k KERNELOPTS, --kernelopts KERNELOPTS
-                         Specify the kernel boot options to use (eg. ro quiet
-                         splash). Default is to read from the config file in
-                         /etc/default/kernelstub. Options MUST be specified
-                         either in the config file or using this option,
-                         otherwise no action will be taken!
-   -l LOG, --log LOG     Path to the log file. Default is
-                         /var/log/kernelstub.log
-   -lv LOG_LEVEL, --log-level LOG_LEVEL
-                         Sets the information level for the log file. Default
-                         is INFO. Valid options are DEBUG, INFO, WARNING,
-                         ERROR, and CRITICAL.
-   -v, --verbose         Displays extra information about the actions being
-                         performed.
-   -s, --simulate        Don't actually run any commands, just simulate them.
-                         This is useful for testing.
- 
- By default, kernelstub will display no output and return with exit status 0. 
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Path to the config file. Default is
+                        /etc/default/kernelstub
+  -i INITRDPATH, --initrdpath INITRDPATH
+                        Manually specify the path to the initrd image.This is
+                        useful if kernelstub can't find your Initrd
+                        automatically.
+  -k KERNELPATH, --kernelpath KERNELPATH
+                        Manually specify the path to the kernel image.Similar
+                        to -i
+  -l LOG, --log LOG     Path to the log file. Default is
+                        /var/log/kernelstub.log
+  -L LOG_LEVEL, --log-level LOG_LEVEL
+                        Sets the information level for the log file. Default
+                        is INFO. Valid options are DEBUG, INFO, WARNING,
+                        ERROR, and CRITICAL.
+  -o OPTIONS, --options OPTIONS
+                        Specify the kernel boot options to use (eg. quiet
+                        splash). Default is to read from the config file in
+                        /etc/default/kernelstub. Options MUST be specified
+                        either in the config file or using this option,
+                        otherwise no action will be taken!
+  -s, --simulate        Don't actually run any commands, just simulate them.
+                        This is useful for testing.
+  -v, --verbose         Displays extra information about the actions being
+                        performed.
+
+
+ By default, kernelstub will display no output and return with exit status 0.
  You can enable additional output by passing the -v flag. You can also check
  the log file, which is located in /var/log/kernelstub by default. An alternate
  location can be given by passing the -l argument. 

@@ -32,5 +32,7 @@ setup(name='kernelstub',
         ('/etc/kernel/postinst.d', ['kernelstub/data/kernel/zz-kernelstub']),
         ('/etc/initramfs/post-update.d', ['kernelstub/data/initramfs/zz-kernelstub']),
         ('/etc/default', ['kernelstub/data/kernelstub']),
-        ('/usr/bin', ['kernelstub/kernelstub'])]
+        ('/usr/bin', ['kernelstub/kernelstub']),
+        ('/usr/share/man/man1'), ['kernelstub/data/kernelstub.1.gz']),
+        ('/usr/share/man/man1'), ['kernelstub/data/kernelstub_config.5.gz'])]
     )
