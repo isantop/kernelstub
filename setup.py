@@ -29,10 +29,10 @@ setup(name='kernelstub',
     packages=['kernelstub'],
     scripts=['kernelstub/kernelstub'],
     data_files=[
-        ('/etc/kernel/postinst.d', ['kernelstub/data/kernel/zz-kernelstub']),
-        ('/etc/initramfs/post-update.d', ['kernelstub/data/initramfs/zz-kernelstub']),
-        ('/etc/default', ['kernelstub/data/kernelstub']),
+        ('/etc/kernel/postinst.d', ['kernelstub/data/hooks/kernel/zz-kernelstub']),
+        ('/etc/initramfs/post-update.d', ['kernelstub/data/hooks/initramfs/zz-kernelstub']),
+        ('/etc/default', ['kernelstub/data/config/kernelstub.default']),
         ('/usr/bin', ['kernelstub/kernelstub']),
-        ('/usr/share/man/man1', ['kernelstub/data/kernelstub.1.gz']),
-        ('/usr/share/man/man5', ['kernelstub/data/kernelstub_config.5.gz'])]
+        ('/usr/share/man/man1', ['kernelstub/data/man/kernelstub.1.gz']),
+        ('/usr/share/man/man5', ['kernelstub/data/man/kernelstub_config.5.gz'])]
     )
