@@ -1,3 +1,9 @@
+kernelstub (2.0.0) UNRELEASED; urgency=medium
+
+  * Re-written with new, more organized sturcture
+
+ -- Ian Santopietro <ian@system76.com>  Tue, 23 Jan 2018 15:48:44 -0700
+
 kernelstub (1.0.0) artful; urgency=medium
 
   * 1.0 release.
