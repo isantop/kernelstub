@@ -20,7 +20,7 @@ THIS SOFTWARE.
 from distutils.core import setup
 
 setup(name='kernelstub',
-    version='1.0.0',
+    version='2.0.0',
     description='Automatic kernel efistub manager for UEFI',
     url='https://launchpad.net/kernelstub',
     author='Ian Santopietro',
