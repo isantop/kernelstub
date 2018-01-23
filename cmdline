@@ -1,0 +1,1 @@
+root=UUID=0fcca874-5950-4223-b7e6-ea508a7255a1 initrd=EFI/Ubuntu-kernelstub/initrd.img ro video.brightness_switch_enabled=0 quiet splash vt.global_cursor_default=0 loglevel=0 vga=current rd.systemd.show_status=false rd.udev.log-priority=0
