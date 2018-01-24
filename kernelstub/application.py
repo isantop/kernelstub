@@ -39,7 +39,7 @@ THIS SOFTWARE.
 
 import logging, subprocess, shutil, os
 
-from . import drive, nvram, opers
+from . import drive, nvram, opers, loader, config
 
 class CmdLineError(Exception):
     pass
@@ -76,11 +76,32 @@ class Kernelstub():
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
 
+        # Get the objects
+        this_os = opers.OS()
+        this_drive = drive.Drive()
+        this_nvram = nvram.NVRAM(this_os.os_name, this_os.os_version)
+        this_loader = loader.Loader(logging)
+        this_config = config.Config()
+
+        configuration = this_config.load_config()['default']
+
         # Figure out runtime options
         if args.simulate:
             noRun = True
         else:
             noRun = False
+
+        manage = False
+        if args.manage:
+            manage = True
+        if configuration['manage_mode']:
+            manage = True
+
+        force = False
+        if args.force:
+            force = True
+        if configuration['force_update']:
+            force = True
 
         if args.kernelpath:
             linux_path = args.kernelpath
@@ -98,7 +119,7 @@ class Kernelstub():
         if not args.cmdline:
             config_path = "/etc/default/kernelstub"
             try:
-                kernel_opts = self.check_config(config_path)
+                kernel_opts = configuration['kernel_options']
             except:
                 error = ("cmdline was 'InvalidConfig'\n\n"
                          "This probably means that the config file doesn't exist "
@@ -111,20 +132,17 @@ class Kernelstub():
                 raise CmdLineError("No Kernel Parameters found")
                 return 3
         else:
-            kernelOpts = args.cmdline
+            kernel_opts = args.cmdline
 
-        # Get the objects
-        this_os = opers.OS()
-        this_drive = drive.Drive()
-        this_nvram = nvram.NVRAM(this_os.os_name, this_os.os_version)
+
 
         # Directory Information
         os_dir_name = this_os.os_name + "-kernelstub/"
         work_dir = "/boot/efi/EFI/" + os_dir_name
-        linux_name = "linux64.efi"
-        linux_dest = work_dir + linux_name
-        initrd_name = "initrd.img"
-        initrd_dest = work_dir + initrd_name
+        linux_name = "linux64"
+        linux_dest = '%s%s' % (work_dir, linux_name)
+        initrd_name = "initrd"
+        initrd_dest = '%s%s' % (work_dir, initrd_name)
 
         self.ensure_dir(work_dir) # Make sure the destination exists on the ESP
 
@@ -141,8 +159,11 @@ class Kernelstub():
 
         # Do stuff
         logging.info("Now running the commands\n")
+
+        # Backup the old config
+        self.backup_old(linux_dest, initrd_dest)
         try:
-            self.copy_files(linux_path, linux_dest, noRun)
+            self.copy_files(linux_path, '%s-current.efi' % linux_dest, noRun)
         except FileOpsError:
             error = ("Could not copy the Kernel Image  into the ESP! This "
                      "indicates a very bad problem and it is unsafe to continue. "
@@ -151,7 +172,7 @@ class Kernelstub():
             return 2
 
         try:
-            self.copy_files(initrd_path, initrd_dest, noRun)
+            self.copy_files(initrd_path, '%s-current.img' % initrd_dest, noRun)
         except FileOpsError:
             error = ("Could not copy the initrd.img  into the ESP! This indicates "
                      "a very bad problem and it is unsafe to continue. Aborting "
@@ -160,14 +181,25 @@ class Kernelstub():
             return 3
 
         # Check for an existing NVRAM entry and remove it if present
-        if this_nvram.os_entry_index >= 0:
-            logging.info("Deleting old boot entry")
-            this_nvram.delete_boot_entry(this_nvram.os_entry_index)
-            logging.info('New NVRAM: \n\n%s\n' % this_nvram.nvram)
+        if not manage:
+            if this_nvram.os_entry_index >= 0:
+                logging.info("Deleting old boot entry")
+                this_nvram.delete_boot_entry(this_nvram.order_num)
+                logging.info('New NVRAM: \n\n%s\n' % this_nvram.nvram)
+            else:
+                logging.info("No old entry to remove, skipping.")
+            this_nvram.add_entry(this_os, this_drive, kernel_opts)
+            logging.info('New NVRAM:\n\n%s\n' % this_nvram.nvram)
         else:
-            logging.info("No old entry to remove, skipping.")
-        this_nvram.add_entry(this_os, this_drive, kernel_opts)
-        logging.info('New NVRAM:\n\n%s\n' % this_nvram.nvram)
+            logging.info('Running in manage-only mode, not modifying NVRAM')
+            logging.info('Setting up loader configuration.')
+            logging.debug('Value of `force` var: %s' % str(force))
+            this_loader.write_config(this_os.os_name,
+                                     this_os.os_version,
+                                     'root=UUID=%s %s' %(this_drive.root_uuid, kernel_opts),
+                                     overwrite=force)
+
+
 
         try:
             self.copy_files("/proc/cmdline", work_dir + "cmdline.txt", noRun)
@@ -179,6 +211,22 @@ class Kernelstub():
             logging.warning(error)
             pass
         return 0
+
+    def backup_old(self, linux_dest, initrd_dest):
+        try:
+            self.copy_files('%s-current.efi' % linux_dest,
+                            '%s-old.efi' % linux_dest,
+                            False)
+        except:
+            pass
+
+        try:
+            self.copy_files('%s-current.img' % initrd_dest,
+                            '%s-old.img' %initrd_dest,
+                            False)
+        except:
+            pass
+
 
     def get_file_path(self, path, search): # Get path to file string, for copying stuff
         command = "ls " + path + search + "* | tail -1"
@@ -206,11 +254,11 @@ class Kernelstub():
             os.makedirs(directory)
 
     def check_config(self, path): # check if the config file exists, read it
+        opts = []
         if os.path.isfile(path) == True:
-            f = open(path, "r")
-            opts = f.readline()
-            f.close()
-            return opts
+            with open(path, "r") as config_file:
+                opts = config_file.readlines()
+            return opts[0]
         else:
             raise ConfigError("Missing configuration, cannot continue")
             return "InvalidConfig"
