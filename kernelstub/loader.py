@@ -25,7 +25,7 @@ import os
 class Loader():
 
     loader_dir = '/boot/efi/loader'
-    entry_dir = '/boot/efi/loader/entries'
+    entry_dir = 'b/boot/efi/loader/entries'
 
     def __init__(self, log):
         self.log = log
@@ -36,8 +36,8 @@ class Loader():
 
     def write_config(self, os_name, os_version, kopts, overwrite=False):
         title_line = 'title %s %s' %(os_name, os_version)
-        linux_line = 'linux /EFI/%s-kernelstub/vmlinuz-current' % os_name
-        initrd_line = 'initrd /EFI/%s-kernelstub/initrd-current' % os_name
+        linux_line = 'linux /EFI/%s-kernelstub/linux64-current.efi' % os_name
+        initrd_line = 'initrd /EFI/%s-kernelstub/initrd-current.img' % os_name
         option_line = 'options %s' % kopts
         with open('%s/%s-current.conf' % (self.entry_dir, os_name), mode='w') as entry:
             entry.write('%s\n' % title_line)

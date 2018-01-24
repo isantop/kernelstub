@@ -18,23 +18,6 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
 OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
-
- This program will automatically keep a copy of the Linux Kernel image and your
- initrd.img located on your EFI System Partition (ESP) on an EFI-compatible
- system. The benefits of this approach include being able to boot Linux directly
- and bypass the GRUB bootloader in many cases, which can save 4-6 seconds during
- boot on a system with a fast drive. Please note that there are no guarantees
- about boot time saved using this method.
-
- For maximum safety, kernelstub recommends leaving an entry for GRUB in your
- system's ESP and NVRAM configuration, as GRUB allows you to modify boot
- parameters per-boot, which loading the kernel directly cannot do. The only
- other way to do this is to use an EFI shell to manually load the kernel and
- give it parameters from the EFI Shell. You can do this by using:
-
- fs0:> vmlinuz-image initrd=EFI/path/to/initrd/stored/on/esp options
-
- kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
 import subprocess
