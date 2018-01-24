@@ -20,18 +20,66 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 """
 
-import os
+import os, platform
 
 class OS():
 
-    os_name = "Linux"
-    os_version = "1.0"
-    os_cmdline = ['quiet', 'splash']
+    name_pretty = "Linux"
+    name = "Linux"
+    version = "1.0"
+    cmdline = ['quiet', 'splash']
+    kernel_name = 'vmlinuz'
+    initrd_name = 'initrd.img'
+    kernel_release = platform.release()
 
     def __init__(self):
-        self.os_name = self.get_os_name()
-        self.os_version = self.get_os_version()
-        self.os_cmdline = self.get_os_cmdline()
+        self.name_pretty = self.get_os_name()
+        self.name = self.clean_names(self.name_pretty)
+        self.version = self.get_os_version()
+        self.cmdline = self.get_os_cmdline()
+
+    def clean_names(self, name):
+        badchar = {
+            ' ' : '_',
+            '~' : '-',
+            '!' : '',
+            "'" : "",
+            '<' : '',
+            '>' : '',
+            ':' : '',
+            '"' : '',
+            '/' : '',
+            '\\' : '',
+            '|' : '',
+            '?' : '',
+            '*' : '',
+            'CON' : '',
+            'PRN' : '',
+            'AUX' : '',
+            'NUL' : '',
+            'COM1' : '',
+            'COM2' : '',
+            'COM3' : '',
+            'COM4' : '',
+            'COM5' : '',
+            'COM6' : '',
+            'COM7' : '',
+            'COM8' : '',
+            'COM9' : '',
+            'LPT1' : '',
+            'LPT2' : '',
+            'LPT3' : '',
+            'LPT4' : '',
+            'LPT5' : '',
+            'LPT6' : '',
+            'LPT7' : '',
+            'LPT8' : '',
+            'LPT9' : '',
+        }
+
+        for char in badchar:
+            name = name.replace(char, badchar[char])
+        return name
 
     def get_os_cmdline(self):
         with open('/proc/cmdline') as cmdline_file:

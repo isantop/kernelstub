@@ -39,7 +39,11 @@ THIS SOFTWARE.
 
 import logging, subprocess, shutil, os, platform
 
-from . import drive, nvram, opers, loader, config
+from . import drive as idrive
+from . import nvram as invram
+from . import opsys as iopsys
+from . import installer as iinstaller
+from . import config as iconfig
 
 class CmdLineError(Exception):
     pass
@@ -48,48 +52,51 @@ class Kernelstub():
 
     def main(self, args): # Do the thing
 
-        # Set up logging
-        file_level = "INFO"
-        verb = args.verbose
-        if verb > 2:
-            verb = 2
+        file_level = 'INFO'
+        verbosity = args.verbose
+        if verbosity == None:
+            verbosity = 0
+        if verbosity > 2:
+            verbosity = 2
 
-        verbosity = { None : "WARNING",
-                      1 : "INFO",
-                      2 : "DEBUG" }
+        level = {
+            0 : 'WARNING',
+            1 : 'INFO',
+            2 : 'DEBUG',
+        }
 
-        console_level = verbosity[verb]
+        console_level = level[verbosity]
 
         if args.log:
                 log_file = args.log
         else:
             log_file = "/var/log/kernelstub.log"
-        logging.basicConfig(level = file_level,
-                            format = ('%(asctime)s %(name)-12s '
-                                      '"%(levelname)-8s %(message)s'),
-                            datefmt = '%m-%d %H:%M',
-                            filename = log_file,
-                            filemode = 'w')
+
+        log = logging.getLogger('kernelstub')
         console = logging.StreamHandler()
-        console.setLevel(console_level)
-        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        console.setFormatter(formatter)
-        logging.getLogger('').addHandler(console)
+        stream_fmt = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        console.setFormatter(stream_fmt)
 
-        # Get the objects
-        this_os = opers.OS()
-        this_drive = drive.Drive()
-        this_nvram = nvram.NVRAM(this_os.os_name, this_os.os_version)
-        this_loader = loader.Loader(logging)
-        this_config = config.Config()
+        #logfile = logging.FileHandler(log_file)
+        #logfile.setLevel(file_level)
+        #file_fmt = logging.Formatter(
+        #    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        #)
+        #logfile.setFormatter(file_fmt)
 
-        configuration = this_config.load_config()['default']
+        log.addHandler(console)
+        #log.addHandler(logfile)
+        log.setLevel(console_level)
+        log.debug('Logging set up')
 
         # Figure out runtime options
         if args.simulate:
-            noRun = True
+            no_run = True
         else:
-            noRun = False
+            no_run = False
+
+        config = iconfig.Config()
+        configuration = config.load_config()['default']
 
         manage = False
         if args.manage:
@@ -102,19 +109,6 @@ class Kernelstub():
             force = True
         if configuration['force_update']:
             force = True
-
-        if args.kernelpath:
-            linux_path = args.kernelpath
-        else:
-            logging.info("No kernel specified, attempting automatic discovery")
-            linux_path = "/boot/vmlinuz-%s" % platform.release()
-
-        if args.initrd_path:
-            initrd_path = args.initrd_path
-        else:
-            logging.info("No initrd specified, attempting automatic discovery")
-            initrd_path = "/boot/initrd.img-%s" % platform.release()
-
 
         # First check for kernel parameters. Without them, stop and fail
         if not args.cmdline:
@@ -129,132 +123,61 @@ class Kernelstub():
                          "Create a new config file in /etc/default/kernelstub with "
                          "your required kernel parameters and rerun kernelstub "
                          "again!\n\n")
-                logging.critical(error)
+                log.critical(error)
                 raise CmdLineError("No Kernel Parameters found")
                 return 3
         else:
             kernel_opts = args.cmdline
 
+        opsys = iopsys.OS()
 
+        if args.kernelpath:
+            linux_path = args.kernelpath
+        else:
+            log.info("No kernel specified, attempting automatic discovery")
+            linux_path = "/boot/%s-%s" % (opsys.kernel_name, opsys.kernel_release)
 
-        # Directory Information
-        os_dir_name = this_os.os_name + "-kernelstub/"
-        work_dir = "/boot/efi/EFI/" + os_dir_name
-        linux_name = "linux64"
-        linux_dest = '%s%s' % (work_dir, linux_name)
-        initrd_name = "initrd"
-        initrd_dest = '%s%s' % (work_dir, initrd_name)
+        if args.initrd_path:
+            initrd_path = args.initrd_path
+        else:
+            log.info("No initrd specified, attempting automatic discovery")
+            initrd_path = "/boot/%s-%s" % (opsys.initrd_name, opsys.kernel_release)
 
-        self.ensure_dir(work_dir) # Make sure the destination exists on the ESP
+        drive = idrive.Drive()
+        nvram = invram.NVRAM(opsys.name, opsys.version)
+        installer = iinstaller.Installer(nvram, opsys, drive)
+
+        # Make sure the destination exists on the ESP
+        if not os.path.exists('%s%s' % (installer.work_dir,
+                                        installer.os_dir_name)):
+            os.makedirs('%s%s' % (installer.work_dir, installer.os_dir_name))
 
         # Log some helpful information, to file and optionally console
-        logging.info("NVRAM entry index:  %s" % str(this_nvram.os_entry_index))
-        logging.info("Boot Number:        %s" % this_nvram.order_num)
-        logging.info("Drive name is       %s" % this_drive.drive_name)
-        logging.info("Root FS is on       %s" % this_drive.root_fs)
-        logging.info("ESP data is on      %s" % this_drive.esp_fs)
-        logging.info("ESP partition #:    %s" % this_drive.esp_num)
-        logging.info("Root FS UUID is:    %s" % this_drive.root_uuid)
-        logging.info("OS running is:      %s %s" % (this_os.os_name, this_os.os_version))
-        logging.info("Kernel Params:      %s" % kernel_opts)
-        logging.info("Kernel image path:  %s" % linux_path)
-        logging.info("Ramdisk image path: %s" % initrd_path)
+        log.info("NVRAM entry index:  %s" % nvram.os_entry_index)
+        log.info("Boot Number:        %s" % nvram.order_num)
+        log.info("Drive name is       %s" % drive.drive_name)
+        log.info("Root FS is on       %s" % drive.root_fs)
+        log.info("ESP data is on      %s" % drive.esp_fs)
+        log.info("ESP partition #:    %s" % drive.esp_num)
+        log.info("Root FS UUID is:    %s" % drive.root_uuid)
+        log.info("OS running is:      %s %s" % (opsys.name, opsys.version))
+        log.info("Kernel Params:      %s" % kernel_opts)
+        log.info("Kernel image path:  %s" % linux_path)
+        log.info("Ramdisk image path: %s" % initrd_path)
 
-        # Do stuff
-        logging.info("Now running the commands\n")
+        log.debug('Setting up boot...')
 
-        # Backup the old config
-        self.backup_old(linux_dest, initrd_dest)
-        try:
-            self.copy_files(linux_path, '%s-current.efi' % linux_dest, noRun)
-        except FileOpsError:
-            error = ("Could not copy the Kernel Image  into the ESP! This "
-                     "indicates a very bad problem and it is unsafe to continue. "
-                     "Aborting now...")
-            logging.critical(error)
-            return 2
+        installer.backup_old(simulate=no_run)
+        installer.setup_kernel(simulate=no_run)
 
-        try:
-            self.copy_files(initrd_path, '%s-current.img' % initrd_dest, noRun)
-        except FileOpsError:
-            error = ("Could not copy the initrd.img  into the ESP! This indicates "
-                     "a very bad problem and it is unsafe to continue. Aborting "
-                     "now...")
-            logging.critical(error)
-            return 3
-
-        # Check for an existing NVRAM entry and remove it if present
-        if not manage:
-            if this_nvram.os_entry_index >= 0:
-                logging.info("Deleting old boot entry")
-                this_nvram.delete_boot_entry(this_nvram.order_num)
-                logging.info('New NVRAM: \n\n%s\n' % this_nvram.nvram)
-            else:
-                logging.info("No old entry to remove, skipping.")
-            this_nvram.add_entry(this_os, this_drive, kernel_opts)
-            logging.info('New NVRAM:\n\n%s\n' % this_nvram.nvram)
+        if manage:
+            installer.setup_loader(kernel_opts, overwrite=force)
         else:
-            logging.info('Running in manage-only mode, not modifying NVRAM')
-            logging.info('Setting up loader configuration.')
-            logging.debug('Value of `force` var: %s' % str(force))
-            this_loader.write_config(this_os.os_name,
-                                     this_os.os_version,
-                                     'root=UUID=%s %s' %(this_drive.root_uuid, kernel_opts),
-                                     overwrite=force)
+            installer.setup_stub(kernel_opts, simulate=no_run)
 
+        installer.copy_cmdline(simulate=no_run)
 
-
-        try:
-            self.copy_files("/proc/cmdline", work_dir + "cmdline.txt", noRun)
-        except FileOpsError:
-            error = ("Could not copy the current Kernel Command line into the ESP. "
-                     "You should manually copy the contents of /proc/cmdline into "
-                     "the ESP to ensure you can get to it in an emergency. This is "
-                     "a non-critical error, so continuing without it.")
-            logging.warning(error)
-            pass
         return 0
-
-    def backup_old(self, linux_dest, initrd_dest):
-        try:
-            self.copy_files('%s-current.efi' % linux_dest,
-                            '%s-old.efi' % linux_dest,
-                            False)
-        except:
-            pass
-
-        try:
-            self.copy_files('%s-current.img' % initrd_dest,
-                            '%s-old.img' %initrd_dest,
-                            False)
-        except:
-            pass
-
-
-    def get_file_path(self, path, search): # Get path to file string, for copying stuff
-        command = "ls " + path + search + "* | tail -1"
-        return subprocess.getoutput(command)
-
-    def copy_files(self, src, dest, simulate): # Copy file src into dest
-        if simulate == True:
-            copy = ("Simulate copying " + src + " into " + dest)
-            logging.info(copy)
-            return True
-        else:
-            copy = ("Copying " + src + " into " + dest)
-            logging.info(copy)
-            try:
-                shutil.copy(src, dest)
-                return True
-            except:
-                logging.error("Copy failed! Things may not work...")
-                raise FileOpsError("Could not copy one or more files.")
-                return False
-
-    def ensure_dir(self, file_path): # Make sure a file exists, and make it if it doesn't
-        directory = os.path.dirname(file_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
 
     def check_config(self, path): # check if the config file exists, read it
         opts = []

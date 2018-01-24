@@ -24,7 +24,7 @@ import os, subprocess
 
 class Drive():
 
-    drive_name = "none"
+    name = "none"
     root_fs = "/"
     root_uuid = "12345-12345-12345"
     esp_fs = "/boot/efi"

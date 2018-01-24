@@ -31,9 +31,7 @@ class NVRAM():
 
     def __init__(self, name, version):
         self.os_label = "%s %s" % (name, version)
-        self.nvram = self.get_nvram()
-        self.find_os_entry(self.nvram, self.os_label)
-        self.order_num = str(self.nvram[self.os_entry_index])[4:8]
+        self.update()
 
     def update(self):
         self.nvram = self.get_nvram()
@@ -41,12 +39,12 @@ class NVRAM():
         self.order_num = str(self.nvram[self.os_entry_index])[4:8]
 
     def get_nvram(self):
-        command = ['/usr/bin/sudo',
-                   'efibootmgr']
+        command = [
+            '/usr/bin/sudo',
+            'efibootmgr'
+        ]
         nvram = subprocess.check_output(command).decode('UTF-8').split('\n')
         return nvram
-
-
 
     def find_os_entry(self, nvram, os_label):
         self.os_entry_index = -1
@@ -66,17 +64,19 @@ class NVRAM():
         root_uuid = this_drive.root_uuid
         entry_initrd = 'EFI/%s/initrd' % this_os.os_name
         kernel_opts = kernel_opts
-        command = ['/usr/bin/sudo',
-                   'efibootmgr',
-                   '-d', device,
-                   '-p', esp_num,
-                   '-c',
-                   '-L', '"%s"' % entry_label,
-                   '-l', entry_linux,
-                   '-u',
-                   '"root=UUID=%s' % root_uuid,
-                   'initrd=%s' % entry_initrd,
-                   'ro']
+        command = [
+            '/usr/bin/sudo',
+            'efibootmgr',
+            '-d', device,
+            '-p', esp_num,
+            '-c',
+            '-L', '"%s"' % entry_label,
+            '-l', entry_linux,
+            '-u',
+            '"root=UUID=%s' % root_uuid,
+            'initrd=%s' % entry_initrd,
+            'ro'
+        ]
         for option in kernel_opts:
             command.append(option)
         command.append('"')

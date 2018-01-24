@@ -1,0 +1,148 @@
+#!/usr/bin/python3
+
+"""
+ kernelstub Version 0.2
+
+ The automatic manager for using the Linux Kernel EFI Stub to boot
+
+ Copyright 2017 Ian Santopietro <isantop@gmail.com>
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+"""
+
+import os, shutil, logging
+
+class Installer():
+
+    loader_dir = '/boot/efi/loader'
+    entry_dir = '/boot/efi/loader/entries'
+    os_dir_name = 'linux-kernelstub'
+    work_dir = '/boot/efi/EFI/'
+
+    def __init__(self, nvram, opsys, drive):
+        self.log = logging.getLogger('kernelstub.Installer')
+        self.log.debug('Logging set up')
+        self.log.debug('loaded kernelstub.Installer')
+
+        self.nvram = nvram
+        self.opsys = opsys
+        self.drive = drive
+
+        self.os_dir_name = "%s-%s" % (self.opsys.name, self.drive.root_uuid)
+        self.kernel_dest = '%s%s/%s' % (self.work_dir, self.os_dir_name,
+                                        self.opsys.kernel_name)
+        self.initrd_dest = '%s%s/%s' % (self.work_dir, self.os_dir_name,
+                                        self.opsys.initrd_name)
+
+        if not os.path.exists(self.loader_dir):
+            os.makedirs(self.loader_dir)
+        if not os.path.exists(self.entry_dir):
+            os.makedirs(self.entry_dir)
+
+    def backup_old(self, simulate=False):
+        self.log.info('Backing up old kernel')
+        try:
+            self.copy_files(
+                '%s-current.efi' % self.kernel_dest,
+                '%s-previous.efi' % self.kernel_dest,
+                simulate=simulate
+            )
+        except:
+            pass
+        try:
+            self.copy_files(
+                '%s-current' % self.initrd_dest,
+                '%s-previous' % self.initrd_dest,
+                simulate=simulate
+            )
+        except:
+            pass
+
+    def setup_kernel(self, simulate=False):
+        self.log.info('Copying Kernel into ESP')
+        kernel_src = '/boot/%s-%s' % (self.opsys.kernel_name,
+                                      self.opsys.kernel_release)
+        initrd_src = '/boot/%s-%s' % (self.opsys.initrd_name,
+                                      self.opsys.kernel_release)
+        kernel_dest = '%s-current.efi' % self.kernel_dest
+        initrd_dest = '%s-current'     % self.initrd_dest
+
+        self.log.debug('Copying kernel:\n  %s => %s' % (kernel_src, kernel_dest))
+        self.copy_files(
+            kernel_src,
+            kernel_dest,
+            simulate=simulate
+        )
+
+        self.log.debug('Copying initrd:\n  %s => %s' % (initrd_src, initrd_dest))
+        self.copy_files(
+            initrd_src,
+            initrd_dest,
+            simulate=simulate
+        )
+        self.log.info('Copy complete')
+
+    def setup_stub(self, kernel_opts, simulate=False):
+        self.log.info("Setting up Kernel EFISTUB loader...")
+        self.copy_cmdline(simulate=simulate)
+        self.nvram.update()
+        if self.nvram.os_entry_index >= 0:
+            self.log.info("Deleting old boot entry")
+            self.nvram.delete_boot_entry(self.nvram.order_num)
+        else:
+            self.log.debug("No old entry found, skipping removal.")
+        self.nvram.add_entry(self.opsys, self.drive, kernel_opts)
+        self.nvram.update()
+        self.log.info('NVRAM configured, new values: \n\n%s\n' % self.nvram.nvram)
+
+    def setup_loader(self, kernel_opts, overwrite=False):
+        self.log.info('Setting up loader.conf configuration')
+
+        with open('%s/%s-current.conf' % (self.entry_dir,
+                                          self.opsys.name), mode='w') as entry:
+            entry.write('title %s %s\n' % (self.opsys.name_pretty,
+                                           self.opsys.version))
+            entry.write('linux %s-current.efi\n' % self.kernel_dest)
+            entry.write('initrd %s-current\n' % self.initrd_dest)
+            entry.write('options %s\n' % kernel_opts)
+
+        if not overwrite:
+            if not os.path.exists('%s/loader.conf' % self.loader_dir):
+                overwrite = True
+
+        if overwrite:
+            entry_name = '%s-current' % os_name
+            with open('%s/loader.conf' % self.loader_dir, mode='w') as loader:
+                default_line = 'default %s-current\n' % os_name
+                loader.write(default_line)
+
+    def copy_cmdline(self, simulate):
+        self.copy_files(
+            '/proc/cmdline',
+            self.work_dir,
+            simulate = simulate
+        )
+
+    def copy_files(self, src, dest, simulate): # Copy file src into dest
+        if simulate == True:
+            copy = ("Simulate copying " + src + " into " + dest)
+            self.log.info(copy)
+            return True
+        else:
+            try:
+                shutil.copy(src, dest)
+                return True
+            except:
+                self.log.error("Copy failed! Things may not work...")
+                raise FileOpsError("Could not copy one or more files.")
+                return False
