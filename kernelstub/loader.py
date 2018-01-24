@@ -25,7 +25,7 @@ import os
 class Loader():
 
     loader_dir = '/boot/efi/loader'
-    entry_dir = 'b/boot/efi/loader/entries'
+    entry_dir = '/boot/efi/loader/entries'
 
     def __init__(self, log):
         self.log = log
