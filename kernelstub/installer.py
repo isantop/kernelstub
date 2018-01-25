@@ -112,8 +112,10 @@ class Installer():
                                           self.opsys.name), mode='w') as entry:
             entry.write('title %s %s\n' % (self.opsys.name_pretty,
                                            self.opsys.version))
-            entry.write('linux %s-current.efi\n' % self.kernel_dest)
-            entry.write('initrd %s-current\n' % self.initrd_dest)
+            entry.write('linux /EFI/%s/%s-current.efi\n' % (self.os_dir_name,
+                                                            self.opsys.kernel_name))
+            entry.write('initrd /EFI/%s/%s-current\n' % (self.os_dir_name,
+                                                         self.opsys.initrd_name))
             entry.write('options %s\n' % kernel_opts)
 
         if not overwrite:
@@ -121,9 +123,9 @@ class Installer():
                 overwrite = True
 
         if overwrite:
-            entry_name = '%s-current' % os_name
+            entry_name = '%s-current' % self.opsys.name
             with open('%s/loader.conf' % self.loader_dir, mode='w') as loader:
-                default_line = 'default %s-current\n' % os_name
+                default_line = 'default %s-current\n' % self.opsys.name
                 loader.write(default_line)
 
     def copy_cmdline(self, simulate):

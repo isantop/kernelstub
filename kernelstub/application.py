@@ -76,16 +76,7 @@ class Kernelstub():
         console = logging.StreamHandler()
         stream_fmt = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
         console.setFormatter(stream_fmt)
-
-        #logfile = logging.FileHandler(log_file)
-        #logfile.setLevel(file_level)
-        #file_fmt = logging.Formatter(
-        #    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-        #)
-        #logfile.setFormatter(file_fmt)
-
         log.addHandler(console)
-        #log.addHandler(logfile)
         log.setLevel(console_level)
         log.debug('Logging set up')
 
@@ -96,18 +87,25 @@ class Kernelstub():
             no_run = False
 
         config = iconfig.Config()
-        configuration = config.load_config()['default']
+        whole_config = config.load_config()
+        try:
+            if whole_config['user']:
+                configuration = whole_config['user']
+        except KeyError:
+            whole_config['user'] = whole_config['default']
+            configuration = whole_config['user']
 
         manage = False
         if args.manage:
             manage = True
-        if configuration['manage_mode']:
+            configuration['manage_mode'] = manage
+        if configuration['manage_mode'] == True:
             manage = True
 
         force = False
         if args.force:
             force = True
-        if configuration['force_update']:
+        if configuration['force_update'] == True:
             force = True
 
         # First check for kernel parameters. Without them, stop and fail
@@ -128,6 +126,7 @@ class Kernelstub():
                 return 3
         else:
             kernel_opts = args.cmdline
+            configuration['kernel_options'] = kernel_opts
 
         opsys = iopsys.OS()
 
@@ -171,11 +170,17 @@ class Kernelstub():
         installer.setup_kernel(simulate=no_run)
 
         if manage:
-            installer.setup_loader(kernel_opts, overwrite=force)
+            kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
+            installer.setup_loader(kopts, overwrite=force)
         else:
-            installer.setup_stub(kernel_opts, simulate=no_run)
+            kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
+            log.debug('kopts: %s' % kopts)
+            installer.setup_stub(kopts, simulate=no_run)
 
         installer.copy_cmdline(simulate=no_run)
+
+        whole_config['user'] = configuration
+        config.save_config(whole_config)
 
         return 0
 

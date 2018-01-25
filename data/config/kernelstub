@@ -1,7 +1,7 @@
---- # Default kernelstub configuration
-default:
-    kernel_options: quiet splash
-    manage_mode: Yes
-    force_update: No
-...
-
+{
+  "default": {
+      "kernel_options": "quiet splash",
+      "manage_mode": true,
+      "force_update": false
+  }
+}

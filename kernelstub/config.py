@@ -20,28 +20,49 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 """
 
-import yaml, os
+import json, os, logging
 
 class Config():
 
-    config_path = "/etc/default/kernelstub"
+    config_path = "/etc/kernelstub/configuration"
     config = {}
-    config_default = {'default': {'kernel_options': 'quiet splash',
-                                  'manage_mode': False,
-                                  'force_update': False,},
-                      }
+    config_default = {
+        'default': {
+            'kernel_options': 'quiet splash',
+            'manage_mode': False,
+            'force_update' : False
+        }
+    }
 
-    def __init__(self, path='/etc/default/kernelstub'):
+    def __init__(self, path='/etc/kernelstub/configuration'):
+        self.log = logging.getLogger('kernelstub.Config')
+        self.log.debug('Logging set up')
+        self.log.debug('loaded kernelstub.Config')
         self.config_path = path
         self.config = self.load_config()
+        os.makedirs('/etc/kernelstub/', exist_ok=True)
 
     def load_config(self):
+        self.log.info('Looking for configuration...')
         if os.path.exists(self.config_path):
+            self.log.debug('Checking %s' % self.config_path)
             with open(self.config_path) as config_file:
-                self.config = yaml.safe_load(config_file)
+                self.config = json.load(config_file)
+        elif os.path.exists('/etc/default/kernelstub/'):
+            self.log.debug('Checking fallback /etc/default/kernelstub')
+            with open('/etc/default/kernelstub', mode='r') as config_file:
+                self.config = json.load(config_file)
         else:
+            self.log.info('No configuration file found, loading defaults.')
             self.config = self.config_default
 
+        self.log.info('Configuration found!')
         return self.config
 
+    def save_config(self, config, path='/etc/kernelstub/configuration'):
+        self.log.debug('Saving configuration...')
+        with open(path, mode='w') as config_file:
+            json.dump(config, config_file, indent=2)
         
+        self.log.info('Configuration saved!')
+        return 0
