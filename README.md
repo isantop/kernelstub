@@ -67,6 +67,7 @@ There are other options as well, as detailed below:
 |--------------------------|---------------------------------------------------|
 |`-h`, `--help`            | Display the help Text                             |
 |`-d`, `--dry-run`         | Don't actually copy any files or set anything up. |
+|`-e PATH`, `--esp_path`   | Manually specify the ESP path.*		       |
 |`-k PATH`, `--kernelpath` | Manually specify the path to the kernel image.    |
 |`-i PATH`, `--initrd_path`| Manually specify the path to the initrd image.    |
 |`-o "options"`,`--options`| Set kernel boot options.*			       |

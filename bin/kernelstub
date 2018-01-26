@@ -58,6 +58,11 @@ def main(): # Do the thing
 
     parser.add_argument(
         '-e',
+        dest = 'esp_path',
+        metavar = 'ESP,',
+        help = ''
+    )
+    parser.add_argument(
         '--esp_path',
         dest = 'esp_path',
         metavar = 'ESP',
@@ -66,6 +71,11 @@ def main(): # Do the thing
 
     parser.add_argument(
         '-k',
+        dest = 'kernel_path',
+        metavar= 'PATH,',
+        help = ''
+    )
+    parser.add_argument(
         '--kernel-path',
         dest = 'kernel_path',
         metavar= 'PATH',
@@ -74,6 +84,11 @@ def main(): # Do the thing
 
     parser.add_argument(
         '-i',
+        dest = 'initrd_path',
+        metavar = 'PATH,',
+        help = ''
+    )
+    parser.add_argument(
         '--initrd-path',
         dest = 'initrd_path',
         metavar = 'PATH',
@@ -82,6 +97,11 @@ def main(): # Do the thing
 
     parser.add_argument(
         '-o',
+        dest = 'k_options',
+        metavar = '"OPTIONS",',
+        help = ''
+    )
+    parser.add_argument(
         '--options',
         dest = 'k_options',
         metavar = '"OPTIONS"',
