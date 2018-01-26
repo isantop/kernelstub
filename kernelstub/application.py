@@ -39,11 +39,11 @@ THIS SOFTWARE.
 
 import logging, subprocess, shutil, os, platform
 
-from . import drive as idrive
-from . import nvram as invram
-from . import opsys as iopsys
-from . import installer as iinstaller
-from . import config as iconfig
+from . import drive as Drive
+from . import nvram as Nvram
+from . import opsys as Opsys
+from . import installer as Installer
+from . import config as Config
 
 class CmdLineError(Exception):
     pass
@@ -86,7 +86,7 @@ class Kernelstub():
         else:
             no_run = False
 
-        config = iconfig.Config()
+        config = Config.Config()
         whole_config = config.load_config()
         try:
             if whole_config['user']:
@@ -110,25 +110,22 @@ class Kernelstub():
 
         # First check for kernel parameters. Without them, stop and fail
         if not args.cmdline:
-            config_path = "/etc/default/kernelstub"
             try:
                 kernel_opts = configuration['kernel_options']
             except:
                 error = ("cmdline was 'InvalidConfig'\n\n"
-                         "This probably means that the config file doesn't exist "
-                         "and you didn't specify any boot options on the command "
-                         "line.\n"
-                         "Create a new config file in /etc/default/kernelstub with "
-                         "your required kernel parameters and rerun kernelstub "
-                         "again!\n\n")
+                         "Could not find any valid configuration. This "
+                         "probably means that the configuration file is "
+                         "corrupt. Either remove it to regenerate it from"
+                         "default or fix the existing one.")
                 log.critical(error)
                 raise CmdLineError("No Kernel Parameters found")
-                return 3
+                exit(2)
         else:
             kernel_opts = args.cmdline
             configuration['kernel_options'] = kernel_opts
 
-        opsys = iopsys.OS()
+        opsys = Opsys.OS()
 
         if args.kernelpath:
             linux_path = args.kernelpath
@@ -142,9 +139,13 @@ class Kernelstub():
             log.info("No initrd specified, attempting automatic discovery")
             initrd_path = "/boot/%s-%s" % (opsys.initrd_name, opsys.kernel_release)
 
-        drive = idrive.Drive()
-        nvram = invram.NVRAM(opsys.name, opsys.version)
-        installer = iinstaller.Installer(nvram, opsys, drive)
+        esp_path = '/boot/efi'
+        if args.esp_path:
+            esp_path = args.esp_path
+
+        drive = Drive.Drive(esp_path=esp_path)
+        nvram = Nvram.NVRAM(opsys.name, opsys.version)
+        installer = Installer.Installer(nvram, opsys, drive)
 
         # Make sure the destination exists on the ESP
         if not os.path.exists('%s%s' % (installer.work_dir,
@@ -184,12 +185,3 @@ class Kernelstub():
 
         return 0
 
-    def check_config(self, path): # check if the config file exists, read it
-        opts = []
-        if os.path.isfile(path) == True:
-            with open(path, "r") as config_file:
-                opts = config_file.readlines()
-            return opts[0]
-        else:
-            raise ConfigError("Missing configuration, cannot continue")
-            return "InvalidConfig"
