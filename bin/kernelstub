@@ -97,6 +97,11 @@ def main(): # Do the thing
                                 'if it already exists. This may overwrite ' +
                                 'another OS\'s settings'),
                         dest = 'force')
+    parser.add_argument('-e', "hg",
+                        '--esp-path',
+                        help = ('Manually specify the path to the ESP. ' +
+                                'Otherwise, the default (/boot/efi) will be used.'),
+                        metavar = 'ESP')
     args = parser.parse_args()
 
     kernelstub.main(args)
