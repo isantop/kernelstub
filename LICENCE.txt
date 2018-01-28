@@ -1,4 +1,7 @@
- Copyright 2017 Ian Santopietro <isantop@gmail.com>
+Please see the CONTRIBUTING file for terms and instructions for contributing to 
+this repository.
+
+Copyright 2017 Ian Santopietro <isantop@gmail.com>
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
