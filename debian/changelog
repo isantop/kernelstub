@@ -1,8 +1,8 @@
-kernelstub (2.0.2) UNRELEASED; urgency=medium
+kernelstub (2.0.2) artful; urgency=medium
 
-  * Update iniramfs and kernel triggers with new option names.
+  * Update iniramfs and kernel triggers with new option names. 
 
- -- Ian Santopietro <ian@system76.com>  Mon, 29 Jan 2018 09:47:46 -0700
+ -- Ian Santopietro <ian@system76.com>  Mon, 29 Jan 2018 10:27:49 -0700
 
 kernelstub (2.0.1) artful; urgency=medium
 
