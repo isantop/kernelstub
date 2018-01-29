@@ -1,6 +1,8 @@
 {
   "default": {
       "kernel_options": "quiet splash",
+      "esp_path": "/boot/efi",
+      "setup_loader": false,
       "manage_mode": false,
       "force_update": false
   }

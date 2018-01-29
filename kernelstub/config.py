@@ -29,6 +29,8 @@ class Config():
     config_default = {
         'default': {
             'kernel_options': 'quiet splash',
+            'esp_path': "/boot/efi",
+            'setup_loader': False,
             'manage_mode': False,
             'force_update' : False
         }
@@ -44,25 +46,36 @@ class Config():
 
     def load_config(self):
         self.log.info('Looking for configuration...')
+
         if os.path.exists(self.config_path):
             self.log.debug('Checking %s' % self.config_path)
+
             with open(self.config_path) as config_file:
                 self.config = json.load(config_file)
+
         elif os.path.exists('/etc/default/kernelstub/'):
             self.log.debug('Checking fallback /etc/default/kernelstub')
+
             with open('/etc/default/kernelstub', mode='r') as config_file:
                 self.config = json.load(config_file)
+
         else:
             self.log.info('No configuration file found, loading defaults.')
             self.config = self.config_default
+            self.config['user'] = self.config['default'].copy()
 
         self.log.info('Configuration found!')
         return self.config
 
-    def save_config(self, config, path='/etc/kernelstub/configuration'):
+    def save_config(self, path='/etc/kernelstub/configuration'):
         self.log.debug('Saving configuration...')
+
         with open(path, mode='w') as config_file:
-            json.dump(config, config_file, indent=2)
+            json.dump(self.config, config_file, indent=2)
         
         self.log.info('Configuration saved!')
         return 0
+
+    def print_config(self):
+        output_config = json.dumps(self.config, indent=2)
+        return output_config

@@ -22,6 +22,9 @@ THIS SOFTWARE.
 
 import os, shutil, logging
 
+class FileOpsError(Exception):
+    pass
+
 class Installer():
 
     loader_dir = '/boot/efi/loader'
@@ -78,18 +81,31 @@ class Installer():
         initrd_dest = '%s-current'     % self.initrd_dest
 
         self.log.debug('Copying kernel:\n  %s => %s' % (kernel_src, kernel_dest))
-        self.copy_files(
-            kernel_src,
-            kernel_dest,
-            simulate=simulate
-        )
+        try:
+            self.copy_files(
+                kernel_src,
+                kernel_dest,
+                simulate=simulate
+            )
+        except FileOpsError:
+            self.log.critical('Couldn\'t copy the kernel onto the ESP!\n' +
+                              'This is a critical error and we cannot continue. Check your settings to see if ' +
+                              'there is a typo. Otherwise, check permissions and try again.')
+            exit(3)
+
 
         self.log.debug('Copying initrd:\n  %s => %s' % (initrd_src, initrd_dest))
-        self.copy_files(
-            initrd_src,
-            initrd_dest,
-            simulate=simulate
-        )
+        try:
+            self.copy_files(
+                initrd_src,
+                initrd_dest,
+                simulate=simulate
+            )
+        except FileOpsError:
+            self.log.critical('Couldn\'t copy the initrd onto the ESP!\n' +
+                              'This is a critical error and we cannot continue. Check your settings to see if ' +
+                              'there is a typo. Otherwise, check permissions and try again.')
+            exit(3)
         self.log.info('Copy complete')
 
     def setup_stub(self, kernel_opts, simulate=False):
@@ -105,17 +121,28 @@ class Installer():
         self.nvram.update()
         self.log.info('NVRAM configured, new values: \n\n%s\n' % self.nvram.nvram)
 
-    def setup_loader(self, kernel_opts, overwrite=False):
+    def setup_loader(self, kernel_opts, overwrite=False, simulate=False):
         self.log.info('Setting up loader.conf configuration')
 
-        with open('%s/%s-current.conf' % (self.entry_dir,
-                                          self.opsys.name), mode='w') as entry:
-            entry.write('title %s %s\n' % (self.opsys.name_pretty,
-                                           self.opsys.version))
-            entry.write('linux /EFI/%s/%s-current.efi\n' % (self.os_dir_name,
-                                                            self.opsys.kernel_name))
-            entry.write('initrd /EFI/%s/%s-current\n' % (self.os_dir_name,
-                                                         self.opsys.initrd_name))
+        with open(
+            '%s/%s-current.conf' % (
+                self.entry_dir, self.opsys.name
+            ),
+            mode='w'
+        ) as entry:
+            entry.write(
+                'title %s %s\n' % (self.opsys.name_pretty, self.opsys.version)
+            )
+            entry.write(
+                'linux /EFI/%s/%s-current.efi\n' % (
+                    self.os_dir_name, self.opsys.kernel_name
+                )
+            )
+            entry.write(
+                'initrd /EFI/%s/%s-current\n' % (
+                    self.os_dir_name, self.opsys.initrd_name
+                )
+            )
             entry.write('options %s\n' % kernel_opts)
 
         if not overwrite:
@@ -136,7 +163,7 @@ class Installer():
         )
 
     def copy_files(self, src, dest, simulate): # Copy file src into dest
-        if simulate == True:
+        if simulate:
             copy = ("Simulate copying " + src + " into " + dest)
             self.log.info(copy)
             return True
