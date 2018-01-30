@@ -1,8 +1,32 @@
- Copyright 2017 Ian Santopietro <isantop@gmail.com>
+Kernelstub
 
-Permission to use, copy, modify, and/or distribute this software for any purpose
-with or without fee is hereby granted, provided that the above copyright notice
-and this permission notice appear in all copies.
+Copyright 2017-2018 Ian Santopietro <isantop@gmail.com>
+
+Collective Public Licence, Version 1
+
+TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION, AND MODIFICATION
+
+The source code in this repository is to be considered a "Collective Work" under
+Copyright Law of any applicable countries. As such, be advised that code you
+contribute to this repository, should it be accepted and merged, shall be
+considered part of the repository as a whole with regard to its context within
+the repository. This means that your contributions will be made available under
+the terms laid out in this file and may be subject to change in the future.
+
+For the purposes of copyright, the person(s) listed as "Owner" of this
+repository are considered to be the "Author(s)".
+
+Please note that this does not diminish your copyright with regard to the code
+itself contributed, only to its inclusion in the repository as a whole. For
+example, if you contribute code, the copy of code that you contribute to the
+repository is then considered to be part of the collective whole. If you later
+wish to reuse the code in another project, be it a derivative of this work or a
+different work entirely, the inclusion of your code in this project does not
+affect your ability to do so regardless of the licence currently in effect.
+
+This document protects both the rights of the Author(s) to distribute the work
+according to their terms, and also the rights of Contributors to express their
+ideas free of the legal restrictions imposed by others.
 
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
 REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
@@ -11,5 +35,16 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
 OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
+
+This software may be distributed under additional terms than those presented here,
+provided those terms are not in conflict with the terms provided here. Any
+additional license, disclosure, terms, or disclaimer is provided at the end of
+this document.
+
+LICENSE
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
 
 
