@@ -2,4 +2,4 @@
 
 KERNEL="/boot/vmlinuz-$1"
 
-kernelstub --verbose --initrd-path $2 --kernel-path $KERNEL
+kernelstub --verbose --initrd-path "$2" --kernel-path "$KERNEL"

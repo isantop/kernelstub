@@ -2,4 +2,4 @@
 
 INITRD="/boot/initrd.img-$1"
 
-kernelstub --verbose --kernel-path $2 --initrd-path $INITRD
+kernelstub --verbose --kernel-path "$2" --initrd-path "$INITRD"
