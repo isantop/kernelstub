@@ -63,19 +63,19 @@ NVRAM entries. The `-l` option also explicitly sets up the configuration for
 
 There are other options as well, as detailed below:
 
-| Option                   | Action                                            |
-|--------------------------|---------------------------------------------------|
-|`-h`, `--help`            | Display the help Text                             |
-|`-d`, `--dry-run`         | Don't actually copy any files or set anything up. |
-|`-e PATH`, `--esp_path`   | Manually specify the ESP path.*		       |
-|`-k PATH`, `--kernelpath` | Manually specify the path to the kernel image.    |
-|`-i PATH`, `--initrd_path`| Manually specify the path to the initrd image.    |
-|`-o "options"`,`--options`| Set kernel boot options.*			       |
-|`-l`, `--loader`          | Create a `systemd-boot`-compatible loader config.*|
-|`-s`, `--stub`            | Set up NVRAM entries for the copied kernel.       |
-|`-m`, `--manage-only`	   | Don't set up any NVRAM entries.*                  |
-|`-f`, `--force-update`    | Forcefully update the main loader.conf.**         |
-|`-v`, `--verbose`         | Display more information to the command line      |
+| Option                             | Action                                            |
+|------------------------------------|---------------------------------------------------|
+|`-h`, `--help`                      | Display the help Text                             |
+|`-d`, `--dry-run`                   | Don't actually copy any files or set anything up. |
+|`-e <path>`, `--esp_path <path>`    | Manually specify the ESP path.*		         |
+|`-k <path>`, `--kernelpath <path>`  | Manually specify the path to the kernel image.    |
+|`-i <path>`, `--initrd_path <path>` | Manually specify the path to the initrd image.    |
+|`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
+|`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
+|`-s`, `--stub`                      | Set up NVRAM entries for the copied kernel.       |
+|`-m`, `--manage-only`	             | Don't set up any NVRAM entries.*                  |
+|`-f`, `--force-update`              | Forcefully update the main loader.conf.**         |
+|`-v`, `--verbose`                   | Display more information to the command line      |
 
 *These options save information to the config file.
 **This may overwrite another OS's information.
