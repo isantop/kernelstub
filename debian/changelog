@@ -1,3 +1,9 @@
+kernelstub (2.0.3) artful; urgency=medium
+
+  * Update to include quotes in update hooks
+
+ -- Ian Santopietro <ian@system76.com>  Tue, 30 Jan 2018 14:51:17 -0700
+
 kernelstub (2.0.2) artful; urgency=medium
 
   * Update iniramfs and kernel triggers with new option names. 

@@ -1,8 +1,121 @@
- kernelstub Version 0.2
+## Kernelstub
 
- The automatic manager for using the Linux Kernel EFI Stub to boot
- 
- Copyright 2017 Ian Santopietro <isantop@gmail.com>
+The automatic manager for booting Linux on (U)EFI.
+
+Kernelstub is a utility to automatically manage your OS's EFI System Partition
+(ESP). It makes it simple to copy the current kernel and initramfs image onto
+the ESP so that they are automatically probable by most EFI boot loaders as well
+as the EFI firmware itself. It can also set up the system's NVRAM to add entries
+to the firmware boot menu for the kernel (and keep these options up to date when
+new kernel versions are installed).
+
+### Installation
+
+Installation can be handled through the supplied Debian packaging as well as the
+python packaging. If kernelstub is packaged in your distro's repositories, you
+can install kernelstub through the `kernelstub` package. To build a debian
+package locally, use these commands:
+```
+git clone https://github.com/isantop/kernelstub
+cd kernelstub
+debuild -B
+sudo dpkg -i ../kernelstub*.deb
+```
+For installation on non-debian systems, or if you prefer to use Python
+packaging, use:
+```
+git clone https://github.com/isantop/kernelstub
+cd kernelstub
+sudo python3 setup.py install --record > installed_files.txt
+```
+For your convenience, this will create a list of all files installed on the
+system in the `installed_files.txt` file, so that you can easily remove the
+package later.
+
+
+### Usage
+
+Usage is fairly straightforward and usually only requires running the command as
+root with `su`/`sudo`. If your computer requires special kernel parameters to
+boot, you can specify them as such:
+```
+sudo kernelstub -c "options_go here wrapped in-quotes"
+```
+Running the command with `-o` will save the options used into the user section
+of the configuration file (see _Configuration_ below) so that you don't need to
+specify them manually each time you run it.
+
+Kernelstub assumes the `quiet splash` options by default, since these generally
+work on every system, at least for booting up to a usable system.
+
+You can get output of the program using the `-v`/`--verbose` option. There are
+three levels of verbosity. The default is to only show `Warning`, `Error`, and
+`Critical` failure messages. With one `-v`, kernelstub will display information
+about its progress to the command line. Two `-v` flags will also display
+debugging information generally only useful to developers.
+
+By default, kernelstub will attempt to set up an entry in the system NVRAM to
+boot the kernel directly. If you want to use kernelstub with a separate program
+(e.g. `bootctl`/`systemd-boot` or rEFIt/rEFInd), you can use the `-m` flag. This
+causes kernelstub to copy the kernel and initrd into the ESP, but not set up any
+NVRAM entries. The `-l` option also explicitly sets up the configuration for
+`system-boot` or `gummiboot`. These options are also stored in the config file.
+
+There are other options as well, as detailed below:
+
+| Option                   | Action                                            |
+|--------------------------|---------------------------------------------------|
+|`-h`, `--help`            | Display the help Text                             |
+|`-d`, `--dry-run`         | Don't actually copy any files or set anything up. |
+|`-e PATH`, `--esp_path`   | Manually specify the ESP path.*		       |
+|`-k PATH`, `--kernelpath` | Manually specify the path to the kernel image.    |
+|`-i PATH`, `--initrd_path`| Manually specify the path to the initrd image.    |
+|`-o "options"`,`--options`| Set kernel boot options.*			       |
+|`-l`, `--loader`          | Create a `systemd-boot`-compatible loader config.*|
+|`-s`, `--stub`            | Set up NVRAM entries for the copied kernel.       |
+|`-m`, `--manage-only`	   | Don't set up any NVRAM entries.*                  |
+|`-f`, `--force-update`    | Forcefully update the main loader.conf.**         |
+|`-v`, `--verbose`         | Display more information to the command line      |
+
+*These options save information to the config file.
+**This may overwrite another OS's information.
+
+### Configuration
+
+Kernelstub has a robust configuration system with multiple fallbacks for safety.
+By default, a sample (non-functional) configuration file is provided in
+`/etc/kernelstub/SAMPLE` which demonstrates the available options and
+the JSON syntax. The main configuration file is stored in
+`/etc/kernelstub/configuration`, which is created by default if it doesn't exist.
+Kernelstub also has a copy of the default configuration stored internally, so
+that it can create a config file if none already exists.
+
+When kernelstub is run with the `-o`, `-l`, `-s`, or `-m` options, this is
+recorded in the config file so that future automatic runs or runs without
+options will work correctly. Options specified on the command line always take
+precedence over options in the config files.
+
+Your distribution or package maintainer may additionally create a configuration
+template in `/etc/default/kernelstub`. This should not be edited except by
+maintaners. Use the standard config file instead, as this will be loaded instead
+of the distributor file if it exists, and options will never be saved to the
+distributor file.
+
+
+### Return codes
+
+If kernelstub is going to be used in a scripted environment, it is useful to
+know what return codes it provides in the event of errors. If everything
+appeared to work correctly and kernelstub exited successfully, it returns 0. If
+there was a problem parsing the configuration file, it returns 2. If there was a
+problem copying a file needed for installation, it returns 3.
+
+
+### Licence
+
+Kernelstub is available under an ISC-based licence. The full licence is below:
+
+ Copyright 2017-2018 Ian Santopietro <isantop@gmail.com>
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -16,82 +129,3 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
- This program will automatically keep a copy of the Linux Kernel image and your
- initrd.img located on your EFI System Partition (ESP) on an EFI-compatible
- system. The benefits of this approach include being able to boot Linux directly
- and bypass the GRUB bootloader in many cases, which can save 4-6 seconds during
- boot on a system with a fast drive. Please note that there are no guarantees
- about boot time saved using this method.
-
- For maximum safety, kernelstub recommends leaving an entry for GRUB in your
- system's ESP and NVRAM configuration, as GRUB allows you to modify boot
- parameters per-boot, which loading the kernel directly cannot do. The only
- other way to do this is to use an EFI shell to manually load the kernel and
- give it parameters from the EFI Shell. You can do this by using:
-
- fs0:> vmlinuz-image initrd=EFI/path/to/initrd/stored/on/esp options
-
- kernelstub will load parameters from the /etc/default/kernelstub config file.
-"""
-
-INSTALLATION
- Installation is simple, and only requires running the install.sh shell script.
- This will prompt you for sudo privileges if required, then install the relevant
- portions of the program in their correct places, including an automatic trigger
- to run during kernel updates. The install scripts will NOT install a
- configuration file; for details, see the CONFIGURATION section.
-
-USAGE
- Usage is straightforward, and typically only requires running the program as
- root (or with sudo/su). A full explanation of available options is below:
- 
- usage: kernelstub [-h] [-k KERNELOPTS] [-l LOG] [-lv LOG_LEVEL] [-v] [-s]
-
- optional arguments:
-   -h, --help            show this help message and exit
-   -k KERNELOPTS, --kernelopts KERNELOPTS
-                         Specify the kernel boot options to use (eg. ro quiet
-                         splash). Default is to read from the config file in
-                         /etc/default/kernelstub. Options MUST be specified
-                         either in the config file or using this option,
-                         otherwise no action will be taken!
-   -l LOG, --log LOG     Path to the log file. Default is
-                         /var/log/kernelstub.log
-   -lv LOG_LEVEL, --log-level LOG_LEVEL
-                         Sets the information level for the log file. Default
-                         is INFO. Valid options are DEBUG, INFO, WARNING,
-                         ERROR, and CRITICAL.
-   -v, --verbose         Displays extra information about the actions being
-                         performed.
-   -s, --simulate        Don't actually run any commands, just simulate them.
-                         This is useful for testing.
- 
- By default, kernelstub will display no output and return with exit status 0. 
- You can enable additional output by passing the -v flag. You can also check
- the log file, which is located in /var/log/kernelstub by default. An alternate
- location can be given by passing the -l argument. 
- 
-CONFIGURATION
- Kernelstub will attempt to automatically configure as many items as possible, 
- given a set of sane defaults. It will use UUID to identify the root partition 
- to the kernel, and uses full device names wherever possible. The only 
- configuration availble is for kernel options, which MUST be given for the 
- program to function properly; failure to provide kernel options will result in
- an error code. 
- 
- Kernel parameters can be supplied through the /etc/default/kernelstub file, and
- this is recommended since it will enable automatic handling of kernel updates. 
- If you wish, you can also specify parameters using the -k or --kernelopts 
- flags. Please note that these are not automatically stored in the config file, 
- so work better for single-kernel boot overrides.
- 
- The /etc/default/kernelstub config file is NOT provided by default, however a 
- sample file is located at /etc/default/kernelstub.SAMPLE. Only the first line 
- of the file is read, so you must place the kernel parameters here. Other lines 
- in the file are ignored. 
- 
- If you're unsure what kernel parameters you will need, you can get the ones 
- used in the current boot by looking at the GRUB_CMDLINE_LINUX_DEFAULT and the
- GRUB_CMDLINE_LINUX options in /etc/default/grub. Generally these include "quiet
- splash" or other compatibility tweaks like "nomodeset". You may also find these
- options in the /proc/cmdline file.
