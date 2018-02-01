@@ -9,4 +9,5 @@ kernelstub \
 	--manage-only \
 	--force \
 	--verbose
-	
+
+bootctl install
