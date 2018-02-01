@@ -73,7 +73,7 @@ There are other options as well, as detailed below:
 |`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
 |`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
 |`-s`, `--stub`                      | Set up NVRAM entries for the copied kernel.       |
-|`-m`, `--manage-only`	              | Don't set up any NVRAM entries.*                  |
+|`-m`, `--manage-only`	             | Don't set up any NVRAM entries.*                  |
 |`-f`, `--force-update`              | Forcefully update the main loader.conf.**         |
 |`-v`, `--verbose`                   | Display more information to the command line      |
 
