@@ -1,6 +1,6 @@
 {
   "default": {
-      "kernel_options": "quiet splash",
+      "kernel_options": "quiet loglevel=0",
       "manage_mode": true,
       "force_update": false
   }

@@ -65,7 +65,7 @@ def main(options=None): # Do the thing
         help = ''
     )
     parser.add_argument(
-        '--esp_path',
+        '--esp-path',
         dest = 'esp_path',
         metavar = 'ESP',
         help = 'Manually specify the path to the ESP. Default is /boot/efi'
