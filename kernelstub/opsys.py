@@ -33,6 +33,8 @@ class OS():
     kernel_name = 'vmlinuz'
     initrd_name = 'initrd.img'
     kernel_release = platform.release()
+    kernel_path = '/vmlinuz'
+    initrd_path = '/initrd.img'
 
     def __init__(self):
         self.name_pretty = self.get_os_name()
