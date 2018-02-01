@@ -1,3 +1,9 @@
+kernelstub (2.0.4) artful; urgency=medium
+
+  * Use /vmlinuz and /initrd.img symlinks
+
+ -- Ian Santopietro <ian@system76.com>  Thu, 01 Feb 2018 09:47:27 -0700
+
 kernelstub (2.0.3) artful; urgency=medium
 
   * Update to include quotes in update hooks

@@ -30,9 +30,11 @@ class Drive():
     root_fs = "/"
     root_uuid = "12345-12345-12345"
     esp_fs = "/boot/efi"
+    esp_path = "/boot/efi"
     esp_num = 0
 
     def __init__(self, root_path="/", esp_path="/boot/efi"):
+        self.esp_path = esp_path
         self.drive_name = self.get_drive_name(root_path)
         self.root_fs = self.get_part_name(root_path)
         self.root_uuid = self.get_uuid(self.root_fs)

@@ -43,31 +43,41 @@ class Installer():
         self.opsys = opsys
         self.drive = drive
 
+        self.work_dir = os.path.join(self.drive.esp_path, "EFI")
+        self.loader_dir = os.path.join(self.drive.esp_path, "loader")
+        self.entry_dir = os.path.join(self.loader_dir, "entries")
         self.os_dir_name = "%s-%s" % (self.opsys.name, self.drive.root_uuid)
-        self.kernel_dest = '%s%s/%s' % (self.work_dir, self.os_dir_name,
-                                        self.opsys.kernel_name)
-        self.initrd_dest = '%s%s/%s' % (self.work_dir, self.os_dir_name,
-                                        self.opsys.initrd_name)
+        self.os_folder = os.path.join(self.work_dir, self.os_dir_name)
+        self.kernel_dest = os.path.join(self.os_folder, self.opsys.kernel_name)
+        self.initrd_dest = os.path.join(self.os_folder, self.opsys.initrd_name)
 
         if not os.path.exists(self.loader_dir):
             os.makedirs(self.loader_dir)
         if not os.path.exists(self.entry_dir):
             os.makedirs(self.entry_dir)
 
-    def backup_old(self, simulate=False):
+    def ensure_dir(self, directory):
+        try:
+            os.makedirs(directory, exist_ok=True)
+            return True
+        except Exception as e:
+            self.log.error('Couldn\'t make sure %s exists.' % directory)
+            self.log.debug(e)
+            return False
+
+    def backup_old(self, kernel, initrd, simulate=False):
         self.log.info('Backing up old kernel')
         try:
             self.copy_files(
-                '%s-current.efi' % self.kernel_dest,
-                '%s-previous.efi' % self.kernel_dest,
-                simulate=simulate
-            )
+                kernel,
+                '%s/vmlinuz-previous.efi' % self.os_folder,
+                simulate=simulate)
         except:
             pass
         try:
             self.copy_files(
-                '%s-current' % self.initrd_dest,
-                '%s-previous' % self.initrd_dest,
+                initrd,
+                '%s/initrd.img-previous' % self.os_folder,
                 simulate=simulate
             )
         except:
@@ -75,6 +85,9 @@ class Installer():
 
     def setup_kernel(self, simulate=False):
         self.log.info('Copying Kernel into ESP')
+
+        self.ensure_dir(self.os_folder)
+
         kernel_src = '/boot/%s-%s' % (self.opsys.kernel_name,
                                       self.opsys.kernel_release)
         initrd_src = '/boot/%s-%s' % (self.opsys.initrd_name,
@@ -126,6 +139,9 @@ class Installer():
     def setup_loader(self, kernel_opts, overwrite=False, simulate=False):
         self.log.info('Setting up loader.conf configuration')
 
+        self.ensure_dir(self.loader_dir)
+        self.ensure_dir(self.entry_dir)
+
         with open(
             '%s/%s-current.conf' % (
                 self.entry_dir, self.opsys.name
@@ -160,7 +176,7 @@ class Installer():
     def copy_cmdline(self, simulate):
         self.copy_files(
             '/proc/cmdline',
-            self.work_dir,
+            self.os_folder,
             simulate = simulate
         )
 

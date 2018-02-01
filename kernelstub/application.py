@@ -100,7 +100,7 @@ class Kernelstub():
             kernel_path = args.kernel_path
         else:
             log.debug("No kernel specified, attempting automatic discovery")
-            kernel_path = "/boot/%s-%s" % (opsys.kernel_name, opsys.kernel_release)
+            kernel_path = "/%s" % opsys.kernel_name
 
         if not os.path.exists(kernel_path):
             log.critical('Can\'t find the kernel image! \n\n'
@@ -116,7 +116,7 @@ class Kernelstub():
             initrd_path = args.initrd_path
         else:
             log.debug("No initrd specified, attempting automatic discovery")
-            initrd_path = "/boot/%s-%s" % (opsys.initrd_name, opsys.kernel_release)
+            initrd_path = "/%s" % opsys.initrd_name
 
         if not os.path.exists(initrd_path):
             log.critical('Can\'t find the initrd image! \n\n'
@@ -183,11 +183,6 @@ class Kernelstub():
         nvram = Nvram.NVRAM(opsys.name, opsys.version)
         installer = Installer.Installer(nvram, opsys, drive)
 
-        # Make sure the destination exists on the ESP
-        if not os.path.exists('%s%s' % (installer.work_dir,
-                                        installer.os_dir_name)):
-            os.makedirs('%s%s' % (installer.work_dir, installer.os_dir_name))
-
         # Log some helpful information, to file and optionally console
         info = (
             '    OS:..................%s %s\n'   %(opsys.name_pretty,opsys.version) +
@@ -207,7 +202,11 @@ class Kernelstub():
         log.info('System information: \n\n%s' % info)
         log.debug('Setting up boot...')
 
-        installer.backup_old(simulate=no_run)
+        installer.backup_old(
+            '%s.old' % kernel_path,
+            '%s.old' % initrd_path,
+            simulate=no_run
+        )
         installer.setup_kernel(simulate=no_run)
 
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
