@@ -43,7 +43,7 @@ import argparse
 
 from kernelstub import application
 
-def main(): # Do the thing
+def main(options=None): # Do the thing
     kernelstub = application.Kernelstub()
     # Set up argument processing
     parser = argparse.ArgumentParser(
@@ -65,7 +65,7 @@ def main(): # Do the thing
         help = ''
     )
     parser.add_argument(
-        '--esp_path',
+        '--esp-path',
         dest = 'esp_path',
         metavar = 'ESP',
         help = 'Manually specify the path to the ESP. Default is /boot/efi'
@@ -151,6 +151,9 @@ def main(): # Do the thing
     )
 
     args = parser.parse_args()
+    if options:
+        args = parser.parse_args(options)
+
 
     kernelstub.main(args)
 

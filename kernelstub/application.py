@@ -84,7 +84,6 @@ class Kernelstub():
             no_run = True
 
         config = Config.Config()
-
         configuration = config.config['user']
 
         if args.esp_path:
@@ -95,30 +94,22 @@ class Kernelstub():
         if args.kernel_path:
             log.debug(
                 'Manually specified kernel path:\n ' +
-                '                                %s' % args.kernel_path
-            )
-            kernel_path = args.kernel_path
-        else:
-            log.debug("No kernel specified, attempting automatic discovery")
-            kernel_path = "/boot/%s-%s" % (opsys.kernel_name, opsys.kernel_release)
+                '               %s' % args.kernel_path)
+            opsys.kernel_path = args.kernel_path
 
-        if not os.path.exists(kernel_path):
+        if args.initrd_path:
+            log.debug(
+                'Manually specified initrd path:\n ' +
+                '               %s' % args.initrd_path)
+            opsys.initrd_path = args.initrd_path
+
+        if not os.path.exists(opsys.kernel_path):
             log.critical('Can\'t find the kernel image! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
             exit(1)
 
-        if args.initrd_path:
-            log.debug(
-                'Manually specified kernel path:\n ' +
-                '                                %s' % args.initrd_path
-            )
-            initrd_path = args.initrd_path
-        else:
-            log.debug("No initrd specified, attempting automatic discovery")
-            initrd_path = "/boot/%s-%s" % (opsys.initrd_name, opsys.kernel_release)
-
-        if not os.path.exists(initrd_path):
+        if not os.path.exists(opsys.initrd_path):
             log.critical('Can\'t find the initrd image! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
@@ -172,21 +163,13 @@ class Kernelstub():
                 'Please check the config files and make sure they are correct. '
                 'If you can\'t figure it out, then deleting them should fix '
                 'the errors and cause kernelstub to regenerate them from '
-                'Default. \n\n You can use "-vv" to get the configuration used.'
-            )
-            log.debug(
-                'Configuration we got: \n\n%s' % config.print_config()
-            )
+                'Default. \n\n You can use "-vv" to get the configuration used.')
+            log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(4)
 
         drive = Drive.Drive(esp_path=esp_path)
         nvram = Nvram.NVRAM(opsys.name, opsys.version)
         installer = Installer.Installer(nvram, opsys, drive)
-
-        # Make sure the destination exists on the ESP
-        if not os.path.exists('%s%s' % (installer.work_dir,
-                                        installer.os_dir_name)):
-            os.makedirs('%s%s' % (installer.work_dir, installer.os_dir_name))
 
         # Log some helpful information, to file and optionally console
         info = (
@@ -200,30 +183,35 @@ class Kernelstub():
             '    NVRAM entry #:.......%s\n'      % nvram.os_entry_index +
             '    Boot Variable #:.....%s\n'      % nvram.order_num +
             '    Kernel Boot Options:.%s\n'      % kernel_opts +
-            '    Kernel Image Path:...%s\n'      % kernel_path +
-            '    Initrd Image Path:...%s\n'      % initrd_path
-        )
+            '    Kernel Image Path:...%s\n'      % opsys.kernel_path +
+            '    Initrd Image Path:...%s\n'      % opsys.initrd_path)
 
         log.info('System information: \n\n%s' % info)
         log.debug('Setting up boot...')
 
-        installer.backup_old(simulate=no_run)
-        installer.setup_kernel(simulate=no_run)
-
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
+        log.debug('kopts: %s' % kopts)
 
-        if setup_loader:
-            kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
-            installer.setup_loader(kopts, overwrite=force, simulate=no_run)
+        installer.setup_kernel(
+            kopts,
+            setup_loader=setup_loader,
+            overwrite=force,
+            simulate=no_run)
+        try:
+            installer.backup_old(
+                kopts,
+                setup_loader=setup_loader,
+                simulate=no_run)
+        except Exception as e:
+            log.error('Couldn\'t back up old kernel. \nThis might just mean ' +
+                      'You don\'t have an old kernel installed. If you do, try' +
+                      'With -vv to see debuging information')
+            log.debug(e)
 
         if not manage_mode:
-            kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
-            log.debug('kopts: %s' % kopts)
             installer.setup_stub(kopts, simulate=no_run)
 
         installer.copy_cmdline(simulate=no_run)
-
-
 
         config.config['user'] = configuration
         config.save_config()

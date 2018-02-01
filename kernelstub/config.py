@@ -66,7 +66,7 @@ class Config():
             self.config = self.config_default
             self.config['user'] = self.config['default'].copy()
 
-        self.log.info('Configuration found!')
+        self.log.debug('Configuration found!')
         return self.config
 
     def save_config(self, path='/etc/kernelstub/configuration'):
@@ -75,7 +75,7 @@ class Config():
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
         
-        self.log.info('Configuration saved!')
+        self.log.debug('Configuration saved!')
         return 0
 
     def print_config(self):
