@@ -85,12 +85,15 @@ class Installer():
             linux_line = '/EFI/%s-%s/%s-previous.efi' % (self.opsys.name,
                                                          self.drive.root_uuid,
                                                          self.opsys.kernel_name)
+            initrd_line = '/EFI/%s-%s/%s-previous' % (self.opsys.name,
+                                                      self.drive.root_uuid,
+                                                      self.opsys.initrd_name)
             self.make_loader_entry(
                 self.opsys.name_pretty,
                 linux_line,
-                self.initrd_dest,
+                initrd_line,
                 kernel_opts,
-                os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
+                os.path.join(self.entry_dir, '%s-oldkern' % self.opsys.name))
 
     def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False, simulate=False):
         self.log.info('Copying Kernel into ESP')
@@ -148,10 +151,13 @@ class Installer():
                 linux_line = '/EFI/%s-%s/%s.efi' % (self.opsys.name,
                                                     self.drive.root_uuid,
                                                     self.opsys.kernel_name)
+                initrd_line = '/EFI/%s-%s/%s' % (self.opsys.name,
+                                                 self.drive.root_uuid,
+                                                 self.opsys.initrd_name)
                 self.make_loader_entry(
                     self.opsys.name_pretty,
                     linux_line,
-                    self.initrd_dest,
+                    initrd_line,
                     kernel_opts,
                     os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
 
