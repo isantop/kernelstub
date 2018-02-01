@@ -43,7 +43,7 @@ import argparse
 
 from kernelstub import application
 
-def main(): # Do the thing
+def main(options=None): # Do the thing
     kernelstub = application.Kernelstub()
     # Set up argument processing
     parser = argparse.ArgumentParser(
@@ -151,6 +151,9 @@ def main(): # Do the thing
     )
 
     args = parser.parse_args()
+    if options:
+        args = parser.parse_args(options)
+
 
     kernelstub.main(args)
 
