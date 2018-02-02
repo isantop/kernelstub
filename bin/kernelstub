@@ -49,6 +49,7 @@ def main(options=None): # Do the thing
     parser = argparse.ArgumentParser(
         description = "Automatic Kernel EFIstub manager")
     loader_stub = parser.add_mutually_exclusive_group()
+    install_loader = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         '-d',
@@ -118,12 +119,18 @@ def main(options=None): # Do the thing
         metavar = '"OPTIONS"',
         help = 'The boot options to be passed to the kernel')
 
-    parser.add_argument(
+    install_loader.add_argument(
         '-l',
         '--loader',
         action = 'store_true',
         dest = 'setup_loader',
         help = 'Creates a systemd-boot compatible loader configuration')
+    install_loader.add_argument(
+        '-n',
+        '--no-loader',
+        action = 'store_true',
+        dest = 'off_loader',
+        help = 'Turns off creating loader configuration')
 
     loader_stub.add_argument(
         '-s',

@@ -145,11 +145,12 @@ class Kernelstub():
         log.debug(config.print_config())
 
         if args.setup_loader:
-            configuration['setup_loader'] = args.setup_loader
+            configuration['setup_loader'] = True
+        if args.off_loader:
+            configuration['setup_loader'] = False
 
         if args.install_stub:
             configuration['manage_mode'] = False
-
         if args.manage_mode:
             configuration['manage_mode'] = True
 
