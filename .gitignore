@@ -1,6 +1,13 @@
 # Other files here:
 output.log
 
+# Debian Packaging artefacts:
+debian/.debhelper/
+debian/kernelstub
+debian/*.debhelper
+debian/*.substvars
+debian/files
+
 # Editor TMP files
 *~
 

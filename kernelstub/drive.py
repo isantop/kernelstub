@@ -18,7 +18,7 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
-Please see the provided LICENCE.txt file for additional distribution/copyright
+Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
@@ -26,15 +26,16 @@ import os, subprocess
 
 class Drive():
 
-    name = "none"
-    root_fs = "/"
-    root_uuid = "12345-12345-12345"
-    esp_fs = "/boot/efi"
-    esp_path = "/boot/efi"
+    name = 'none'
+    root_fs = '/'
+    root_uuid = '12345-12345-12345'
+    esp_fs = '/boot/efi'
+    esp_path = '/boot/efi'
     esp_num = 0
 
     def __init__(self, root_path="/", esp_path="/boot/efi"):
         self.esp_path = esp_path
+        self.drive_dict = self.parse_proc_partitions()
         self.drive_name = self.get_drive_name(root_path)
         self.root_fs = self.get_part_name(root_path)
         self.root_uuid = self.get_uuid(self.root_fs)
@@ -43,15 +44,13 @@ class Drive():
 
     def get_drive_name(self, path):
         major = self.get_maj(path)
-        dInfo = self.parse_proc_partitions()
-        name = dInfo[(major, 0)]
+        name = self.drive_dict[(major, 0)]
         return name
 
     def get_part_name(self, path):
         major = self.get_maj(path)
         minor = self.get_min(path)
-        pInfo = self.parse_proc_partitions()
-        name = pInfo[(major, minor)]
+        name = self.drive_dict[(major, minor)]
         return name
 
     def parse_proc_partitions(self):

@@ -18,7 +18,7 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
-Please see the provided LICENCE.txt file for additional distribution/copyright
+Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 
  This program will automatically keep a copy of the Linux Kernel image and your
