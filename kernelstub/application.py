@@ -62,6 +62,9 @@ class Kernelstub():
         if verbosity > 2:
             verbosity = 2
 
+        if args.print_config:
+            verbosity = 1
+
         level = {
             0 : 'WARNING',
             1 : 'INFO',
@@ -194,6 +197,16 @@ class Kernelstub():
             '    Initrd Image Path:...%s\n'      % opsys.initrd_path)
 
         log.info('System information: \n\n%s' % info)
+
+        if args.print_config:
+            all_config = (
+                '   Kernel options:................%s\n' % configuration['kernel_options'] +
+                '   ESP Location:..................%s\n' % configuration['esp_path'] +
+                '   Management Mode:...............%s\n' % configuration['manage_mode'] +
+                '   Install Loader configuration:..%s\n' % configuration['setup_loader'])
+            log.info('Configuration details: \n\n%s' % all_config)
+            exit(0)
+
         log.debug('Setting up boot...')
 
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)

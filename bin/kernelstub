@@ -56,6 +56,12 @@ def main(options=None): # Do the thing
         action = 'store_true',
         dest = 'dry_run',
         help = 'Don\'t perform any actions, just simulate them.')
+    parser.add_argument(
+        '-p',
+        '--print-config',
+        action = 'store_true',
+        dest = 'print_config',
+        help = 'Print the current configuration and exit')
 
     parser.add_argument(
         '-e',
