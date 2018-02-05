@@ -62,6 +62,9 @@ class Kernelstub():
         if verbosity > 2:
             verbosity = 2
 
+        if args.print_config:
+            verbosity = 1
+
         level = {
             0 : 'WARNING',
             1 : 'INFO',
@@ -89,6 +92,10 @@ class Kernelstub():
         if args.esp_path:
             configuration['esp_path'] = args.esp_path
 
+        root_path = "/"
+        if args.root_path:
+            root_path = args.root_path
+
         opsys = Opsys.OS()
 
         if args.kernel_path:
@@ -96,12 +103,16 @@ class Kernelstub():
                 'Manually specified kernel path:\n ' +
                 '               %s' % args.kernel_path)
             opsys.kernel_path = args.kernel_path
+        else:
+            opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
 
         if args.initrd_path:
             log.debug(
                 'Manually specified initrd path:\n ' +
                 '               %s' % args.initrd_path)
             opsys.initrd_path = args.initrd_path
+        else:
+            opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
             log.critical('Can\'t find the kernel image! \n\n'
@@ -134,11 +145,12 @@ class Kernelstub():
         log.debug(config.print_config())
 
         if args.setup_loader:
-            configuration['setup_loader'] = args.setup_loader
+            configuration['setup_loader'] = True
+        if args.off_loader:
+            configuration['setup_loader'] = False
 
         if args.install_stub:
             configuration['manage_mode'] = False
-
         if args.manage_mode:
             configuration['manage_mode'] = True
 
@@ -167,14 +179,13 @@ class Kernelstub():
             log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(4)
 
-        drive = Drive.Drive(esp_path=esp_path)
+        drive = Drive.Drive(root_path=root_path, esp_path=esp_path)
         nvram = Nvram.NVRAM(opsys.name, opsys.version)
         installer = Installer.Installer(nvram, opsys, drive)
 
         # Log some helpful information, to file and optionally console
         info = (
             '    OS:..................%s %s\n'   %(opsys.name_pretty,opsys.version) +
-            '    Drive name:........../dev/%s\n' % drive.name +
             '    Root partition:....../dev/%s\n' % drive.root_fs +
             '    Root FS UUID:........%s\n'      % drive.root_uuid +
             '    ESP Path:............%s\n'      % esp_path +
@@ -187,6 +198,16 @@ class Kernelstub():
             '    Initrd Image Path:...%s\n'      % opsys.initrd_path)
 
         log.info('System information: \n\n%s' % info)
+
+        if args.print_config:
+            all_config = (
+                '   Kernel options:................%s\n' % configuration['kernel_options'] +
+                '   ESP Location:..................%s\n' % configuration['esp_path'] +
+                '   Management Mode:...............%s\n' % configuration['manage_mode'] +
+                '   Install Loader configuration:..%s\n' % configuration['setup_loader'])
+            log.info('Configuration details: \n\n%s' % all_config)
+            exit(0)
+
         log.debug('Setting up boot...')
 
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)

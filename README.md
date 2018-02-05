@@ -39,7 +39,7 @@ Usage is fairly straightforward and usually only requires running the command as
 root with `su`/`sudo`. If your computer requires special kernel parameters to
 boot, you can specify them as such:
 ```
-sudo kernelstub -c "options_go here wrapped in-quotes"
+sudo kernelstub -o "options_go here wrapped in-quotes"
 ```
 Running the command with `-o` will save the options used into the user section
 of the configuration file (see _Configuration_ below) so that you don't need to
