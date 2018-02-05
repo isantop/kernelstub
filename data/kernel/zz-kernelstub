@@ -1,5 +1,6 @@
 #!/bin/bash
 
 INITRD="/boot/initrd.img-$1"
+KERNEL="$2"
 
-kernelstub --verbose --kernel-path "$2" --initrd-path "$INITRD"
+kernelstub --verbose --initrd-path "/initrd.img" --kernel-path "/vmlinuz"
