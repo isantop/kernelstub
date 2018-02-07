@@ -59,12 +59,12 @@ class NVRAM():
 
 
     def add_entry(self, this_os, this_drive, kernel_opts):
-        device = '/dev/%s' % this_drive.drive_name
+        device = '/dev/%s' % this_drive.name
         esp_num = this_drive.esp_num
-        entry_label = '%s %s' % (this_os.os_name, this_os.os_version)
-        entry_linux = '\\EFI\\%s\\vmlinuz' % this_os.os_name
+        entry_label = '%s %s' % (this_os.name_pretty, this_os.version)
+        entry_linux = '\\EFI\\%s-%s\\vmlinuz' % (this_os.name, this_drive.root_uuid)
         root_uuid = this_drive.root_uuid
-        entry_initrd = 'EFI/%s/initrd' % this_os.os_name
+        entry_initrd = 'EFI/%s-%s/initrd' % (this_os.name, this_drive.root_uuid)
         kernel_opts = kernel_opts
         command = [
             '/usr/bin/sudo',
@@ -75,9 +75,8 @@ class NVRAM():
             '-L', '"%s"' % entry_label,
             '-l', entry_linux,
             '-u',
-            '"root=UUID=%s' % root_uuid,
-            'initrd=%s' % entry_initrd,
-            'ro'
+            '"initrd=%s' % entry_initrd,
+            '%s"' % kernel_opts,
         ]
         for option in kernel_opts:
             command.append(option)

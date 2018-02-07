@@ -26,6 +26,7 @@ import os, subprocess, logging
 
 class Drive():
 
+    name = 'none'
     root_fs = '/'
     root_uuid = '12345-12345-12345'
     esp_fs = '/boot/efi'
@@ -43,6 +44,9 @@ class Drive():
         self.drive_dict = self.parse_proc_partitions()
         self.log.debug('drive_dict = %s' % self.drive_dict)
 
+        self.name = self.get_drive_name(root_path)
+        self.log.debug('drive name: /dev/%s' % self.name)
+
         self.log.debug('root_path = %s' % root_path)
         self.root_fs = self.get_part_name(root_path)
         self.log.debug('root_fs = %s ' % self.root_fs)
@@ -56,6 +60,11 @@ class Drive():
         major = self.get_maj(path)
         minor = self.get_min(path)
         name = self.drive_dict[(major, minor)]
+        return name
+
+    def get_drive_name(self, path):
+        major = self.get_maj(path)
+        name = self.drive_dict[(major, 0)]
         return name
 
     def parse_proc_partitions(self):
