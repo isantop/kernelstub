@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import subprocess
+import subprocess, logging
 
 class NVRAM():
 
@@ -32,6 +32,10 @@ class NVRAM():
     order_num = "0000"
 
     def __init__(self, name, version):
+        self.log = logging.getLogger('kernelstub.NVRAM')
+        self.log.debug('Logging set up')
+        self.log.debug('loaded kernelstub.NVRAM')
+
         self.os_label = "%s %s" % (name, version)
         self.update()
 
@@ -59,29 +63,27 @@ class NVRAM():
 
 
     def add_entry(self, this_os, this_drive, kernel_opts):
-        device = '/dev/%s' % this_drive.drive_name
+        device = '/dev/%s' % this_drive.name
         esp_num = this_drive.esp_num
-        entry_label = '%s %s' % (this_os.os_name, this_os.os_version)
-        entry_linux = '\\EFI\\%s\\vmlinuz' % this_os.os_name
+        entry_label = '%s-%s' % (this_os.name, this_os.version)
+        entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
         root_uuid = this_drive.root_uuid
-        entry_initrd = 'EFI/%s/initrd' % this_os.os_name
-        kernel_opts = kernel_opts
+        entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
+        self.log.debug('kernel opts: %s' % kernel_opts)
+
         command = [
             '/usr/bin/sudo',
             'efibootmgr',
+            '-c',
             '-d', device,
             '-p', esp_num,
-            '-c',
-            '-L', '"%s"' % entry_label,
+            '-L', '%s' % entry_label,
             '-l', entry_linux,
             '-u',
-            '"root=UUID=%s' % root_uuid,
-            'initrd=%s' % entry_initrd,
-            'ro'
+            '"initrd=%s' % entry_initrd,
+            '%s"' % kernel_opts
         ]
-        for option in kernel_opts:
-            command.append(option)
-        command.append('"')
+        self.log.debug('Command is: %s' % command)
         subprocess.run(command)
         self.update()
 

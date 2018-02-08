@@ -7,7 +7,6 @@ kernelstub \
 	--options "quiet loglevel=0" \
 	--loader \
 	--manage-only \
-	--force \
 	--verbose
 
-bootctl install
+bootctl install --path=/boot/efi
