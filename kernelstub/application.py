@@ -41,6 +41,8 @@ terms.
 
 import logging, subprocess, shutil, os, platform
 
+import logging.handlers as handlers
+
 from . import drive as Drive
 from . import nvram as Nvram
 from . import opsys as Opsys
@@ -54,7 +56,9 @@ class Kernelstub():
 
     def main(self, args): # Do the thing
 
-        file_level = 'INFO'
+        log_file_path = '/var/log/kernelstub.log'
+        if args.log_file:
+            log_file_path = args.log_file
 
         verbosity = 0
         if args.verbosity:
@@ -66,19 +70,33 @@ class Kernelstub():
             verbosity = 1
 
         level = {
-            0 : 'WARNING',
-            1 : 'INFO',
-            2 : 'DEBUG',
+            0 : logging.WARNING,
+            1 : logging.INFO,
+            2 : logging.DEBUG,
         }
 
         console_level = level[verbosity]
+        file_level = level[2]
 
+        stream_fmt = logging.Formatter(
+            '%(name)-21s: %(levelname)-8s %(message)s')
+        file_fmt = logging.Formatter(
+            '%(asctime)s - %(name)-21s: %(levelname)-8s %(message)s')
         log = logging.getLogger('kernelstub')
-        console = logging.StreamHandler()
-        stream_fmt = logging.Formatter('%(name)-21s: %(levelname)-8s %(message)s')
-        console.setFormatter(stream_fmt)
-        log.addHandler(console)
-        log.setLevel(console_level)
+
+        console_log = logging.StreamHandler()
+        console_log.setFormatter(stream_fmt)
+        console_log.setLevel(console_level)
+
+        file_log = handlers.RotatingFileHandler(
+            log_file_path, maxBytes=(1048576*5), backupCount=5)
+        file_log.setFormatter(file_fmt)
+        file_log.setLevel(file_level)
+
+
+        log.addHandler(console_log)
+        log.addHandler(file_log)
+        log.setLevel(logging.DEBUG)
         log.debug('Logging set up')
 
         # Figure out runtime options
