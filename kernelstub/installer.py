@@ -117,6 +117,8 @@ class Installer():
                 'permissions and try again.')
             exit(3)
 
+        self.log.info('Copying initrd.img into ESP')
+
         self.initrd_dest = os.path.join(self.os_folder, self.opsys.initrd_name)
         try:
             self.copy_files(
@@ -216,7 +218,6 @@ class Installer():
                 shutil.copy(src, dest)
                 return True
             except Exception as e:
-                self.log.error("Copy failed! Things may not work...")
                 self.log.debug(e)
                 raise FileOpsError("Could not copy one or more files.")
                 return False
