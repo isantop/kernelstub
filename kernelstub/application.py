@@ -134,16 +134,16 @@ class Kernelstub():
             opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
-            log.critical('Can\'t find the kernel image! \n\n'
+            log.exception('Can\'t find the kernel image! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
-            exit(1)
+            exit(166)
 
         if not os.path.exists(opsys.initrd_path):
-            log.critical('Can\'t find the initrd image! \n\n'
+            log.exception('Can\'t find the initrd image! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
-            exit(1)
+            exit(167)
 
         # Check for kernel parameters. Without them, stop and fail
         if args.k_options:
@@ -157,9 +157,9 @@ class Kernelstub():
                          "probably means that the configuration file is "
                          "corrupt. Either remove it to regenerate it from"
                          "default or fix the existing one.")
-                log.critical(error)
+                log.exception(error)
                 raise CmdLineError("No Kernel Parameters found")
-                exit(2)
+                exit(168)
 
         log.debug(config.print_config())
 
@@ -188,7 +188,7 @@ class Kernelstub():
             force_update = configuration['force_update']
 
         except KeyError:
-            log.critical(
+            log.exception(
                 'Malformed configuration! \n'
                 'The configuration we got is bad, and we can\'nt continue. '
                 'Please check the config files and make sure they are correct. '
@@ -196,7 +196,7 @@ class Kernelstub():
                 'the errors and cause kernelstub to regenerate them from '
                 'Default. \n\n You can use "-vv" to get the configuration used.')
             log.debug('Configuration we got: \n\n%s' % config.print_config())
-            exit(4)
+            exit(169)
 
         log.debug('Structing objects')
 
@@ -234,6 +234,8 @@ class Kernelstub():
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
         log.debug('kopts: %s' % kopts)
 
+        installer.copy_cmdline(simulate=no_run)
+
         installer.setup_kernel(
             kopts,
             setup_loader=setup_loader,
@@ -252,8 +254,6 @@ class Kernelstub():
 
         if not manage_mode:
             installer.setup_stub(kopts, simulate=no_run)
-
-        installer.copy_cmdline(simulate=no_run)
 
         log.debug('Saving configuration to file')
 

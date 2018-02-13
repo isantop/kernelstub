@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import subprocess
+import subprocess, logging
 
 class NVRAM():
 
@@ -32,15 +32,20 @@ class NVRAM():
     order_num = "0000"
 
     def __init__(self, name, version):
+        self.log = logging.getLogger('kernelstub.NVRAM')
+        self.log.debug('loaded kernelstub.Installer')
+
         self.os_label = "%s %s" % (name, version)
         self.update()
 
     def update(self):
+        self.log.debug('Updating NVRAM info')
         self.nvram = self.get_nvram()
         self.find_os_entry(self.nvram, self.os_label)
         self.order_num = str(self.nvram[self.os_entry_index])[4:8]
 
     def get_nvram(self):
+        self.log.debug('Getting NVRAM data')
         command = [
             '/usr/bin/sudo',
             'efibootmgr'
@@ -49,23 +54,25 @@ class NVRAM():
         return nvram
 
     def find_os_entry(self, nvram, os_label):
+        self.log.debug('Finding NVRAM entry for %s' % os_label)
         self.os_entry_index = -1
         find_index = self.os_entry_index
         for entry in nvram:
             find_index = find_index + 1
             if os_label in entry:
                 self.os_entry_index = find_index
+                self.log.debug('Entry found! Index: %s' % self.os_entry_index)
                 return find_index
 
 
     def add_entry(self, this_os, this_drive, kernel_opts):
+        self.log.info('Creating NVRAM entry')
         device = '/dev/%s' % this_drive.drive_name
         esp_num = this_drive.esp_num
         entry_label = '%s %s' % (this_os.os_name, this_os.os_version)
         entry_linux = '\\EFI\\%s\\vmlinuz' % this_os.os_name
         root_uuid = this_drive.root_uuid
         entry_initrd = 'EFI/%s/initrd' % this_os.os_name
-        kernel_opts = kernel_opts
         command = [
             '/usr/bin/sudo',
             'efibootmgr',
@@ -79,16 +86,32 @@ class NVRAM():
             'initrd=%s' % entry_initrd,
             'ro'
         ]
-        for option in kernel_opts:
-            command.append(option)
-        command.append('"')
-        subprocess.run(command)
+        self.log.debug('NVRAM command:\n%s' % command)
+        try:
+            subprocess.run(command)
+        except Exception as e:
+            self.log.exception('Couldn\'t create boot entry for kernel! ' +
+                           'This means that the system will not boot from ' +
+                           'the new kernel directly. Do NOT reboot without ' +
+                           'an alternate bootloader configured or fixing ' +
+                           'this problem. More information is available in ' +
+                           'the log or by running again with -vv')
+            self.log.debug(e)
+            exit(172)
         self.update()
 
     def delete_boot_entry(self, index):
+        self.log.info('Deleting old boot entry: %s' % index)
         command = ['/usr/bin/sudo',
                    'efibootmgr',
                    '-B',
                    '-b', str(index)]
-        subprocess.run(command)
+        try:
+            subprocess.run(command)
+        except Exception as e:
+            self.log.exception('Couldn\'t delete old boot entry %s. ' % index +
+                           'This could cause problems, so kernelstub will ' +
+                           'not continue. Check again with -vv for more info.')
+            self.log.debug(e)
+            exit(173)
         self.update()

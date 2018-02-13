@@ -34,7 +34,6 @@ class Drive():
 
     def __init__(self, root_path="/", esp_path="/boot/efi"):
         self.log = logging.getLogger('kernelstub.Drive')
-        self.log.debug('Logging set up')
         self.log.debug('loaded kernelstub.Drive')
 
         self.esp_path = esp_path
@@ -56,9 +55,11 @@ class Drive():
         major = self.get_maj(path)
         minor = self.get_min(path)
         name = self.drive_dict[(major, minor)]
+        self.log.debug('Partiton for %s is %s', % (path, name))
         return name
 
     def parse_proc_partitions(self):
+        self.log.debug('Getting partition dictionary')
         res = {}
         with open('/proc/partitions', mode='r') as parts:
             for line in parts:
@@ -77,14 +78,14 @@ class Drive():
         dev = os.stat(path).st_dev
         major = os.major(dev)
 
-        self.log.debug('Major for %s = %s' % (path, major))
+        self.log.debug('Major number for %s is %s' % (path, major))
         return major
 
     def get_min(self, path):
         dev = os.stat(path).st_dev
         minor = os.minor(dev)
 
-        self.log.debug('Minor for %s = %s' % (path, minor))
+        self.log.debug('Minor number for %s is %s' % (path, minor))
         return minor
 
     def get_uuid(self, fs):

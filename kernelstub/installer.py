@@ -33,10 +33,10 @@ class Installer():
     entry_dir = '/boot/efi/loader/entries'
     os_dir_name = 'linux-kernelstub'
     work_dir = '/boot/efi/EFI/'
+    old_kernel = True
 
     def __init__(self, nvram, opsys, drive):
         self.log = logging.getLogger('kernelstub.Installer')
-        self.log.debug('Logging set up')
         self.log.debug('loaded kernelstub.Installer')
 
         self.nvram = nvram
@@ -68,6 +68,9 @@ class Installer():
                 kernel_dest,
                 simulate=simulate)
         except:
+            self.log.debug('Couldn\'t back up old kernel. There\'s ' +
+                           'probably only one kernel installed.')
+            self.old_kernel = False
             pass
 
         initrd_name = "%s-previous" % self.opsys.initrd_name
@@ -78,9 +81,12 @@ class Installer():
                 initrd_dest,
                 simulate=simulate)
         except:
+            self.log.debug('Couldn\'t back up old initrd.img. There\'s ' +
+                           'probably only one kernel installed.')
+            self.old_kernel = False
             pass
 
-        if setup_loader:
+        if setup_loader and old_kernel:
             self.ensure_dir(self.entry_dir)
             linux_line = '/EFI/%s-%s/%s-previous.efi' % (self.opsys.name,
                                                          self.drive.root_uuid,
@@ -97,11 +103,11 @@ class Installer():
 
     def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False, simulate=False):
         self.log.info('Copying Kernel into ESP')
-
         self.kernel_dest = os.path.join(
             self.os_folder,
             "%s.efi" % self.opsys.kernel_name)
         self.ensure_dir(self.os_folder, simulate=simulate)
+        self.log.debug('kernel being copied to %s' % self.kernel_dest)
 
         try:
             self.copy_files(
@@ -109,16 +115,16 @@ class Installer():
                 self.kernel_dest,
                 simulate=simulate)
 
-        except FileOpsError:
-            self.log.critical(
+        except FileOpsError as e:
+            self.log.exception(
                 'Couldn\'t copy the kernel onto the ESP!\n' +
                 'This is a critical error and we cannot continue. Check your ' +
                 'settings to see if there is a typo. Otherwise, check ' +
                 'permissions and try again.')
-            exit(3)
+            self.log.debug(e)
+            exit(170)
 
         self.log.info('Copying initrd.img into ESP')
-
         self.initrd_dest = os.path.join(self.os_folder, self.opsys.initrd_name)
         try:
             self.copy_files(
@@ -126,36 +132,40 @@ class Installer():
                 self.initrd_dest,
                 simulate=simulate)
 
-        except FileOpsError:
-            self.log.critical('Couldn\'t copy the initrd onto the ESP!\n' +
-                              'This is a critical error and we cannot continue. Check your settings to see if ' +
-                              'there is a typo. Otherwise, check permissions and try again.')
-            exit(3)
+        except FileOpsError as e:
+            self.log.exception('Couldn\'t copy the initrd onto the ESP!\n' +
+                              'This is a critical error and we cannot ' +
+                              'continue. Check your settings to see if ' +
+                              'there is a typo. Otherwise, check permissions ' +
+                              'and try again.')
+            self.log.debug(e)
+            exit(171)
 
         self.log.debug('Copy complete')
 
         if setup_loader:
             self.log.info('Setting up loader.conf configuration')
-            if not simulate:
-                if not overwrite:
-                    if not os.path.exists('%s/loader.conf' % self.loader_dir):
-                        overwrite = True
+            linux_line = '/EFI/%s-%s/%s.efi' % (self.opsys.name,
+                                                self.drive.root_uuid,
+                                                self.opsys.kernel_name)
+            initrd_line = '/EFI/%s-%s/%s' % (self.opsys.name,
+                                             self.drive.root_uuid,
+                                             self.opsys.initrd_name)
+            if not simulate and not overwrite:
+                if not os.path.exists('%s/loader.conf' % self.loader_dir):
+                    overwrite = True
 
                 if overwrite:
                     self.ensure_dir(self.loader_dir)
                     entry_name = '%s-current' % self.opsys.name
-                    with open('%s/loader.conf' % self.loader_dir, mode='w') as loader:
+                    with open(
+                        '%s/loader.conf' % self.loader_dir, mode='w') as loader:
+
                         default_line = 'default %s-current\n' % self.opsys.name
                         loader.write(default_line)
 
 
                 self.ensure_dir(self.entry_dir)
-                linux_line = '/EFI/%s-%s/%s.efi' % (self.opsys.name,
-                                                    self.drive.root_uuid,
-                                                    self.opsys.kernel_name)
-                initrd_line = '/EFI/%s-%s/%s' % (self.opsys.name,
-                                                 self.drive.root_uuid,
-                                                 self.opsys.initrd_name)
                 self.make_loader_entry(
                     self.opsys.name_pretty,
                     linux_line,
@@ -163,8 +173,15 @@ class Installer():
                     kernel_opts,
                     os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
 
-            else:
+            elif simulate:
                 self.log.info("Simulate creation of entry...")
+                self.log.info('Loader entry: %s/%s-current\n' %(self.entry_dir,
+                                                                self.opsys.name) +
+                              'title %s\n' % self.opsys.name_pretty +
+                              'linux %s\n' % linux_line +
+                              'initrd %s\n' % initrd_line +
+                              'options %s\n' % kernel_opts)
+
 
 
     def setup_stub(self, kernel_opts, simulate=False):
@@ -192,11 +209,13 @@ class Installer():
 
 
     def make_loader_entry(self, title, linux, initrd, options, filename):
+        self.log.info('Making entry file for %s' % title)
         with open('%s.conf' % filename, mode='w') as entry:
             entry.write('title %s\n' % title)
             entry.write('linux %s\n' % linux)
             entry.write('initrd %s\n' % initrd)
             entry.write('options %s\n' % options)
+        self.log.debug('Entry created!')
 
     def ensure_dir(self, directory, simulate=False):
         if not simulate:
@@ -204,7 +223,7 @@ class Installer():
                 os.makedirs(directory, exist_ok=True)
                 return True
             except Exception as e:
-                self.log.error('Couldn\'t make sure %s exists.' % directory)
+                self.log.exception('Couldn\'t make sure %s exists.' % directory)
                 self.log.debug(e)
                 return False
 
