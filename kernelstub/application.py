@@ -97,7 +97,8 @@ class Kernelstub():
         log.addHandler(console_log)
         log.addHandler(file_log)
         log.setLevel(logging.DEBUG)
-        log.debug('Logging set up')
+
+        log.debug('Got command line options: %s' % args)
 
         # Figure out runtime options
         no_run = False
@@ -178,7 +179,7 @@ class Kernelstub():
         if configuration['force_update'] == True:
             force = True
 
-        # Check our configuration to make sure it's good
+        log.debug('Checking configuration integrity...')
         try:
             kernel_opts = configuration['kernel_options']
             esp_path = configuration['esp_path']
@@ -196,6 +197,8 @@ class Kernelstub():
                 'Default. \n\n You can use "-vv" to get the configuration used.')
             log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(4)
+
+        log.debug('Structing objects')
 
         drive = Drive.Drive(root_path=root_path, esp_path=esp_path)
         nvram = Nvram.NVRAM(opsys.name, opsys.version)
@@ -252,8 +255,12 @@ class Kernelstub():
 
         installer.copy_cmdline(simulate=no_run)
 
+        log.debug('Saving configuration to file')
+
         config.config['user'] = configuration
         config.save_config()
+
+        log.debug('Setup complete!\n\n')
 
         return 0
 
