@@ -247,9 +247,9 @@ class Kernelstub():
                 setup_loader=setup_loader,
                 simulate=no_run)
         except Exception as e:
-            log.error('Couldn\'t back up old kernel. \nThis might just mean ' +
-                      'You don\'t have an old kernel installed. If you do, try' +
-                      'With -vv to see debuging information')
+            log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
+                      'You don\'t have an old kernel installed. If you do, try ' +
+                      'with -vv to see debuging information')
             log.debug(e)
 
         if not manage_mode:

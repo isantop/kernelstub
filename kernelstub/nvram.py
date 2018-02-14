@@ -65,53 +65,55 @@ class NVRAM():
                 return find_index
 
 
-    def add_entry(self, this_os, this_drive, kernel_opts):
+    def add_entry(self, this_os, this_drive, kernel_opts, simulate=False):
         self.log.info('Creating NVRAM entry')
         device = '/dev/%s' % this_drive.drive_name
         esp_num = this_drive.esp_num
-        entry_label = '%s %s' % (this_os.os_name, this_os.os_version)
-        entry_linux = '\\EFI\\%s\\vmlinuz' % this_os.os_name
+        entry_label = '%s %s' % (this_os.name, this_os.version)
+        entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
         root_uuid = this_drive.root_uuid
-        entry_initrd = 'EFI/%s/initrd' % this_os.os_name
+        entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
+        kopts_list = kernel_opts.split(" ")
         command = [
             '/usr/bin/sudo',
             'efibootmgr',
+            '-c',
             '-d', device,
             '-p', esp_num,
-            '-c',
-            '-L', '"%s"' % entry_label,
-            '-l', entry_linux,
+            '-L', '%s' % entry_label,
+            '-l', '%s' % entry_linux,
             '-u',
-            '"root=UUID=%s' % root_uuid,
-            'initrd=%s' % entry_initrd,
-            'ro'
+            'initrd=%s %s' % (entry_initrd, kernel_opts)
         ]
         self.log.debug('NVRAM command:\n%s' % command)
-        try:
-            subprocess.run(command)
-        except Exception as e:
-            self.log.exception('Couldn\'t create boot entry for kernel! ' +
-                           'This means that the system will not boot from ' +
-                           'the new kernel directly. Do NOT reboot without ' +
-                           'an alternate bootloader configured or fixing ' +
-                           'this problem. More information is available in ' +
-                           'the log or by running again with -vv')
-            self.log.debug(e)
-            exit(172)
+        if not simulate:
+            try:
+                subprocess.run(command)
+            except Exception as e:
+                self.log.exception('Couldn\'t create boot entry for kernel! ' +
+                                   'This means that the system will not boot from ' +
+                                   'the new kernel directly. Do NOT reboot without ' +
+                                   'an alternate bootloader configured or fixing ' +
+                                   'this problem. More information is available in ' +
+                                   'the log or by running again with -vv')
+                self.log.debug(e)
+                exit(172)
         self.update()
 
-    def delete_boot_entry(self, index):
+    def delete_boot_entry(self, index, simulate):
         self.log.info('Deleting old boot entry: %s' % index)
         command = ['/usr/bin/sudo',
                    'efibootmgr',
                    '-B',
                    '-b', str(index)]
-        try:
-            subprocess.run(command)
-        except Exception as e:
-            self.log.exception('Couldn\'t delete old boot entry %s. ' % index +
-                           'This could cause problems, so kernelstub will ' +
-                           'not continue. Check again with -vv for more info.')
-            self.log.debug(e)
-            exit(173)
+        self.log.debug('NVRAM command:\n%s' % command)
+        if not simulate:
+            try:
+                subprocess.run(command)
+            except Exception as e:
+                self.log.exception('Couldn\'t delete old boot entry %s. ' % index +
+                                   'This could cause problems, so kernelstub will ' +
+                                   'not continue. Check again with -vv for more info.')
+                self.log.debug(e)
+                exit(173)
         self.update()

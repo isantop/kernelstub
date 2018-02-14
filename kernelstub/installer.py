@@ -134,10 +134,10 @@ class Installer():
 
         except FileOpsError as e:
             self.log.exception('Couldn\'t copy the initrd onto the ESP!\n' +
-                              'This is a critical error and we cannot ' +
-                              'continue. Check your settings to see if ' +
-                              'there is a typo. Otherwise, check permissions ' +
-                              'and try again.')
+                               'This is a critical error and we cannot ' +
+                               'continue. Check your settings to see if ' +
+                               'there is a typo. Otherwise, check permissions ' +
+                               'and try again.')
             self.log.debug(e)
             exit(171)
 
@@ -191,14 +191,15 @@ class Installer():
 
         if self.nvram.os_entry_index >= 0:
             self.log.info("Deleting old boot entry")
-            self.nvram.delete_boot_entry(self.nvram.order_num)
+            self.nvram.delete_boot_entry(self.nvram.order_num, simulate)
 
         else:
             self.log.debug("No old entry found, skipping removal.")
 
-        self.nvram.add_entry(self.opsys, self.drive, kernel_opts)
+        self.nvram.add_entry(self.opsys, self.drive, kernel_opts, simulate)
         self.nvram.update()
-        self.log.info('NVRAM configured, new values: \n\n%s\n' % self.nvram.nvram)
+        nvram_lines = "\n".join(self.nvram.nvram)
+        self.log.info('NVRAM configured, new values: \n\n%s\n' % nvram_lines)
 
     def copy_cmdline(self, simulate):
         self.copy_files(
