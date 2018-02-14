@@ -43,6 +43,8 @@ class OS():
         self.cmdline = self.get_os_cmdline()
 
     def clean_names(self, name):
+        # This is a list of characters we can't/don't want to have in technical
+        # names for the OS. name_pretty will still have them.
         badchar = {
             ' ' : '_',
             '~' : '-',
@@ -96,8 +98,6 @@ class OS():
                     if not option.startswith('initrd='):
                         cmdline.append(option)
         return cmdline
-
-        return cmdline_string
 
     def get_os_name(self):
         os_release = self.get_os_release()
