@@ -26,7 +26,6 @@ import os, subprocess, logging
 
 class Drive():
 
-    name = 'none'
     root_fs = '/'
     root_uuid = '12345-12345-12345'
     esp_fs = '/boot/efi'
@@ -35,7 +34,6 @@ class Drive():
 
     def __init__(self, root_path="/", esp_path="/boot/efi"):
         self.log = logging.getLogger('kernelstub.Drive')
-        self.log.debug('Logging set up')
         self.log.debug('loaded kernelstub.Drive')
 
         self.esp_path = esp_path
@@ -44,8 +42,8 @@ class Drive():
         self.drive_dict = self.parse_proc_partitions()
         self.log.debug('drive_dict = %s' % self.drive_dict)
 
-        self.name = self.get_drive_name(root_path)
-        self.log.debug('drive name: /dev/%s' % self.name)
+        self.drive_name = self.get_drive_name("/")
+        self.log.debug('Root is on /dev/%s' % self.drive_name)
 
         self.log.debug('root_path = %s' % root_path)
         self.root_fs = self.get_part_name(root_path)
@@ -60,14 +58,17 @@ class Drive():
         major = self.get_maj(path)
         minor = self.get_min(path)
         name = self.drive_dict[(major, minor)]
+        self.log.debug('Partiton for %s is %s' % (path, name))
         return name
 
     def get_drive_name(self, path):
         major = self.get_maj(path)
         name = self.drive_dict[(major, 0)]
+        self.log.debug('Drive name is %s' % name)
         return name
 
     def parse_proc_partitions(self):
+        self.log.debug('Getting partition dictionary')
         res = {}
         with open('/proc/partitions', mode='r') as parts:
             for line in parts:
@@ -86,14 +87,14 @@ class Drive():
         dev = os.stat(path).st_dev
         major = os.major(dev)
 
-        self.log.debug('Major for %s = %s' % (path, major))
+        self.log.debug('Major number for %s is %s' % (path, major))
         return major
 
     def get_min(self, path):
         dev = os.stat(path).st_dev
         minor = os.minor(dev)
 
-        self.log.debug('Minor for %s = %s' % (path, minor))
+        self.log.debug('Minor number for %s is %s' % (path, minor))
         return minor
 
     def get_uuid(self, fs):

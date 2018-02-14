@@ -119,6 +119,18 @@ def main(options=None): # Do the thing
         metavar = '"OPTIONS"',
         help = 'The boot options to be passed to the kernel')
 
+    parser.add_argument(
+        '-g',
+        dest = 'log_file',
+        metavar = 'LOG',
+        help = '')
+    parser.add_argument(
+        '--log-file',
+        dest = 'log_file',
+        metavar = 'LOG',
+        help = 'The path to the log file to use. Defaults to ' +
+               '/var/log/kernelstub.log')
+
     install_loader.add_argument(
         '-l',
         '--loader',
@@ -151,7 +163,8 @@ def main(options=None): # Do the thing
         '--force-update',
         action = 'store_true',
         dest = 'force_update',
-        help = 'Forcibly update any loader.conf to set the new entry as the default')
+        help = 'Forcibly update any loader.conf to set the new entry as the ' +
+               'default')
 
     parser.add_argument(
         '-v',

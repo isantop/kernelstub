@@ -41,6 +41,8 @@ terms.
 
 import logging, subprocess, shutil, os, platform
 
+import logging.handlers as handlers
+
 from . import drive as Drive
 from . import nvram as Nvram
 from . import opsys as Opsys
@@ -54,7 +56,9 @@ class Kernelstub():
 
     def main(self, args): # Do the thing
 
-        file_level = 'INFO'
+        log_file_path = '/var/log/kernelstub.log'
+        if args.log_file:
+            log_file_path = args.log_file
 
         verbosity = 0
         if args.verbosity:
@@ -66,20 +70,35 @@ class Kernelstub():
             verbosity = 1
 
         level = {
-            0 : 'WARNING',
-            1 : 'INFO',
-            2 : 'DEBUG',
+            0 : logging.WARNING,
+            1 : logging.INFO,
+            2 : logging.DEBUG,
         }
 
         console_level = level[verbosity]
+        file_level = level[2]
 
+        stream_fmt = logging.Formatter(
+            '%(name)-21s: %(levelname)-8s %(message)s')
+        file_fmt = logging.Formatter(
+            '%(asctime)s - %(name)-21s: %(levelname)-8s %(message)s')
         log = logging.getLogger('kernelstub')
-        console = logging.StreamHandler()
-        stream_fmt = logging.Formatter('%(name)-21s: %(levelname)-8s %(message)s')
-        console.setFormatter(stream_fmt)
-        log.addHandler(console)
-        log.setLevel(console_level)
-        log.debug('Logging set up')
+
+        console_log = logging.StreamHandler()
+        console_log.setFormatter(stream_fmt)
+        console_log.setLevel(console_level)
+
+        file_log = handlers.RotatingFileHandler(
+            log_file_path, maxBytes=(1048576*5), backupCount=5)
+        file_log.setFormatter(file_fmt)
+        file_log.setLevel(file_level)
+
+
+        log.addHandler(console_log)
+        log.addHandler(file_log)
+        log.setLevel(logging.DEBUG)
+
+        log.debug('Got command line options: %s' % args)
 
         # Figure out runtime options
         no_run = False
@@ -115,16 +134,16 @@ class Kernelstub():
             opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
-            log.critical('Can\'t find the kernel image! \n\n'
+            log.exception('Can\'t find the kernel image! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
-            exit(1)
+            exit(166)
 
         if not os.path.exists(opsys.initrd_path):
-            log.critical('Can\'t find the initrd image! \n\n'
+            log.exception('Can\'t find the initrd image! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
-            exit(1)
+            exit(167)
 
         # Check for kernel parameters. Without them, stop and fail
         if args.k_options:
@@ -138,9 +157,9 @@ class Kernelstub():
                          "probably means that the configuration file is "
                          "corrupt. Either remove it to regenerate it from"
                          "default or fix the existing one.")
-                log.critical(error)
+                log.exception(error)
                 raise CmdLineError("No Kernel Parameters found")
-                exit(2)
+                exit(168)
 
         log.debug(config.print_config())
 
@@ -160,7 +179,7 @@ class Kernelstub():
         if configuration['force_update'] == True:
             force = True
 
-        # Check our configuration to make sure it's good
+        log.debug('Checking configuration integrity...')
         try:
             kernel_opts = configuration['kernel_options']
             esp_path = configuration['esp_path']
@@ -169,7 +188,7 @@ class Kernelstub():
             force_update = configuration['force_update']
 
         except KeyError:
-            log.critical(
+            log.exception(
                 'Malformed configuration! \n'
                 'The configuration we got is bad, and we can\'nt continue. '
                 'Please check the config files and make sure they are correct. '
@@ -177,7 +196,9 @@ class Kernelstub():
                 'the errors and cause kernelstub to regenerate them from '
                 'Default. \n\n You can use "-vv" to get the configuration used.')
             log.debug('Configuration we got: \n\n%s' % config.print_config())
-            exit(4)
+            exit(169)
+
+        log.debug('Structing objects')
 
         drive = Drive.Drive(root_path=root_path, esp_path=esp_path)
         nvram = Nvram.NVRAM(opsys.name, opsys.version)
@@ -213,6 +234,8 @@ class Kernelstub():
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
         log.debug('kopts: %s' % kopts)
 
+        installer.copy_cmdline(simulate=no_run)
+
         installer.setup_kernel(
             kopts,
             setup_loader=setup_loader,
@@ -224,18 +247,20 @@ class Kernelstub():
                 setup_loader=setup_loader,
                 simulate=no_run)
         except Exception as e:
-            log.error('Couldn\'t back up old kernel. \nThis might just mean ' +
-                      'You don\'t have an old kernel installed. If you do, try' +
-                      'With -vv to see debuging information')
+            log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
+                      'You don\'t have an old kernel installed. If you do, try ' +
+                      'with -vv to see debuging information')
             log.debug(e)
 
         if not manage_mode:
             installer.setup_stub(kopts, simulate=no_run)
 
-        installer.copy_cmdline(simulate=no_run)
+        log.debug('Saving configuration to file')
 
         config.config['user'] = configuration
         config.save_config()
+
+        log.debug('Setup complete!\n\n')
 
         return 0
 
