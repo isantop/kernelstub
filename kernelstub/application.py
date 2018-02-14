@@ -234,7 +234,7 @@ class Kernelstub():
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
         log.debug('kopts: %s' % kopts)
 
-        installer.copy_cmdline(simulate=no_run)
+
 
         installer.setup_kernel(
             kopts,
@@ -251,6 +251,8 @@ class Kernelstub():
                       'You don\'t have an old kernel installed. If you do, try ' +
                       'with -vv to see debuging information')
             log.debug(e)
+
+        installer.copy_cmdline(simulate=no_run)
 
         if not manage_mode:
             installer.setup_stub(kopts, simulate=no_run)
