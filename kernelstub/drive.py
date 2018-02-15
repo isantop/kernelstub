@@ -24,6 +24,9 @@ terms.
 
 import os, subprocess, logging
 
+class NoBlockDevError(Exception):
+    pass
+
 class Drive():
 
     root_fs = '/'
@@ -53,6 +56,29 @@ class Drive():
         self.esp_fs = self.get_part_name(esp_path)
         self.esp_num = self.esp_fs[-1]
 
+        self.mtab = self.get_drives()
+        try:
+            self.root_fs = get_part_dev(root_path)
+        except NoBlockDevError as e:
+            self.log.exception('Could not find a block device for the root ' +
+                               'partition. This is a critical error and we ' +
+                               'cannot continue.')
+            self.log.debug(e)
+
+
+
+    def get_drives(self):
+        with open('/proc/mounts', mode='r') as proc_mounts:
+            mtab = proc_mounts.readline()
+        return mtab
+
+    def get_part_dev(self, path):
+        for mount in self.mtab:
+            drive = mount.split(" ")
+            if drive[1] == path:
+                self.log.debug('%s is on %s' % (path, drive[0]))
+                return drive[0]
+        raise NoBlockDevError("Couldn't find the block device for %s' % path)
 
     def get_part_name(self, path):
         major = self.get_maj(path)

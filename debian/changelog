@@ -1,3 +1,9 @@
+kernelstub (2.0.6.1) artful; urgency=medium
+
+  * Fix cmdline installation order
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 14 Feb 2018 11:15:08 -0700
+
 kernelstub (2.0.6) artful; urgency=medium
 
   * Fix adding stub to NVRAM (-s flag)
