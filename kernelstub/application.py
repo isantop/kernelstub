@@ -206,17 +206,17 @@ class Kernelstub():
 
         # Log some helpful information, to file and optionally console
         info = (
-            '    OS:..................%s %s\n'   %(opsys.name_pretty,opsys.version) +
-            '    Root partition:....../dev/%s\n' % drive.root_fs +
-            '    Root FS UUID:........%s\n'      % drive.root_uuid +
-            '    ESP Path:............%s\n'      % esp_path +
-            '    ESP Partition:......./dev/%s\n' % drive.esp_fs +
-            '    ESP Partition #:.....%s\n'      % drive.esp_num +
-            '    NVRAM entry #:.......%s\n'      % nvram.os_entry_index +
-            '    Boot Variable #:.....%s\n'      % nvram.order_num +
-            '    Kernel Boot Options:.%s\n'      % kernel_opts +
-            '    Kernel Image Path:...%s\n'      % opsys.kernel_path +
-            '    Initrd Image Path:...%s\n'      % opsys.initrd_path)
+            '    OS:..................%s %s\n' %(opsys.name_pretty,opsys.version) +
+            '    Root partition:......%s\n'    % drive.root_fs +
+            '    Root FS UUID:........%s\n'    % drive.root_uuid +
+            '    ESP Path:............%s\n'    % esp_path +
+            '    ESP Partition:.......%s\n'    % drive.esp_fs +
+            '    ESP Partition #:.....%s\n'    % drive.esp_num +
+            '    NVRAM entry #:.......%s\n'    % nvram.os_entry_index +
+            '    Boot Variable #:.....%s\n'    % nvram.order_num +
+            '    Kernel Boot Options:.%s\n'    % kernel_opts +
+            '    Kernel Image Path:...%s\n'    % opsys.kernel_path +
+            '    Initrd Image Path:...%s\n'    % opsys.initrd_path)
 
         log.info('System information: \n\n%s' % info)
 
