@@ -24,9 +24,14 @@ terms.
 
 import os, subprocess, logging
 
+class NoBlockDevError(Exception):
+    pass
+
 class Drive():
 
+    drive_name = 'none'
     root_fs = '/'
+    root_path = '/'
     root_uuid = '12345-12345-12345'
     esp_fs = '/boot/efi'
     esp_path = '/boot/efi'
@@ -37,65 +42,53 @@ class Drive():
         self.log.debug('loaded kernelstub.Drive')
 
         self.esp_path = esp_path
+        self.root_path = root_path
+        self.log.debug('root path = %s' % self.root_path)
         self.log.debug('esp_path = %s' % self.esp_path)
 
-        self.drive_dict = self.parse_proc_partitions()
-        self.log.debug('drive_dict = %s' % self.drive_dict)
+        self.mtab = self.get_drives()
 
-        self.drive_name = self.get_drive_name("/")
+        try:
+            self.root_fs = self.get_part_dev(self.root_path)
+            self.esp_fs = self.get_part_dev(self.esp_path)
+            self.drive_name = self.get_drive_dev(self.esp_fs)
+            self.esp_num = self.esp_fs[-1]
+            self.root_uuid = self.get_uuid(self.root_fs[5:])
+        except NoBlockDevError as e:
+            self.log.exception('Could not find a block device for the a ' +
+                               'partition. This is a critical error and we ' +
+                               'cannot continue.')
+            self.log.debug(e)
+            exit(174)
+
         self.log.debug('Root is on /dev/%s' % self.drive_name)
-
-        self.log.debug('root_path = %s' % root_path)
-        self.root_fs = self.get_part_name(root_path)
         self.log.debug('root_fs = %s ' % self.root_fs)
-
-        self.root_uuid = self.get_uuid(self.root_fs)
-        self.esp_fs = self.get_part_name(esp_path)
-        self.esp_num = self.esp_fs[-1]
+        self.log.debug('root_uuid is %s' % self.root_uuid)
 
 
-    def get_part_name(self, path):
-        major = self.get_maj(path)
-        minor = self.get_min(path)
-        name = self.drive_dict[(major, minor)]
-        self.log.debug('Partiton for %s is %s' % (path, name))
-        return name
+    def get_drives(self):
+        with open('/proc/mounts', mode='r') as proc_mounts:
+            mtab = proc_mounts.readlines()
+        return mtab
 
-    def get_drive_name(self, path):
-        major = self.get_maj(path)
-        name = self.drive_dict[(major, 0)]
-        self.log.debug('Drive name is %s' % name)
-        return name
+    def get_part_dev(self, path):
+        self.log.debug(self.mtab)
+        for mount in self.mtab:
+            drive = mount.split(" ")
+            if drive[1] == path:
+                self.log.debug('%s is on %s' % (path, drive[0]))
+                return drive[0]
+        raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
 
-    def parse_proc_partitions(self):
-        self.log.debug('Getting partition dictionary')
-        res = {}
-        with open('/proc/partitions', mode='r') as parts:
-            for line in parts:
-                fields = line.split()
-                try:
-                    tmaj = int(fields[0])
-                    tmin = int(fields[1])
-                    name = fields[3]
-                    res[(tmaj, tmin)] = name
-                except:
-                    # just ignore parse errors in header/separator lines
-                    pass
-        return res
+    def get_drive_dev(self, esp):
+        # Ported from bash, out of @jackpot51's firmware updater
+        efi_name = os.path.basename(esp)
+        efi_sys = os.readlink('/sys/class/block/%s' % efi_name)
+        disk_sys = os.path.dirname(efi_sys)
+        disk_name = os.path.basename(disk_sys)
+        self.log.debug('ESP is a partition on /dev/%s' % disk_name)
+        return disk_name
 
-    def get_maj(self, path):
-        dev = os.stat(path).st_dev
-        major = os.major(dev)
-
-        self.log.debug('Major number for %s is %s' % (path, major))
-        return major
-
-    def get_min(self, path):
-        dev = os.stat(path).st_dev
-        minor = os.minor(dev)
-
-        self.log.debug('Minor number for %s is %s' % (path, minor))
-        return minor
 
     def get_uuid(self, fs):
         disks_bytes = subprocess.check_output(['/bin/ls',

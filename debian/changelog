@@ -1,3 +1,15 @@
+kernelstub (2.0.7) artful; urgency=medium
+
+  * Rewrite drive detection code to be more reliable
+
+ -- Ian Santopietro <ian@system76.com>  Thu, 15 Feb 2018 12:17:13 -0700
+
+kernelstub (2.0.6.1) artful; urgency=medium
+
+  * Fix cmdline installation order
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 14 Feb 2018 11:15:08 -0700
+
 kernelstub (2.0.6) artful; urgency=medium
 
   * Fix adding stub to NVRAM (-s flag)

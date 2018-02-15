@@ -39,7 +39,7 @@ terms.
  kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
-import argparse
+import argparse, os
 
 from kernelstub import application
 
@@ -177,6 +177,11 @@ def main(options=None): # Do the thing
     if options:
         args = parser.parse_args(options)
 
+    if os.geteuid() != 0:
+        parser.print_help()
+        print('kernelstub: ERROR: You need to be root or use sudo to run ' +
+              'kernelstub!')
+        exit(174)
 
     kernelstub.main(args)
 
