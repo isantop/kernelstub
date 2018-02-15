@@ -40,7 +40,6 @@ class Config():
 
     def __init__(self, path='/etc/kernelstub/configuration'):
         self.log = logging.getLogger('kernelstub.Config')
-        self.log.debug('Logging set up')
         self.log.debug('loaded kernelstub.Config')
         self.config_path = path
         self.config = self.load_config()
@@ -70,7 +69,7 @@ class Config():
         return self.config
 
     def save_config(self, path='/etc/kernelstub/configuration'):
-        self.log.debug('Saving configuration...')
+        self.log.debug('Saving configuration to %s' % path)
 
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
