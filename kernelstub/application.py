@@ -39,7 +39,7 @@ terms.
  kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
-import logging, subprocess, shutil, os, platform
+import logging, os
 
 import logging.handlers as handlers
 
@@ -185,7 +185,7 @@ class Kernelstub():
             esp_path = configuration['esp_path']
             setup_loader = configuration['setup_loader']
             manage_mode = configuration['manage_mode']
-            force_update = configuration['force_update']
+            force = configuration['force_update']
 
         except KeyError:
             log.exception(

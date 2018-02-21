@@ -86,7 +86,7 @@ class Installer():
             self.old_kernel = False
             pass
 
-        if setup_loader and old_kernel:
+        if setup_loader and self.old_kernel:
             self.ensure_dir(self.entry_dir)
             linux_line = '/EFI/%s-%s/%s-previous.efi' % (self.opsys.name,
                                                          self.drive.root_uuid,
@@ -157,7 +157,6 @@ class Installer():
 
                 if overwrite:
                     self.ensure_dir(self.loader_dir)
-                    entry_name = '%s-current' % self.opsys.name
                     with open(
                         '%s/loader.conf' % self.loader_dir, mode='w') as loader:
 

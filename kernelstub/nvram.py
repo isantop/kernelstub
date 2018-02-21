@@ -71,9 +71,7 @@ class NVRAM():
         esp_num = this_drive.esp_num
         entry_label = '%s %s' % (this_os.name, this_os.version)
         entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
-        root_uuid = this_drive.root_uuid
         entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
-        kopts_list = kernel_opts.split(" ")
         command = [
             '/usr/bin/sudo',
             'efibootmgr',

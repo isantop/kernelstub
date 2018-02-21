@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, platform
+import platform
 
 class OS():
 
