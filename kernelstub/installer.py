@@ -151,28 +151,7 @@ class Installer():
             initrd_line = '/EFI/%s-%s/%s' % (self.opsys.name,
                                              self.drive.root_uuid,
                                              self.opsys.initrd_name)
-            if not simulate and not overwrite:
-                if not os.path.exists('%s/loader.conf' % self.loader_dir):
-                    overwrite = True
-
-                if overwrite:
-                    self.ensure_dir(self.loader_dir)
-                    with open(
-                        '%s/loader.conf' % self.loader_dir, mode='w') as loader:
-
-                        default_line = 'default %s-current\n' % self.opsys.name
-                        loader.write(default_line)
-
-
-                self.ensure_dir(self.entry_dir)
-                self.make_loader_entry(
-                    self.opsys.name_pretty,
-                    linux_line,
-                    initrd_line,
-                    kernel_opts,
-                    os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
-
-            elif simulate:
+            if simulate:
                 self.log.info("Simulate creation of entry...")
                 self.log.info('Loader entry: %s/%s-current\n' %(self.entry_dir,
                                                                 self.opsys.name) +
@@ -180,6 +159,29 @@ class Installer():
                               'linux %s\n' % linux_line +
                               'initrd %s\n' % initrd_line +
                               'options %s\n' % kernel_opts)
+                return 0
+
+            if not overwrite:
+                if not os.path.exists('%s/loader.conf' % self.loader_dir):
+                    overwrite = True
+
+            if overwrite:
+                self.ensure_dir(self.loader_dir)
+                with open(
+                    '%s/loader.conf' % self.loader_dir, mode='w') as loader:
+
+                    default_line = 'default %s-current\n' % self.opsys.name
+                    loader.write(default_line)
+
+            self.ensure_dir(self.entry_dir)
+            self.make_loader_entry(
+                self.opsys.name_pretty,
+                linux_line,
+                initrd_line,
+                kernel_opts,
+                os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
+
+
 
 
 

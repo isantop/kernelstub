@@ -173,11 +173,6 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
-        force = False
-        if args.force_update:
-            force = True
-        if configuration['force_update'] == True:
-            force = True
 
         log.debug('Checking configuration integrity...')
         try:
@@ -198,6 +193,11 @@ class Kernelstub():
             log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(169)
 
+        if args.force_update:
+            force = True
+        if configuration['force_update'] == True:
+            force = True
+
         log.debug('Structing objects')
 
         drive = Drive.Drive(root_path=root_path, esp_path=esp_path)
@@ -216,7 +216,8 @@ class Kernelstub():
             '    Boot Variable #:.....%s\n'    % nvram.order_num +
             '    Kernel Boot Options:.%s\n'    % kernel_opts +
             '    Kernel Image Path:...%s\n'    % opsys.kernel_path +
-            '    Initrd Image Path:...%s\n'    % opsys.initrd_path)
+            '    Initrd Image Path:...%s\n'    % opsys.initrd_path +
+            '    Force-overwrite:.....%s\n'    % str(force))
 
         log.info('System information: \n\n%s' % info)
 
