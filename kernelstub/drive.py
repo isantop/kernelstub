@@ -67,7 +67,7 @@ class Drive():
             self.log.exception('Could not get a UUID for the a filesystem. ' +
                                'This is a critical error and we cannot continue')
             self.log.debug(e)
-            exit(176)
+            exit(177)
 
 
         self.log.debug('Root is on /dev/%s' % self.drive_name)
