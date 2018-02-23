@@ -126,6 +126,7 @@ details these codes and their meaning:
 | 174       | Couldn't detect the block device file for the root partition |
 | 175       | Coundn't detect the block device file for the ESP            |
 | 176       | Wasn't run as root                                           |
+| 177       | Couldn't get a required UUID				   |
 
 
 ### Licence
