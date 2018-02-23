@@ -131,6 +131,12 @@ def main(options=None): # Do the thing
         help = 'The path to the log file to use. Defaults to ' +
                '/var/log/kernelstub.log')
 
+    parser.add_argument(
+        '-b',
+        '--bootctl',
+        dest = 'systemd_boot',
+        help = 'Configure systemd-boot using bootctl')
+
     install_loader.add_argument(
         '-l',
         '--loader',

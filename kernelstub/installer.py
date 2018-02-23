@@ -182,9 +182,6 @@ class Installer():
                 os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
 
 
-
-
-
     def setup_stub(self, kernel_opts, simulate=False):
         self.log.info("Setting up Kernel EFISTUB loader...")
         self.copy_cmdline(simulate=simulate)

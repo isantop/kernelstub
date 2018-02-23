@@ -173,6 +173,11 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
+        try:
+            if configuration['config_rev'] != config.config['default']['config_rev']:
+                configuration = config.upgrade_config(configuration)
+        except KeyError:
+            configuration = config.upgrade_config(configuration)
 
         log.debug('Checking configuration integrity...')
         try:
@@ -181,7 +186,7 @@ class Kernelstub():
             setup_loader = configuration['setup_loader']
             manage_mode = configuration['manage_mode']
             force = configuration['force_update']
-
+            bootctl = configuration['bootctl']
         except KeyError:
             log.exception(
                 'Malformed configuration! \n'
@@ -197,6 +202,9 @@ class Kernelstub():
             force = True
         if configuration['force_update'] == True:
             force = True
+        
+        if args.bootctl:
+            bootctl = True
 
         log.debug('Structing objects')
 
@@ -235,8 +243,6 @@ class Kernelstub():
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
         log.debug('kopts: %s' % kopts)
 
-
-
         installer.setup_kernel(
             kopts,
             setup_loader=setup_loader,
@@ -252,6 +258,18 @@ class Kernelstub():
                       'You don\'t have an old kernel installed. If you do, try ' +
                       'with -vv to see debuging information')
             log.debug(e)
+        
+        if bootctl:
+            try:
+                nvram.setup_bootctl(simulate=no_run)
+            except Exception as e:
+                log.error(
+                    'Couldn\'t set up systemd-boot as requested. This is not a ' +
+                    'critical error, but you should check if this is a problem. ' +
+                    'Run kernelstub with -vv to get more information about the ' +
+                    'error. You might also look at sudo efibootmgr')
+                log.debug(e)
+                    
 
         installer.copy_cmdline(simulate=no_run)
 

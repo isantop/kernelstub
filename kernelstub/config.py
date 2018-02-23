@@ -31,10 +31,12 @@ class Config():
     config_default = {
         'default': {
             'kernel_options': 'quiet splash',
-            'esp_path': "/boot/efi",
+            'esp_path': '/boot/efi',
             'setup_loader': False,
             'manage_mode': False,
-            'force_update' : False
+            'force_update': False,
+            'bootctl': False,
+            'config_rev': '1'
         }
     }
 
@@ -48,17 +50,37 @@ class Config():
     def load_config(self):
         self.log.info('Looking for configuration...')
 
+        cur_config_rev = self.config_default['default']['config_rev']
+
         if os.path.exists(self.config_path):
             self.log.debug('Checking %s' % self.config_path)
 
             with open(self.config_path) as config_file:
                 self.config = json.load(config_file)
+                try:
+                    if self.config['default']['config_ver'] != cur_config_rev:
+                        self.log.warning(
+                            'Found outdated config, updating to latest version.')
+                        self.upgrade_config(self.config['default'])
+                except KeyError as e:
+                    self.log.debug(e)
+                    self.log.warning(
+                        'Found really old config. Updating to latest version')
+                    self.upgrade_config(self.config['default'])
+
 
         elif os.path.exists('/etc/default/kernelstub/'):
             self.log.debug('Checking fallback /etc/default/kernelstub')
 
             with open('/etc/default/kernelstub', mode='r') as config_file:
                 self.config = json.load(config_file)
+
+            try:
+                if self.config['default']['config_ver'] != cur_config_rev:
+                    self.upgrade_config(self.config['default'])
+            except KeyError as e:
+                self.log.debug(e)
+                self.upgrade_config(self.config['default'])
 
         else:
             self.log.info('No configuration file found, loading defaults.')
@@ -67,6 +89,19 @@ class Config():
 
         self.log.debug('Configuration found!')
         return self.config
+
+    def upgrade_config(self, config):
+        """
+        Try to upgrade config to the latest version.
+        """
+        self.log.warning('Outdated config found, updating to the latest')
+        for key in self.config_default['default']:
+            if key not in config:
+                self.log.info('Adding key %s to configuration' % key)
+                config[key] = self.config_default['default'][key]
+        config['config_rev'] = self.config_default['default']['config_rev']
+        return config
+
 
     def save_config(self, path='/etc/kernelstub/configuration'):
         self.log.debug('Saving configuration to %s' % path)

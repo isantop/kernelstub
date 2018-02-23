@@ -1,3 +1,11 @@
+kernelstub (2.1.0) artful; urgency=medium
+
+  * Update configuration file format.
+  * Add code to migrate to new config formats
+  * Allow kernelstub to setup systemd-boot
+
+ -- Ian Santopietro <ian@system76.com>  Fri, 23 Feb 2018 12:42:56 -0700
+
 kernelstub (2.0.8) artful; urgency=medium
 
   * Pyflakes in build process
