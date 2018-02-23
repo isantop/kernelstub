@@ -22,9 +22,12 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, subprocess, logging
+import os, logging
 
 class NoBlockDevError(Exception):
+    pass
+
+class UUIDNotFoundError(Exception):
     pass
 
 class Drive():
@@ -60,6 +63,12 @@ class Drive():
                                'cannot continue.')
             self.log.debug(e)
             exit(174)
+        except UUIDNotFoundError as e:
+            self.log.exception('Could not get a UUID for the a filesystem. ' +
+                               'This is a critical error and we cannot continue')
+            self.log.debug(e)
+            exit(176)
+
 
         self.log.debug('Root is on /dev/%s' % self.drive_name)
         self.log.debug('root_fs = %s ' % self.root_fs)
@@ -67,17 +76,21 @@ class Drive():
 
 
     def get_drives(self):
+        self.log.debug('Getting a list of drives')
         with open('/proc/mounts', mode='r') as proc_mounts:
             mtab = proc_mounts.readlines()
+
+        self.log.debug(mtab)
         return mtab
 
     def get_part_dev(self, path):
-        self.log.debug(self.mtab)
+        self.log.debug('Getting the block device file for %s' % path)
         for mount in self.mtab:
             drive = mount.split(" ")
             if drive[1] == path:
-                self.log.debug('%s is on %s' % (path, drive[0]))
-                return drive[0]
+                part_dev = os.path.realpath(drive[0])
+                self.log.debug('%s is on %s' % (path, part_dev))
+                return part_dev
         raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
 
     def get_drive_dev(self, esp):
@@ -89,16 +102,15 @@ class Drive():
         self.log.debug('ESP is a partition on /dev/%s' % disk_name)
         return disk_name
 
-
     def get_uuid(self, fs):
-        disks_bytes = subprocess.check_output(['/bin/ls',
-                                               '-la',
-                                               '/dev/disk/by-uuid'])
-        disks_info = disks_bytes.decode('UTF-8')
-        disks_list = disks_info.split("\n")
+        all_uuids = os.listdir('/dev/disk/by-uuid')
+        self.log.debug('Looking for UUID for %s' % fs)
+        self.log.debug('List of UUIDs:\n%s' % all_uuids)
 
-        for disk in disks_list:
-            info_list = disk.split(" ")
-            if info_list[-1].endswith(fs):
-                return info_list[-3]
+        for uuid in all_uuids:
+            uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
+            if fs in os.path.realpath(uuid_path):
+                return uuid
+
+        raise UUIDNotFoundError
     

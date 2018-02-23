@@ -39,7 +39,7 @@ terms.
  kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
-import logging, subprocess, shutil, os, platform
+import logging, os
 
 import logging.handlers as handlers
 
@@ -173,11 +173,6 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
-        force = False
-        if args.force_update:
-            force = True
-        if configuration['force_update'] == True:
-            force = True
 
         log.debug('Checking configuration integrity...')
         try:
@@ -185,7 +180,7 @@ class Kernelstub():
             esp_path = configuration['esp_path']
             setup_loader = configuration['setup_loader']
             manage_mode = configuration['manage_mode']
-            force_update = configuration['force_update']
+            force = configuration['force_update']
 
         except KeyError:
             log.exception(
@@ -197,6 +192,11 @@ class Kernelstub():
                 'Default. \n\n You can use "-vv" to get the configuration used.')
             log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(169)
+
+        if args.force_update:
+            force = True
+        if configuration['force_update'] == True:
+            force = True
 
         log.debug('Structing objects')
 
@@ -216,7 +216,8 @@ class Kernelstub():
             '    Boot Variable #:.....%s\n'    % nvram.order_num +
             '    Kernel Boot Options:.%s\n'    % kernel_opts +
             '    Kernel Image Path:...%s\n'    % opsys.kernel_path +
-            '    Initrd Image Path:...%s\n'    % opsys.initrd_path)
+            '    Initrd Image Path:...%s\n'    % opsys.initrd_path +
+            '    Force-overwrite:.....%s\n'    % str(force))
 
         log.info('System information: \n\n%s' % info)
 

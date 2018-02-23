@@ -181,7 +181,7 @@ def main(options=None): # Do the thing
         parser.print_help()
         print('kernelstub: ERROR: You need to be root or use sudo to run ' +
               'kernelstub!')
-        exit(174)
+        exit(176)
 
     kernelstub.main(args)
 
