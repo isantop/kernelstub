@@ -33,7 +33,7 @@ class NVRAM():
 
     def __init__(self, name, version):
         self.log = logging.getLogger('kernelstub.NVRAM')
-        self.log.debug('loaded kernelstub.Installer')
+        self.log.debug('loaded kernelstub.NVRAM')
 
         self.os_label = "%s %s" % (name, version)
         self.update()
