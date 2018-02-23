@@ -120,4 +120,5 @@ class NVRAM():
         self.log.info('Setting up systemd-boot')
         
         if not simulate:
-            subprocess.run(['/usr/bin/sudo', '/usr/bin/bootctl', 'install'])
+            subprocess.check_call(['/usr/bin/sudo', '/usr/bin/bootctl', 'install'])
+            

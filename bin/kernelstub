@@ -134,6 +134,7 @@ def main(options=None): # Do the thing
     parser.add_argument(
         '-b',
         '--bootctl',
+        action = 'store_true',
         dest = 'systemd_boot',
         help = 'Configure systemd-boot using bootctl')
 

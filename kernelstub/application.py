@@ -203,7 +203,7 @@ class Kernelstub():
         if configuration['force_update'] == True:
             force = True
         
-        if args.bootctl:
+        if args.systemd_boot:
             bootctl = True
 
         log.debug('Structing objects')
