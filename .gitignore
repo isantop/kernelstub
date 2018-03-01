@@ -7,6 +7,7 @@ debian/kernelstub
 debian/*.debhelper
 debian/*.substvars
 debian/files
+debian/pop-boot
 
 # Editor TMP files
 *~

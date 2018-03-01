@@ -33,7 +33,7 @@ class NVRAM():
 
     def __init__(self, name, version):
         self.log = logging.getLogger('kernelstub.NVRAM')
-        self.log.debug('loaded kernelstub.Installer')
+        self.log.debug('loaded kernelstub.NVRAM')
 
         self.os_label = "%s %s" % (name, version)
         self.update()
@@ -71,9 +71,7 @@ class NVRAM():
         esp_num = this_drive.esp_num
         entry_label = '%s %s' % (this_os.name, this_os.version)
         entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
-        root_uuid = this_drive.root_uuid
         entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
-        kopts_list = kernel_opts.split(" ")
         command = [
             '/usr/bin/sudo',
             'efibootmgr',

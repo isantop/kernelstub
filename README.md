@@ -67,17 +67,21 @@ There are other options as well, as detailed below:
 |------------------------------------|---------------------------------------------------|
 |`-h`, `--help`                      | Display the help Text                             |
 |`-d`, `--dry-run`                   | Don't actually copy any files or set anything up. |
+|`-p`, `--print-config`		     | Print the current configuration and exit.         |
 |`-e <path>`, `--esp-path <path>`    | Manually specify the ESP path.*		         |
 |`-k <path>`, `--kernel-path <path>` | Manually specify the path to the kernel image.    |
 |`-i <path>`, `--initrd-path <path>` | Manually specify the path to the initrd image.    |
 |`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
+|`-g <log>`,`--log-file <log>`	     | Where to save the log file.			 |
 |`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
+|`-n`, `--no-loader`		     | Turns off creating the loader configuration.	 |
 |`-s`, `--stub`                      | Set up NVRAM entries for the copied kernel.       |
 |`-m`, `--manage-only`	             | Don't set up any NVRAM entries.*                  |
 |`-f`, `--force-update`              | Forcefully update the main loader.conf.**         |
 |`-v`, `--verbose`                   | Display more information to the command line      |
 
 *These options save information to the config file.
+
 **This may overwrite another OS's information.
 
 ### Configuration
@@ -105,15 +109,30 @@ distributor file.
 ### Return codes
 
 If kernelstub is going to be used in a scripted environment, it is useful to
-know what return codes it provides in the event of errors. If everything
-appeared to work correctly and kernelstub exited successfully, it returns 0. If
-there was a problem parsing the configuration file, it returns 2. If there was a
-problem copying a file needed for installation, it returns 3.
+know what return codes it provides in the event of errors. The table below
+details these codes and their meaning:
+
+| Exit Code | Meaning                                                      |
+|-----------|--------------------------------------------------------------|
+| 0         | Success                                                      |
+| 166       | The kernel path supplied/detected was invalid                |
+| 167       | The initrd path supplied/detected was invalid                |
+| 168       | No kernel options found/supplied                             |
+| 169       | Malformed configuration found                                |
+| 170       | Couldn't copy kernel image to ESP                            |
+| 171       | Couldn't copy initrd image to ESP                            |
+| 172       | Couldn't create a new NVRAM entry                            |
+| 173       | Couldn't remove an old NVRAM entry                           |
+| 174       | Couldn't detect the block device file for the root partition |
+| 175       | Coundn't detect the block device file for the ESP            |
+| 176       | Wasn't run as root                                           |
+| 177       | Couldn't get a required UUID				   |
 
 
 ### Licence
 
-Kernelstub is available under an ISC-based licence. The full licence is below:
+Kernelstub is available under an COLPL + ISC-based license. The full license is
+supplied in the LICENSE.txt file.
 
  Copyright 2017-2018 Ian Santopietro <isantop@gmail.com>
 
