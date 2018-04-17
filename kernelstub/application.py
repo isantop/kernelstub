@@ -163,6 +163,20 @@ class Kernelstub():
 
         log.debug(config.print_config())
 
+        if args.preserve_live and configuration['live_mode']:
+            configuration['live_mode'] = True
+            log.warning(
+                'Live mode is enabled!\n'
+                'Kernelstub is running in live environment mode. This usually '
+                'means that you are running a live disk, and kernelstub should '
+                'not run. We are thus exiting with 0.\n'
+                'If you are not running a live disk, please run '
+                '`sudo kernelstub` to disable live mode.'
+            )
+            exit(0)
+
+        configuration['live_mode'] = False
+
         if args.setup_loader:
             configuration['setup_loader'] = True
         if args.off_loader:
@@ -198,6 +212,17 @@ class Kernelstub():
         if configuration['force_update'] == True:
             force = True
 
+        if configuration['live_mode']:
+            log.warning(
+                'Live mode is enabled!\n'
+                'Kernelstub is running in live environment mode. This usually '
+                'means that you are running a live disk, and kernelstub should '
+                'not run. We are thus exiting with 0.\n'
+                'If you are not running a live disk, please run '
+                '`sudo kernelstub` to disable live mode.'
+            )
+            exit(0)
+
         log.debug('Structing objects')
 
         drive = Drive.Drive(root_path=root_path, esp_path=esp_path)
@@ -226,7 +251,8 @@ class Kernelstub():
                 '   Kernel options:................%s\n' % configuration['kernel_options'] +
                 '   ESP Location:..................%s\n' % configuration['esp_path'] +
                 '   Management Mode:...............%s\n' % configuration['manage_mode'] +
-                '   Install Loader configuration:..%s\n' % configuration['setup_loader'])
+                '   Install Loader configuration:..%s\n' % configuration['setup_loader'] +
+                '   Configuration version:.........%s\n' % configuration['config_rev'])
             log.info('Configuration details: \n\n%s' % all_config)
             exit(0)
 

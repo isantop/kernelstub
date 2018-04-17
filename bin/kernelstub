@@ -177,7 +177,7 @@ def main(options=None): # Do the thing
         '--preserve-live-mode',
         action = 'store_true',
         dest = 'preserve_live',
-        help = argpase.SUPPRESS
+        help = argparse.SUPPRESS
     )
 
     args = parser.parse_args()
