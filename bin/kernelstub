@@ -173,6 +173,13 @@ def main(options=None): # Do the thing
         dest = 'verbosity',
         help = 'Increase program verbosity and display extra output.')
 
+    parser.add_argument(
+        '--preserve-live-mode',
+        action = 'store_true',
+        dest = 'preserve_live',
+        help = argpase.SUPPRESS
+    )
+
     args = parser.parse_args()
     if options:
         args = parser.parse_args(options)
