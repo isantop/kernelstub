@@ -34,7 +34,9 @@ class Config():
             'esp_path': "/boot/efi",
             'setup_loader': False,
             'manage_mode': False,
-            'force_update' : False
+            'force_update' : False,
+            'live_mode' : False,
+            'config_rev' : 2
         }
     }
 
@@ -66,6 +68,15 @@ class Config():
             self.config['user'] = self.config['default'].copy()
 
         self.log.debug('Configuration found!')
+        try:
+            if self.config['user']['config_rev'] != self.config_default['config_rev']:
+                self.log.warning("Updating old configuration.")
+                self.config = self.update_config(self.config)
+                self.log.info("Configuration updated successfully!")
+        except KeyError:
+            self.log.warning("Attempting upgrade of legacy configuration.")
+            self.config = self.update_config(self.config)
+            self.log.info("Configuration updated successfully!")
         return self.config
 
     def save_config(self, path='/etc/kernelstub/configuration'):
@@ -76,6 +87,13 @@ class Config():
         
         self.log.debug('Configuration saved!')
         return 0
+
+    def update_config(self, config):
+        config['user']['live_mode'] = False
+        config['user']['config_rev'] = 2
+        config['default']['live_mode'] = False
+        config['default']['config_rev'] = 2
+        return config
 
     def print_config(self):
         output_config = json.dumps(self.config, indent=2)
