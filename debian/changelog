@@ -1,3 +1,9 @@
+kernelstub (2.1.0) bionic; urgency=medium
+
+  * New live-mode feature to prevent automatic runs on live disks
+
+ -- Ian Santopietro <ian@system76.com>  Tue, 17 Apr 2018 10:52:20 -0600
+
 kernelstub (2.0.8) artful; urgency=medium
 
   * Pyflakes in build process
