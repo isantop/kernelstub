@@ -67,9 +67,8 @@ class Config():
             self.config = self.config_default
 
         self.log.debug('Configuration found!')
-        try:
-            user_config = self.config['user']
-        except KeyError:
+
+        if not 'user' in self.config:
             self.config['user'] = self.config['default'].copy()
 
         try:
@@ -89,7 +88,7 @@ class Config():
 
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
-        
+
         self.log.debug('Configuration saved!')
         return 0
 
