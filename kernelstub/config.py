@@ -56,7 +56,7 @@ class Config():
             with open(self.config_path) as config_file:
                 self.config = json.load(config_file)
 
-        elif os.path.exists('/etc/default/kernelstub/'):
+        elif os.path.exists('/etc/default/kernelstub'):
             self.log.debug('Checking fallback /etc/default/kernelstub')
 
             with open('/etc/default/kernelstub', mode='r') as config_file:
