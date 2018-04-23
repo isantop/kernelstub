@@ -65,9 +65,13 @@ class Config():
         else:
             self.log.info('No configuration file found, loading defaults.')
             self.config = self.config_default
-            self.config['user'] = self.config['default'].copy()
 
         self.log.debug('Configuration found!')
+        try:
+            user_config = self.config['user']
+        except KeyError:
+            self.config['user'] = self.config['default'].copy()
+
         try:
             self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
             if self.config['user']['config_rev'] != self.config_default['default']['config_rev']:
