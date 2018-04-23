@@ -69,6 +69,7 @@ class Config():
         self.log.debug('Configuration found!')
         try:
             user_config = self.config['user']
+            self.log.debug(user_config)
         except KeyError:
             self.config['user'] = self.config['default'].copy()
 
