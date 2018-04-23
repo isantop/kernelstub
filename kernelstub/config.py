@@ -68,8 +68,8 @@ class Config():
             self.config['user'] = self.config['default'].copy()
 
         self.log.debug('Configuration found!')
-        self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
         try:
+            self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
             if self.config['user']['config_rev'] != self.config_default['default']['config_rev']:
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
