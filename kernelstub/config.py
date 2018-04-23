@@ -56,7 +56,7 @@ class Config():
             with open(self.config_path) as config_file:
                 self.config = json.load(config_file)
 
-        elif os.path.exists('/etc/default/kernelstub/'):
+        elif os.path.exists('/etc/default/kernelstub'):
             self.log.debug('Checking fallback /etc/default/kernelstub')
 
             with open('/etc/default/kernelstub', mode='r') as config_file:
@@ -68,8 +68,8 @@ class Config():
             self.config['user'] = self.config['default'].copy()
 
         self.log.debug('Configuration found!')
-        self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
         try:
+            self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
             if self.config['user']['config_rev'] != self.config_default['default']['config_rev']:
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
