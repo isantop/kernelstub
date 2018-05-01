@@ -187,6 +187,10 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
+        if args.add_options:
+            if args.add_options not in configuration['kernel_options']:
+                configuration['kernel_options'] = configuration['kernel_options'] + " %s" % args.add_options
+
 
         log.debug('Checking configuration integrity...')
         try:
@@ -206,6 +210,10 @@ class Kernelstub():
                 'Default. \n\n You can use "-vv" to get the configuration used.')
             log.debug('Configuration we got: \n\n%s' % config.print_config())
             exit(169)
+
+
+
+
 
         if args.force_update:
             force = True
