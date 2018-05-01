@@ -187,10 +187,6 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
-        if args.add_options:
-            if args.add_options not in configuration['kernel_options']:
-                configuration['kernel_options'] = configuration['kernel_options'] + " %s" % args.add_options
-
 
         log.debug('Checking configuration integrity...')
         try:
@@ -212,8 +208,12 @@ class Kernelstub():
             exit(169)
 
 
-
-
+        if args.add_options:
+            add_opts = args.add_options.split(" ")
+            for opt in add_opts:
+                if opt not in kernel_opts:
+                    kernel_opts = kernel_opts + " %s" % opt
+                    configuration['kernel_options'] = kernel_opts
 
         if args.force_update:
             force = True
