@@ -54,6 +54,25 @@ class CmdLineError(Exception):
 
 class Kernelstub():
 
+    def parse_options(self, options):
+        for index, option in enumerate(options):
+            if '"' in option:
+                matched = False
+                itr = 1
+                while matched == False:
+                    try:
+                        next_option = options[index + itr]
+                        option = '%s %s' % (option, next_option)
+                        options[index + itr] = ""
+                        if '"' in next_option:
+                            matched = True
+                        else:
+                            itr = itr + 1
+                    except IndexError:
+                        matched = True
+            options[index] = option
+        return options
+
     def main(self, args): # Do the thing
 
         log_file_path = '/var/log/kernelstub.log'
@@ -210,6 +229,7 @@ class Kernelstub():
 
         if args.add_options:
             add_opts = args.add_options.split(" ")
+            add_opts = self.parse_options(add_opts)
             for opt in add_opts:
                 if opt not in kernel_opts:
                     kernel_opts = kernel_opts + " %s" % opt
