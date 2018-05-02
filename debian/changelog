@@ -1,3 +1,9 @@
+kernelstub (2.2.0) bionic; urgency=medium
+
+  * Added an option to add kernel options
+
+ -- Ian Santopietro <ian@system76.com>  Tue, 01 May 2018 10:15:52 -0700
+
 kernelstub (2.1.0) bionic; urgency=medium
 
   * New live-mode feature to prevent automatic runs on live disks

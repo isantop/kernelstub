@@ -18,7 +18,7 @@ package locally, use these commands:
 ```
 git clone https://github.com/isantop/kernelstub
 cd kernelstub
-debuild -B
+debuild -b -us -uc
 sudo dpkg -i ../kernelstub*.deb
 ```
 For installation on non-debian systems, or if you prefer to use Python
@@ -72,6 +72,7 @@ There are other options as well, as detailed below:
 |`-k <path>`, `--kernel-path <path>` | Manually specify the path to the kernel image.    |
 |`-i <path>`, `--initrd-path <path>` | Manually specify the path to the initrd image.    |
 |`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
+|`-a <options> ,`--add-options <options> | Adds new options to the list of kernel boot options.*** |
 |`-g <log>`,`--log-file <log>`	     | Where to save the log file.			 |
 |`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
 |`-n`, `--no-loader`		     | Turns off creating the loader configuration.	 |
@@ -83,6 +84,9 @@ There are other options as well, as detailed below:
 *These options save information to the config file.
 
 **This may overwrite another OS's information.
+
+***Does not add options if they are already present in the configuration. Each 
+option is checked individually.
 
 ### Configuration
 
@@ -147,4 +151,3 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
 OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
-

@@ -117,7 +117,19 @@ def main(options=None): # Do the thing
         '--options',
         dest = 'k_options',
         metavar = '"OPTIONS"',
-        help = 'The boot options to be passed to the kernel')
+        help = 'The total boot options to be passed to the kernel')
+
+    parser.add_argument(
+        '-a',
+        dest = 'add_options',
+        metavar = '"OPTIONS",',
+        help = '')
+    parser.add_argument(
+        '--add-options',
+        dest = 'add_options',
+        metavar = '"OPTIONS"',
+        help = 'Boot options to add to the configuration ' +
+               '(if they aren\'t already present)')
 
     parser.add_argument(
         '-g',
