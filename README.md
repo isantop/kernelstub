@@ -72,6 +72,7 @@ There are other options as well, as detailed below:
 |`-k <path>`, `--kernel-path <path>` | Manually specify the path to the kernel image.    |
 |`-i <path>`, `--initrd-path <path>` | Manually specify the path to the initrd image.    |
 |`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
+|`-a <options> ,`--add-options <options> | Adds new options to the list of kernel boot options.*** |
 |`-g <log>`,`--log-file <log>`	     | Where to save the log file.			 |
 |`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
 |`-n`, `--no-loader`		     | Turns off creating the loader configuration.	 |
@@ -83,6 +84,9 @@ There are other options as well, as detailed below:
 *These options save information to the config file.
 
 **This may overwrite another OS's information.
+
+***Does not add options if they are already present in the configuration. Each 
+option is checked individually.
 
 ### Configuration
 
