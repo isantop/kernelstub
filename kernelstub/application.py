@@ -156,13 +156,13 @@ class Kernelstub():
             log.exception('Can\'t find the kernel image! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
-            exit(166)
+            exit(0)
 
         if not os.path.exists(opsys.initrd_path):
             log.exception('Can\'t find the initrd image! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
-            exit(167)
+            exit(0)
 
         # Check for kernel parameters. Without them, stop and fail
         if args.k_options:
