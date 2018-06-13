@@ -74,6 +74,7 @@ class Test(Command):
 
 setup(name='kernelstub',
     version='3.0.0',
+    version='2.2.1',
     description='Automatic kernel efistub manager for UEFI',
     url='https://launchpad.net/kernelstub',
     author='Ian Santopietro',
