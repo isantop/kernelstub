@@ -262,7 +262,7 @@ class Kernelstub():
             '    ESP Partition #:.....%s\n'    % drive.esp_num +
             '    NVRAM entry #:.......%s\n'    % nvram.os_entry_index +
             '    Boot Variable #:.....%s\n'    % nvram.order_num +
-            '    Kernel Boot Options:.%s\n'    % kernel_opts +
+            '    Kernel Boot Options:.%s\n'    % " ".join(kernel_opts) +
             '    Kernel Image Path:...%s\n'    % opsys.kernel_path +
             '    Initrd Image Path:...%s\n'    % opsys.initrd_path +
             '    Force-overwrite:.....%s\n'    % str(force))
@@ -271,7 +271,6 @@ class Kernelstub():
 
         if args.print_config:
             all_config = (
-                '   Kernel options:................%s\n' % configuration['kernel_options'] +
                 '   ESP Location:..................%s\n' % configuration['esp_path'] +
                 '   Management Mode:...............%s\n' % configuration['manage_mode'] +
                 '   Install Loader configuration:..%s\n' % configuration['setup_loader'] +
@@ -281,7 +280,7 @@ class Kernelstub():
 
         log.debug('Setting up boot...')
 
-        kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, kernel_opts)
+        kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, " ".join(kernel_opts))
         log.debug('kopts: %s' % kopts)
 
 
