@@ -52,123 +52,157 @@ def main(options=None): # Do the thing
     install_loader = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
-        '-d',
+        '-c',
         '--dry-run',
         action = 'store_true',
         dest = 'dry_run',
-        help = 'Don\'t perform any actions, just simulate them.')
+        help = 'Don\'t perform any actions, just simulate them.'
+    )
     parser.add_argument(
         '-p',
         '--print-config',
         action = 'store_true',
         dest = 'print_config',
-        help = 'Print the current configuration and exit')
+        help = 'Print the current configuration and exit'
+    )
 
     parser.add_argument(
         '-e',
         dest = 'esp_path',
         metavar = 'ESP,',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--esp-path',
         dest = 'esp_path',
         metavar = 'ESP',
-        help = 'Manually specify the path to the ESP. Default is /boot/efi')
+        help = 'Manually specify the path to the ESP. Default is /boot/efi'
+    )
 
     parser.add_argument(
         '-r',
         dest = 'root_path',
         metavar = 'ROOT',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--root-path',
         dest = 'root_path',
         metavar = 'ROOT',
-        help = 'The path where the root filesystem to use is mounted.')
+        help = 'The path where the root filesystem to use is mounted.'
+    )
 
     parser.add_argument(
         '-k',
         dest = 'kernel_path',
         metavar= 'PATH,',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--kernel-path',
         dest = 'kernel_path',
         metavar= 'PATH',
-        help = 'The path to the kernel image.')
+        help = 'The path to the kernel image.'
+    )
 
     parser.add_argument(
         '-i',
         dest = 'initrd_path',
         metavar = 'PATH,',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--initrd-path',
         dest = 'initrd_path',
         metavar = 'PATH',
-        help = 'The path to the initrd image.')
+        help = 'The path to the initrd image.'
+    )
 
     parser.add_argument(
         '-o',
         dest = 'k_options',
         metavar = '"OPTIONS",',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--options',
         dest = 'k_options',
         metavar = '"OPTIONS"',
-        help = 'The total boot options to be passed to the kernel')
+        help = 'The total boot options to be passed to the kernel'
+    )
 
     parser.add_argument(
         '-a',
         dest = 'add_options',
         metavar = '"OPTIONS",',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--add-options',
         dest = 'add_options',
         metavar = '"OPTIONS"',
-        help = 'Boot options to add to the configuration ' +
+        help = ('Boot options to add to the configuration '
                '(if they aren\'t already present)')
+   )
+
+    parser.add_argument(
+        '-d',
+        dest = 'remove_options',
+        metavar = "OPTIONS",
+        help = ''
+    )
+    parser.add_argument(
+        '--delete-options',
+        dest = 'remove_options',
+        metavar = '"OPTIONS"',
+        help = ('Boot options to remove from the configuration ',
+                '(if they\'re present already)')
+    )
 
     parser.add_argument(
         '-g',
         dest = 'log_file',
         metavar = 'LOG',
-        help = '')
+        help = ''
+    )
     parser.add_argument(
         '--log-file',
         dest = 'log_file',
         metavar = 'LOG',
         help = 'The path to the log file to use. Defaults to ' +
-               '/var/log/kernelstub.log')
+               '/var/log/kernelstub.log'
+    )
 
     install_loader.add_argument(
         '-l',
         '--loader',
         action = 'store_true',
         dest = 'setup_loader',
-        help = 'Creates a systemd-boot compatible loader configuration')
+        help = 'Creates a systemd-boot compatible loader configuration'
+    )
     install_loader.add_argument(
         '-n',
         '--no-loader',
         action = 'store_true',
         dest = 'off_loader',
-        help = 'Turns off creating loader configuration')
+        help = 'Turns off creating loader configuration'
+    )
 
     loader_stub.add_argument(
         '-s',
         '--stub',
         action = 'store_true',
         dest = 'install_stub',
-        help = 'Set up NVRAM entries for the copied kernel')
+        help = 'Set up NVRAM entries for the copied kernel'
+    )
 
     loader_stub.add_argument(
         '-m',
         '--manage-only',
         action = 'store_true',
         dest = 'manage_mode',
-        help = 'Only copy entries, don\'t set up the NVRAM')
+        help = 'Only copy entries, don\'t set up the NVRAM'
+    )
 
     parser.add_argument(
         '-f',
@@ -176,14 +210,16 @@ def main(options=None): # Do the thing
         action = 'store_true',
         dest = 'force_update',
         help = 'Forcibly update any loader.conf to set the new entry as the ' +
-               'default')
+               'default'
+    )
 
     parser.add_argument(
         '-v',
         '--verbose',
         action = 'count',
         dest = 'verbosity',
-        help = 'Increase program verbosity and display extra output.')
+        help = 'Increase program verbosity and display extra output.'
+    )
 
     parser.add_argument(
         '--preserve-live-mode',

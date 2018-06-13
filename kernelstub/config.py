@@ -24,19 +24,22 @@ terms.
 
 import json, os, logging
 
+class ConfigError(Exception):
+    pass
+
 class Config():
 
     config_path = "/etc/kernelstub/configuration"
     config = {}
     config_default = {
         'default': {
-            'kernel_options': 'quiet splash',
+            'kernel_options': ['quiet', 'splash'],
             'esp_path': "/boot/efi",
             'setup_loader': False,
             'manage_mode': False,
             'force_update' : False,
             'live_mode' : False,
-            'config_rev' : 2
+            'config_rev' : 3
         }
     }
 
@@ -75,10 +78,14 @@ class Config():
 
         try:
             self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
-            if self.config['user']['config_rev'] != self.config_default['default']['config_rev']:
+            if self.config['user']['config_rev'] < self.config_default['default']['config_rev']:
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
                 self.log.info("Configuration updated successfully!")
+            elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
+                self.log.debug("Configuration up to date")
+            else:
+                raise ConfigError("Configuration cannot be understood!")
         except KeyError:
             self.log.warning("Attempting upgrade of legacy configuration.")
             self.config = self.update_config(self.config)
@@ -95,11 +102,35 @@ class Config():
         return 0
 
     def update_config(self, config):
-        config['user']['live_mode'] = False
-        config['user']['config_rev'] = 2
-        config['default']['live_mode'] = False
-        config['default']['config_rev'] = 2
+        if config['user']['config_rev'] < 2:
+            config['user']['live_mode'] = False
+            config['default']['live_mode'] = False
+        if config['user']['config_rev'] < 3:
+            config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+            config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
+        config['user']['config_rev'] = 3
+        config['default']['config_rev'] = 3
         return config
+
+    def parse_options(self, options):
+        self.log.debug(options)
+        for index, option in enumerate(options):
+            if '"' in option:
+                matched = False
+                itr = 1
+                while matched == False:
+                    try:
+                        next_option = options[index + itr]
+                        option = '%s %s' % (option, next_option)
+                        options[index + itr] = ""
+                        if '"' in next_option:
+                            matched = True
+                        else:
+                            itr = itr + 1
+                    except IndexError:
+                        matched = True
+            options[index] = option
+        return options
 
     def print_config(self):
         output_config = json.dumps(self.config, indent=2)
