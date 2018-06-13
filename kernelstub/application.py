@@ -229,11 +229,17 @@ class Kernelstub():
 
         if args.add_options:
             add_opts = args.add_options.split(" ")
-            add_opts = self.parse_options(add_opts)
+            add_opts = config.parse_options(add_opts)
             for opt in add_opts:
                 if opt not in kernel_opts:
-                    kernel_opts = kernel_opts + " %s" % opt
+                    kernel_opts.append(opt)
                     configuration['kernel_options'] = kernel_opts
+
+        if args.remove_options:
+            rem_opts = args.remove_options.split(" ")
+            rem_opts = config.parse_options(rem_opts)
+            kernel_opts = list(set(kernel_opts) - set(rem_opts))
+            configuration['kernel_options'] = kernel_opts
 
         if args.force_update:
             force = True
