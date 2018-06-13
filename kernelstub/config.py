@@ -82,6 +82,8 @@ class Config():
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
                 self.log.info("Configuration updated successfully!")
+            elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
+                self.log.debug("Configuration up to date")
             else:
                 raise ConfigError("Configuration cannot be understood!")
         except KeyError:
@@ -100,17 +102,18 @@ class Config():
         return 0
 
     def update_config(self, config):
-        if config['user'] < 2:
+        if config['user']['config_rev'] < 2:
             config['user']['live_mode'] = False
             config['default']['live_mode'] = False
-        if config['user'] < 3:
-            config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'])
-            config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'])
+        if config['user']['config_rev'] < 3:
+            config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+            config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
         return config
 
     def parse_options(self, options):
+        self.log.debug(options)
         for index, option in enumerate(options):
             if '"' in option:
                 matched = False

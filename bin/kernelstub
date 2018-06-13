@@ -151,7 +151,7 @@ def main(options=None): # Do the thing
         metavar = "OPTIONS",
         help = ''
     )
-    parser-add_argument(
+    parser.add_argument(
         '--delete-options',
         dest = 'remove_options',
         metavar = '"OPTIONS"',
@@ -201,7 +201,7 @@ def main(options=None): # Do the thing
         '--manage-only',
         action = 'store_true',
         dest = 'manage_mode',
-        help = 'Only copy entries, don\'t set up the NVRAM')
+        help = 'Only copy entries, don\'t set up the NVRAM'
     )
 
     parser.add_argument(
