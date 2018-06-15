@@ -1,5 +1,6 @@
 # Other files here:
 output.log
+.buildconfig
 
 # Debian Packaging artefacts:
 debian/.debhelper/

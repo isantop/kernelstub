@@ -1,3 +1,17 @@
+kernelstub (3.0.0) bionic; urgency=medium
+
+  * Breaking API Change in 2.3.0
+    Existing option renamed/removed: --dry-run 
+    Short-form changed
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 13 Jun 2018 10:39:08 -0600
+
+kernelstub (2.3.0) bionic; urgency=medium
+
+  * Add flag to remove kernel options from the configuration
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 13 Jun 2018 10:03:03 -0600
+
 kernelstub (2.2.1) bionic; urgency=medium
 
   * Cause kernelstub to exit without an error code if the initrd or kernel
