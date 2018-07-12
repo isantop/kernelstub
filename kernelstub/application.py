@@ -166,7 +166,7 @@ class Kernelstub():
 
         # Check for kernel parameters. Without them, stop and fail
         if args.k_options:
-            configuration['kernel_options'] = args.k_options
+            configuration['kernel_options'] = self.parse_options(args.k_options.split())
         else:
             try:
                 configuration['kernel_options']
