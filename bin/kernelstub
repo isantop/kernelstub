@@ -155,7 +155,7 @@ def main(options=None): # Do the thing
         '--delete-options',
         dest = 'remove_options',
         metavar = '"OPTIONS"',
-        help = ('Boot options to remove from the configuration ' 
+        help = ('Boot options to remove from the configuration '
                 '(if they\'re present already)')
     )
 
