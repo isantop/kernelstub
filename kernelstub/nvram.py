@@ -50,8 +50,12 @@ class NVRAM():
             '/usr/bin/sudo',
             'efibootmgr'
         ]
-        nvram = subprocess.check_output(command).decode('UTF-8').split('\n')
-        return nvram
+        try:
+            return subprocess.check_output(command).decode('UTF-8').split('\n')
+        except Exception as e:
+            self.log.exception('Failed to retrieve NVRAM data. Are you running in a chroot?')
+            self.log.debug(e)
+            return []
 
     def find_os_entry(self, nvram, os_label):
         self.log.debug('Finding NVRAM entry for %s' % os_label)

@@ -155,7 +155,7 @@ def main(options=None): # Do the thing
         '--delete-options',
         dest = 'remove_options',
         metavar = '"OPTIONS"',
-        help = ('Boot options to remove from the configuration ' 
+        help = ('Boot options to remove from the configuration '
                 '(if they\'re present already)')
     )
 
@@ -169,8 +169,8 @@ def main(options=None): # Do the thing
         '--log-file',
         dest = 'log_file',
         metavar = 'LOG',
-        help = 'The path to the log file to use. Defaults to ' +
-               '/var/log/kernelstub.log'
+        help = ('The path to the log file to use. Defaults to ' 
+               '/var/log/kernelstub.log')
     )
 
     install_loader.add_argument(
@@ -209,8 +209,8 @@ def main(options=None): # Do the thing
         '--force-update',
         action = 'store_true',
         dest = 'force_update',
-        help = 'Forcibly update any loader.conf to set the new entry as the ' +
-               'default'
+        help = ('Forcibly update any loader.conf to set the new entry as the ' 
+               'default')
     )
 
     parser.add_argument(
@@ -234,7 +234,7 @@ def main(options=None): # Do the thing
 
     if os.geteuid() != 0:
         parser.print_help()
-        print('kernelstub: ERROR: You need to be root or use sudo to run ' +
+        print('kernelstub: ERROR: You need to be root or use sudo to run ' 
               'kernelstub!')
         exit(176)
 
