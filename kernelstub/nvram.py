@@ -42,7 +42,8 @@ class NVRAM():
         self.log.debug('Updating NVRAM info')
         self.nvram = self.get_nvram()
         self.find_os_entry(self.nvram, self.os_label)
-        self.order_num = str(self.nvram[self.os_entry_index])[4:8]
+        if self.os_entry_index >= 0:
+            self.order_num = str(self.nvram[self.os_entry_index])[4:8]
 
     def get_nvram(self):
         self.log.debug('Getting NVRAM data')
