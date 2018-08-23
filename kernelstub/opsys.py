@@ -127,9 +127,8 @@ class OS():
                 os_release = os_release_file.readlines()
         except FileNotFoundError:
             os_release = ['NAME="%s"\n' % self.name,
-                          'VERSION="%s"\n' % self.version,
                           'ID=linux\n',
                           'ID_LIKE=linux\n',
-                          'VERSION_ID="%s"\n' % self.os_version]
+                          'VERSION_ID="%s"\n' % self.version]
 
         return os_release
