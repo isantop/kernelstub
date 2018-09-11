@@ -78,6 +78,26 @@ class Config():
 
         try:
             self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
+            #Double-checking in case OEMs do bad things with the config file
+            if type(config['user']['kernel_options']) is str:
+                try:
+                    config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+                    self.log.warning('Malformed configuration file found!\n\n'
+                                     'The configuration file has the incorrect format for the kernel options. '
+                                     'Usually this is caused by manually editing the configuration file, but '
+                                     'it can also be caused by outdated or buggy maintainer packages from your '
+                                     'hardware OEM. If you haven\'nt manually edited the config file, then '
+                                     'contact your hardware vendor to inform them to fix their packages.\n\n'
+                                     'The issue was able to be corrected automatically, and the corrected '
+                                     'configuration will be saved')
+                except:
+                    raise ConfigError('Malformed configuration file found!\n\n'
+                                      'The configuration file has the incorrect format for the kernel options. '
+                                      'Usually this is caused by manually editing the configuration file, but '
+                                      'it can also be caused by outdated or buggy maintainer packages from your '
+                                      'hardware OEM. If you haven\'nt manually edited the config file, then '
+                                      'contact your hardware vendor to inform them to fix their packages.')
+                    exit(169)
             if self.config['user']['config_rev'] < self.config_default['default']['config_rev']:
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
@@ -106,8 +126,10 @@ class Config():
             config['user']['live_mode'] = False
             config['default']['live_mode'] = False
         if config['user']['config_rev'] < 3:
-            config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
-            config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
+            if type(config['user']['kernel_options']) is str:
+                config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+            if type(config['default']['kernel_options']:
+                config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
         return config
