@@ -85,12 +85,12 @@ class Config():
             elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
                 self.log.debug("Configuration up to date")
                 # Double-checking in case OEMs do bad things with the config file
-                if type(config['user']['kernel_options']) is str:
+                if type(self.config['user']['kernel_options']) is str:
                     self.log.warning('Invalid kernel_options format!\n\n'
                                      'Usually outdated or buggy maintainer packages from your hardware OEM. '
                                      'Contact your hardware vendor to inform them to fix their packages.')
                     try:
-                        config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+                        self.config['user']['kernel_options'] = self.parse_options(self.config['user']['kernel_options'].split())
                     except:
                         raise ConfigError('Malformed configuration file found!')
                         exit(169)
