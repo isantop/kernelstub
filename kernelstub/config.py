@@ -84,25 +84,15 @@ class Config():
                 self.log.info("Configuration updated successfully!")
             elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
                 self.log.debug("Configuration up to date")
-                #Double-checking in case OEMs do bad things with the config file
+                # Double-checking in case OEMs do bad things with the config file
                 if type(config['user']['kernel_options']) is str:
+                    self.log.warning('Invalid kernel_options format!\n\n'
+                                     'Usually outdated or buggy maintainer packages from your hardware OEM. '
+                                     'Contact your hardware vendor to inform them to fix their packages.')
                     try:
                         config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
-                        self.log.warning('Malformed configuration file found!\n\n'
-                                         'The configuration file has the incorrect format for the kernel options. '
-                                         'Usually this is caused by manually editing the configuration file, but '
-                                         'it can also be caused by outdated or buggy maintainer packages from your '
-                                         'hardware OEM. If you haven\'nt manually edited the config file, then '
-                                         'contact your hardware vendor to inform them to fix their packages.\n\n'
-                                         'The issue was able to be corrected automatically, and the corrected '
-                                         'configuration will be saved')
                     except:
-                        raise ConfigError('Malformed configuration file found!\n\n'
-                                          'The configuration file has the incorrect format for the kernel options. '
-                                          'Usually this is caused by manually editing the configuration file, but '
-                                          'it can also be caused by outdated or buggy maintainer packages from your '
-                                          'hardware OEM. If you haven\'nt manually edited the config file, then '
-                                          'contact your hardware vendor to inform them to fix their packages.')
+                        raise ConfigError('Malformed configuration file found!')
                         exit(169)
             else:
                 raise ConfigError("Configuration cannot be understood!")
@@ -128,7 +118,7 @@ class Config():
         if config['user']['config_rev'] < 3:
             if type(config['user']['kernel_options']) is str:
                 config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
-            if type(config['default']['kernel_options']:
+            if type(config['default']['kernel_options']) is str:
                 config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
