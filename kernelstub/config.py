@@ -84,6 +84,16 @@ class Config():
                 self.log.info("Configuration updated successfully!")
             elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
                 self.log.debug("Configuration up to date")
+                # Double-checking in case OEMs do bad things with the config file
+                if type(self.config['user']['kernel_options']) is str:
+                    self.log.warning('Invalid kernel_options format!\n\n'
+                                     'Usually outdated or buggy maintainer packages from your hardware OEM. '
+                                     'Contact your hardware vendor to inform them to fix their packages.')
+                    try:
+                        self.config['user']['kernel_options'] = self.parse_options(self.config['user']['kernel_options'].split())
+                    except:
+                        raise ConfigError('Malformed configuration file found!')
+                        exit(169)
             else:
                 raise ConfigError("Configuration cannot be understood!")
         except KeyError:
@@ -106,8 +116,10 @@ class Config():
             config['user']['live_mode'] = False
             config['default']['live_mode'] = False
         if config['user']['config_rev'] < 3:
-            config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
-            config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
+            if type(config['user']['kernel_options']) is str:
+                config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
+            if type(config['default']['kernel_options']) is str:
+                config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
         return config
