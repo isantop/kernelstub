@@ -125,7 +125,7 @@ class Kernelstub():
 
         if systemd_support:
             journald_log = JournalHandler()
-            journald_log.setLevel(level[1])
+            journald_log.setLevel(file_level)
             journald_log.setFormatter(stream_fmt)
             log.addHandler(journald_log)
 
