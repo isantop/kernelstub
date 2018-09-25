@@ -73,7 +73,7 @@ class Test(Command):
             run_pyflakes3()
 
 setup(name='kernelstub',
-    version='3.0.0',
+    version='3.1.0',
     description='Automatic kernel efistub manager for UEFI',
     url='https://launchpad.net/kernelstub',
     author='Ian Santopietro',
