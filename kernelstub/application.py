@@ -41,6 +41,13 @@ terms.
 
 import logging, os
 
+try:
+    from systemd.journald import JournaldLogHandler
+
+except ImportError:
+    systemd_support = False
+    pass
+
 import logging.handlers as handlers
 
 from . import drive as Drive
@@ -112,9 +119,15 @@ class Kernelstub():
         file_log.setFormatter(file_fmt)
         file_log.setLevel(file_level)
 
-
         log.addHandler(console_log)
         log.addHandler(file_log)
+
+        if systemd_support:
+            journald_log = JournalHandler()
+            journald_log.setLevel(level[1])
+            journald_log.setFormatter(stream_fmt)
+            log.addHandler(journald_log)
+
         log.setLevel(logging.DEBUG)
 
         log.debug('Got command line options: %s' % args)
