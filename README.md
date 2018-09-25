@@ -66,27 +66,33 @@ There are other options as well, as detailed below:
 | Option                             | Action                                            |
 |------------------------------------|---------------------------------------------------|
 |`-h`, `--help`                      | Display the help Text                             |
-|`-d`, `--dry-run`                   | Don't actually copy any files or set anything up. |
-|`-p`, `--print-config`		     | Print the current configuration and exit.         |
-|`-e <path>`, `--esp-path <path>`    | Manually specify the ESP path.*		         |
+|`-c`, `--dry-run`                   | Don't actually copy any files or set anything up. |
+|`-p`, `--print-config`		         | Print the current configuration and exit.         |
+|*_Path Options_*                    |                                                   |
+|`-r <path>`, `--root-path <path>`   | Manually specify the root filesystem path.		 | 
+|`-e <path>`, `--esp-path <path>`    | Manually specify the ESP path.*		             |
 |`-k <path>`, `--kernel-path <path>` | Manually specify the path to the kernel image.    |
 |`-i <path>`, `--initrd-path <path>` | Manually specify the path to the initrd image.    |
-|`-o <options>`,`--options <options>`| Set kernel boot options.*			 |
-|`-a <options> ,`--add-options <options> | Adds new options to the list of kernel boot options.*** |
-|`-g <log>`,`--log-file <log>`	     | Where to save the log file.			 |
+|*_Kernel Parameters_*               |                                                   |
+|`-o <options>`,`--options <options>`| Set kernel boot options.*			             |
+|`-a <options>` ,`--add-options <options>| Adds new options to the list of kernel boot options.*⁺ |
+|`-d <options>` ,`--delete-options <options>| Remove options from the list of kernel boot options.*⁺ |
+*_Output/logging Options_*           |                                                   |
+|`-v`, `--verbose`                   | Display more information to the command line      |
+|`-g <log>`,`--log-file <log>`	     | Where to save the log file.			             |
+|*_Behavior Options_*                |                                                   |
 |`-l`, `--loader`                    | Create a `systemd-boot`-compatible loader config.*|
-|`-n`, `--no-loader`		     | Turns off creating the loader configuration.	 |
+|`-n`, `--no-loader`		         | Turns off creating the loader configuration.	     |
 |`-s`, `--stub`                      | Set up NVRAM entries for the copied kernel.       |
 |`-m`, `--manage-only`	             | Don't set up any NVRAM entries.*                  |
 |`-f`, `--force-update`              | Forcefully update the main loader.conf.**         |
-|`-v`, `--verbose`                   | Display more information to the command line      |
 
 *These options save information to the config file.
 
 **This may overwrite another OS's information.
 
-***Does not add options if they are already present in the configuration. Each 
-option is checked individually.
+⁺Does not add options if they are already present in the configuration, or 
+remove options if they are not present. Each option is checked individually.
 
 ### Configuration
 
