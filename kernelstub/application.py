@@ -41,11 +41,12 @@ terms.
 
 import logging, os
 
+systemd_support = False
 try:
     from systemd.journal import JournalHandler
+    systemd_support = True
 
 except ImportError:
-    systemd_support = False
     pass
 
 import logging.handlers as handlers
