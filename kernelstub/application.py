@@ -42,7 +42,7 @@ terms.
 import logging, os
 
 try:
-    from systemd.journald import JournaldLogHandler
+    from systemd.journal import JournalHandler
 
 except ImportError:
     systemd_support = False
