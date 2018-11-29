@@ -64,7 +64,7 @@ class Installer():
             os.makedirs(self.entry_dir)
 
 
-    def backup_old(self, kernel_opts, setup_loader=False, simulate=False):
+    def backup_old(self, kernel_opts, setup_loader=False):
         """Copy the previous kernel (if present) into the ESP."""
         self.log.info('Backing up old kernel')
 
@@ -73,8 +73,7 @@ class Installer():
         try:
             self.copy_files(
                 '{}.old'.format(self.opsys.kernel_path),
-                kernel_dest,
-                simulate=simulate)
+                kernel_dest)
         except OSError:
             self.log.debug(
                 'Couldn\'t back up old kernel. There\'s probably only one '
@@ -87,8 +86,7 @@ class Installer():
         try:
             self.copy_files(
                 '{}.old'.format(self.opsys.initrd_path),
-                initrd_dest,
-                simulate=simulate)
+                initrd_dest)
         except OSError:
             self.log.debug(
                 'Couldn\'t back up old kernel. There\'s probably only one '
@@ -115,20 +113,19 @@ class Installer():
                 kernel_opts,
                 os.path.join(self.entry_dir, '{}-oldkern'.format(self.opsys.name)))
 
-    def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False, simulate=False):
+    def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False):
         """Copy the active kernel into the ESP."""
         self.log.info('Copying Kernel into ESP')
         self.kernel_dest = os.path.join(
             self.os_folder,
             "{}.efi".format(self.opsys.kernel_name))
-        self.ensure_dir(self.os_folder, simulate=simulate)
+        self.ensure_dir(self.os_folder)
         self.log.debug('kernel being copied to %s', self.kernel_dest)
 
         try:
             self.copy_files(
                 self.opsys.kernel_path,
-                self.kernel_dest,
-                simulate=simulate)
+                self.kernel_dest)
 
         except FileOpsError as e_e:
             self.log.exception(
@@ -144,8 +141,7 @@ class Installer():
         try:
             self.copy_files(
                 self.opsys.initrd_path,
-                self.initrd_dest,
-                simulate=simulate)
+                self.initrd_dest)
 
         except FileOpsError as e_e:
             self.log.exception(
@@ -170,17 +166,6 @@ class Installer():
                 self.drive.root_uuid,
                 self.opsys.initrd_name
             )
-            if simulate:
-                self.log.info("Simulate creation of entry...")
-                self.log.info(
-                    'Loader entry: %s/%s-current\n'
-                    'title %s\n'
-                    'linux %s\n'
-                    'initrd %s\n'
-                    'options %s\n', self.entry_dir, self.opsys.name,
-                    self.opsys.name_pretty, linux_line, initrd_line, kernel_opts
-                )
-                return 0
 
             if not overwrite:
                 if not os.path.exists('{}/loader.conf'.format(self.loader_dir)):
@@ -203,30 +188,29 @@ class Installer():
                 kernel_opts,
                 os.path.join(self.entry_dir, '{}-current'.format(self.opsys.name)))
 
-    def setup_stub(self, kernel_opts, simulate=False):
+    def setup_stub(self, kernel_opts):
         """Set up the kernel efistub bootloader."""
         self.log.info("Setting up Kernel EFISTUB loader...")
-        self.copy_cmdline(simulate=simulate)
+        self.copy_cmdline()
         self.nvram.update()
 
         if self.nvram.os_entry_index >= 0:
             self.log.info("Deleting old boot entry")
-            self.nvram.delete_boot_entry(self.nvram.order_num, simulate)
+            self.nvram.delete_boot_entry(self.nvram.order_num)
 
         else:
             self.log.debug("No old entry found, skipping removal.")
 
-        self.nvram.add_entry(self.opsys, self.drive, kernel_opts, simulate)
+        self.nvram.add_entry(self.opsys, self.drive, kernel_opts)
         self.nvram.update()
         nvram_lines = "\n".join(self.nvram.nvram)
         self.log.info('NVRAM configured, new values: \n\n%s\n', nvram_lines)
 
-    def copy_cmdline(self, simulate):
+    def copy_cmdline(self):
         """Copy the current boot options into the ESP."""
         self.copy_files(
             '/proc/cmdline',
-            self.os_folder,
-            simulate=simulate
+            self.os_folder
         )
 
 
@@ -240,28 +224,23 @@ class Installer():
             entry.write('options {}\n'.format(options))
         self.log.debug('Entry created!')
 
-    def ensure_dir(self, directory, simulate=False):
+    def ensure_dir(self, directory):
         """Ensure that a folder exists."""
-        if not simulate:
-            try:
-                os.makedirs(directory, exist_ok=True)
-                return True
-            except Exception as e_e:
-                self.log.exception('Couldn\'t make sure %s exists.', directory)
-                self.log.debug(e_e)
-                return False
-
-    def copy_files(self, src, dest, simulate):
-        """Copy src into dest."""
-        if simulate:
-            self.log.info('Simulate copying: %s => %s', src, dest)
+        try:
+            os.makedirs(directory, exist_ok=True)
             return True
-        else:
-            try:
-                self.log.debug('Copying: %s => %s', src, dest)
-                shutil.copy(src, dest)
-                return True
-            except Exception as e_e:
-                self.log.debug(e_e)
-                raise FileOpsError("Could not copy one or more files.")
-                return False
+        except Exception as e_e:
+            self.log.exception('Couldn\'t make sure %s exists.', directory)
+            self.log.debug(e_e)
+            return False
+
+    def copy_files(self, src, dest):
+        """Copy src into dest."""
+        try:
+            self.log.debug('Copying: %s => %s', src, dest)
+            shutil.copy(src, dest)
+            return True
+        except Exception as e_e:
+            self.log.debug(e_e)
+            raise FileOpsError("Could not copy one or more files.")
+            return False

@@ -65,7 +65,7 @@ class Kernelstub():
 
     def mktable(self, data, padding):
         """
-        Makes a table from a dictionary.
+        Makes a printable table from a dictionary.
 
         returns: a str containing the table.
         """
@@ -125,11 +125,6 @@ class Kernelstub():
         log.setLevel(logging.DEBUG)
 
         log.debug('Got command line options: %s', args)
-
-        # Figure out runtime options
-        no_run = False
-        if args.dry_run:
-            no_run = True
 
         config = Config.Config()
         configuration = config.config['user']
@@ -327,13 +322,11 @@ class Kernelstub():
         installer.setup_kernel(
             kopts,
             setup_loader=setup_loader,
-            overwrite=force,
-            simulate=no_run)
+            overwrite=force)
         try:
             installer.backup_old(
                 kopts,
-                setup_loader=setup_loader,
-                simulate=no_run)
+                setup_loader=setup_loader)
         except Exception as e_e:
             log.debug(
                 'Couldn\'t back up old kernel. \nThis might just mean you '
@@ -342,10 +335,10 @@ class Kernelstub():
             )
             log.debug(e_e)
 
-        installer.copy_cmdline(simulate=no_run)
+        installer.copy_cmdline()
 
         if not manage_mode:
-            installer.setup_stub(kopts, simulate=no_run)
+            installer.setup_stub(kopts)
 
         log.debug('Saving configuration to file')
 

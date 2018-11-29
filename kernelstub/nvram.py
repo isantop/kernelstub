@@ -78,7 +78,7 @@ class NVRAM():
                 return find_index
 
 
-    def add_entry(self, this_os, this_drive, kernel_opts, simulate=False):
+    def add_entry(self, this_os, this_drive, kernel_opts):
         """Add an entry into the NVRAM."""
         self.log.info('Creating NVRAM entry')
         device = '/dev/{}'.format(this_drive.drive_name)
@@ -98,22 +98,21 @@ class NVRAM():
             'initrd={} {}'.format(entry_initrd, kernel_opts)
         ]
         self.log.debug('NVRAM command:\n%s', command)
-        if not simulate:
-            try:
-                subprocess.run(command)
-            except subprocess.SubprocessError as e_e:
-                self.log.exception(
-                    'Couldn\'t create boot entry for kernel! This means that '
-                    'the system will not boot from the new kernel directly. Do '
-                    'NOT reboot without an alternate bootloader configured or '
-                    'fixing this problem. More information is available in the '
-                    'log or by running again with -vv'
-                )
-                self.log.debug(e_e)
-                exit(172)
+        try:
+            subprocess.run(command)
+        except subprocess.SubprocessError as e_e:
+            self.log.exception(
+                'Couldn\'t create boot entry for kernel! This means that '
+                'the system will not boot from the new kernel directly. Do '
+                'NOT reboot without an alternate bootloader configured or '
+                'fixing this problem. More information is available in the '
+                'log or by running again with -vv'
+            )
+            self.log.debug(e_e)
+            exit(172)
         self.update()
 
-    def delete_boot_entry(self, index, simulate):
+    def delete_boot_entry(self, index):
         """Delete an entry from the NVRAM."""
         self.log.info('Deleting old boot entry: %s', index)
         command = ['/usr/bin/sudo',
@@ -121,15 +120,14 @@ class NVRAM():
                    '-B',
                    '-b', str(index)]
         self.log.debug('NVRAM command:\n%s', command)
-        if not simulate:
-            try:
-                subprocess.run(command)
-            except Exception as e_e:
-                self.log.exception(
-                    'Couldn\'t delete old boot entry %s. This could cause '
-                    'problems, so kernelstub will not continue. Check again '
-                    'with -vv for more info.', index
-                )
-                self.log.debug(e_e)
-                exit(173)
+        try:
+            subprocess.run(command)
+        except Exception as e_e:
+            self.log.exception(
+                'Couldn\'t delete old boot entry %s. This could cause '
+                'problems, so kernelstub will not continue. Check again '
+                'with -vv for more info.', index
+            )
+            self.log.debug(e_e)
+            exit(173)
         self.update()

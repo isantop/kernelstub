@@ -139,9 +139,11 @@ class OS():
             with open('/etc/os-release') as os_release_file:
                 os_release = os_release_file.readlines()
         except FileNotFoundError:
-            os_release = ['NAME="{}"\n'.format(self.name),
-                          'ID=linux\n',
-                          'ID_LIKE=linux\n',
-                          'VERSION_ID="%s"\n' % self.version]
+            os_release = [
+                'NAME="{}"\n'.format(self.name),
+                'ID=linux\n',
+                'ID_LIKE=linux\n',
+                'VERSION_ID="{}"\n'.format(self.version)
+            ]
 
         return os_release
