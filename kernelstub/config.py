@@ -140,11 +140,11 @@ class Config():
             config['default']['live_mode'] = False
         if config['user']['config_rev'] < 3:
             if isinstance(config['user']['kernel_options'], str):
-                options = self.parse_options(config['user']['kernel_options'])
-                config['user']['kernel_options'] = options.split()
+                options = self.parse_options(config['user']['kernel_options'].split())
+                config['user']['kernel_options'] = options
             if isinstance(config['default']['kernel_options'], str):
-                options = self.parse_options(config['default']['kernel_options'])
-                config['default']['kernel_options'] = options.split()
+                options = self.parse_options(config['default']['kernel_options'].split())
+                config['default']['kernel_options'] = options
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
         return config

@@ -110,7 +110,7 @@ class Drive():
         """Returns a block device for the drive partition blockdev is on."""
         # Ported from bash, out of @jackpot51's firmware updater
         efi_name = os.path.basename(blockdev)
-        efi_sys = os.readlink('/sys/class/block/%s', efi_name)
+        efi_sys = os.readlink('/sys/class/block/{}'.format(efi_name))
         disk_sys = os.path.dirname(efi_sys)
         disk_name = os.path.basename(disk_sys)
         self.log.debug('ESP is a partition on /dev/%s', disk_name)

@@ -40,6 +40,7 @@ terms.
 """
 
 import logging
+import logging.handlers as handlers
 import os
 
 from . import drive as Drive
@@ -107,7 +108,7 @@ class Kernelstub():
         console_log.setFormatter(stream_fmt)
         console_log.setLevel(console_level)
 
-        file_log = logging.handlers.RotatingFileHandler(
+        file_log = handlers.RotatingFileHandler(
             log_file_path, maxBytes=(1048576*5), backupCount=5)
         file_log.setFormatter(file_fmt)
         file_log.setLevel(file_level)
