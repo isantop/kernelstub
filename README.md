@@ -66,7 +66,6 @@ There are other options as well, as detailed below:
 | Option                                    | Action                                                 |
 |-------------------------------------------|--------------------------------------------------------|
 |`-h`, `--help`                             | Display the help Text                                  |
-|`-c`, `--dry-run`                          | Don't actually copy any files or set anything up.      |
 |`-p`, `--print-config`		                | Print the current configuration and exit.              |
 |*_Path Options_*                           |                                                        |
 |`-r <path>`, `--root-path <path>`          | Manually specify the root filesystem path.		     | 
