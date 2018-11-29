@@ -122,21 +122,22 @@ If kernelstub is going to be used in a scripted environment, it is useful to
 know what return codes it provides in the event of errors. The table below
 details these codes and their meaning:
 
-| Exit Code | Meaning                                                      |
-|-----------|--------------------------------------------------------------|
-| 0         | Success                                                      |
-| 166       | The kernel path supplied/detected was invalid                |
-| 167       | The initrd path supplied/detected was invalid                |
-| 168       | No kernel options found/supplied                             |
-| 169       | Malformed configuration found                                |
-| 170       | Couldn't copy kernel image to ESP                            |
-| 171       | Couldn't copy initrd image to ESP                            |
-| 172       | Couldn't create a new NVRAM entry                            |
-| 173       | Couldn't remove an old NVRAM entry                           |
-| 174       | Couldn't detect the block device file for the root partition |
-| 175       | Coundn't detect the block device file for the ESP            |
-| 176       | Wasn't run as root                                           |
-| 177       | Couldn't get a required UUID				   |
+| Exit Code | Meaning                                                       |
+|-----------|---------------------------------------------------------------|
+| 0         | Success                                                       |
+| 166       | The kernel path supplied/detected was invalid                 |
+| 167       | The initrd path supplied/detected was invalid                 |
+| 168       | No kernel options found/supplied                              |
+| 169       | Malformed configuration found                                 |
+| 170       | Couldn't copy kernel image to ESP                             |
+| 171       | Couldn't copy initrd image to ESP                             |
+| 172       | Couldn't create a new NVRAM entry                             |
+| 173       | Couldn't remove an old NVRAM entry                            |
+| 174       | Couldn't detect the block device file for the root partition  |
+| 175       | Coundn't detect the block device file for the ESP             |
+| 176       | Wasn't run as root                                            |
+| 177       | Couldn't get a required UUID				                    |
+| 178       | Simulate option used                                          |
 
 
 ### Licence
