@@ -225,11 +225,12 @@ class Kernelstub():
         except KeyError:
             log.exception(
                 'Malformed configuration! \n'
-                'The configuration we got is bad, and we can\'nt continue. '
+                'The configuration we got is bad, and we can\'t continue. '
                 'Please check the config files and make sure they are correct. '
                 'If you can\'t figure it out, then deleting them should fix '
                 'the errors and cause kernelstub to regenerate them from '
-                'Default. \n\n You can use "-vv" to get the configuration used.')
+                'Default. \n\n You can use "-vv" to get the configuration used.'
+            )
             log.debug('Configuration we got: \n\n%s', config.print_config())
             exit(169)
 

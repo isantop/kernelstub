@@ -168,12 +168,12 @@ class Config():
                 while matched is False:
                     try:
                         next_option = options[index + itr]
-                        option = '%s %s' % (option, next_option)
+                        option = '{} {}'.format(option, next_option)
                         options[index + itr] = ""
                         if '"' in next_option:
                             matched = True
                         else:
-                            itr = itr + 1
+                            itr += 1
                     except IndexError:
                         matched = True
             options[index] = option

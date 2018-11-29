@@ -40,7 +40,7 @@ class NVRAM():
         self.log = logging.getLogger('kernelstub.NVRAM')
         self.log.debug('loaded kernelstub.NVRAM')
 
-        self.os_label = "%s %s" % (name, version)
+        self.os_label = "{} {}".format(name, version)
         self.update()
 
     def update(self):
@@ -71,7 +71,7 @@ class NVRAM():
         self.os_entry_index = -1
         find_index = self.os_entry_index
         for entry in nvram:
-            find_index = find_index + 1
+            find_index += 1
             if os_label in entry:
                 self.os_entry_index = find_index
                 self.log.debug('Entry found! Index: %s', self.os_entry_index)
@@ -81,21 +81,21 @@ class NVRAM():
     def add_entry(self, this_os, this_drive, kernel_opts, simulate=False):
         """Add an entry into the NVRAM."""
         self.log.info('Creating NVRAM entry')
-        device = '/dev/%s' % this_drive.drive_name
+        device = '/dev/{}'.format(this_drive.drive_name)
         esp_num = this_drive.esp_num
-        entry_label = '%s %s' % (this_os.name, this_os.version)
-        entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
-        entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
+        entry_label = '{} {}'.format(this_os.name, this_os.version)
+        entry_linux = '\\EFI\\{}-{}\\vmlinuz.efi'.format(this_os.name, this_drive.root_uuid)
+        entry_initrd = 'EFI/{}-{}/initrd.img'.format(this_os.name, this_drive.root_uuid)
         command = [
             '/usr/bin/sudo',
             'efibootmgr',
             '-c',
             '-d', device,
             '-p', esp_num,
-            '-L', '%s' % entry_label,
-            '-l', '%s' % entry_linux,
+            '-L', '{}'.format(entry_label),
+            '-l', '{}'.format(entry_linux),
             '-u',
-            'initrd=%s %s' % (entry_initrd, kernel_opts)
+            'initrd={} {}'.format(entry_initrd, kernel_opts)
         ]
         self.log.debug('NVRAM command:\n%s', command)
         if not simulate:
