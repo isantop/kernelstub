@@ -1,0 +1,333 @@
+.TH KERNELSTUB "1"
+
+.\" To view this file while editing, run it through groff:
+.\"   groff -Tascii -man python.man | less
+
+.SH NAME
+kernelstub \- The automatic Linux kernel EFIstub manager
+.SH SYNOPSIS
+.B kernelstub
+[
+.B \-e
+.I esp-path
+]
+[
+.B \-r
+.I root-fs-path
+]
+[
+.B \-k
+.I kernel-image-path
+]
+.br
+           [
+.B \-i
+.I initrd-image-path
+]
+[
+.B \-o 
+.I "kernel-options"
+]
+.br
+           [
+.B \-a
+.I "kernel-options"
+]
+[
+.B \-d
+.I "kernel-options"
+]
+.br
+           [
+.B \-g
+.I log-file-path
+]
+[
+.B \-h
+]
+[
+.B \-p
+]
+[
+.B \-f
+]
+[
+.B \-l
+|
+.B \-n
+]
+.br
+           [
+.B \-s
+|
+.B \-m
+]
+[
+.B \-v...
+]
+
+.SH DESCRIPTION
+Kernelstub is a program to setup and configure booting without a traditional 
+bootloader.
+It can configure booting through systemd-boot compatible loader files, or 
+through the kernel's built-in efi stub loader.
+It also runs automatically when the kernel is updated to keep this 
+configuration up to date.
+.br
+It supports adding/setting different kernel command line options as well as 
+keeping older kernels available for use as a backup.
+It can operate on an ESP and root partition which are different from the one 
+the system is currently booted from.
+.SH COMMAND LINE OPTIONS
+.TP
+.BI "\-e, --esp-path " path
+Manually setting the path to the EFI System Partition. 
+This value is saved into the configuration. 
+Default is /boot/efi.
+.TP
+.BI "\-r, --root-path " path
+Manually specify the path to the root partition, in case kernelstub is being 
+run on a system other than the target.
+Defaults to /.
+.TP
+.BI "\-k, --kernel-path " path
+Specify the location of the Linux kernel image/vmlinuz.
+Defaults to /vmlinuz.
+.TP
+.BI "\-i, --initrd-path " path
+Specify the location of the initrd image.
+Defaults to /inird.img.
+.TP
+.BI "\-o, --options " 'options'
+Specify the kernel cmdline options/boot flags.
+This will overwrite any existing options in the configuration.
+Use single or double quotes to surround multiple options.
+This option will save the specified changes into the configuration.
+.br
+If you want to add/remove options from the existing 
+configuration, see 
+.B \-a
+and 
+.B \-d
+.TP
+.BI "\-a, --add-options " 'options'
+Add kernel cmdliing options into the existing configuration.
+This will avoid adding duplicate items if they're already present. 
+Use single or double quotes to surround multiple options.
+This option will save the specified changes into the configuration.
+.TP
+.BI "\-d, --delete-options " 'options'
+Remove existing kernel cmdline options from the existing configuration.
+If an option specified here is not present in the list of options, kernelstub
+will silently ignore it.
+Use single or double quotes to surround multiple options.
+This option will save the specified changes into the configuration.
+.TP
+.BI "\-g, --log-file " 'path'
+Specify an alternative log file location. 
+.TP
+.B \-h, --help 
+Prints the usage information and exits. 
+.TP
+.B \-p, --print-config
+Prints the current configuration settings and exits. 
+.TP
+.B \-f, --force-update
+Forcibly update the system loader.conf file to set the current OS as the 
+default.
+This may change your system default boot order. 
+.TP
+.B \-l, --loader 
+Creates a systemd-boot compatible loader entry in ESP/loader/entries for the
+current OS.
+This option is saved in the configuration.
+.TP
+.B \-n, --no-loader.
+Don't create a loader entry for the current OS. 
+This option disables the behavior of 
+.B \-l
+and is saved in the configuration.
+.TP
+.B \-s, --stub 
+Enables automatic management of the kernel efistub bootloader. 
+This option is saved in the configuration.
+.TP
+.B \-m, --manage-only 
+Disables automatic management of the kernel efistub bootloader.
+This option disables the behavior of 
+.B \-s
+and is saved in the configuration. 
+.TP
+.B \-v, --verbose
+Make program output more verbose. 
+Up to two 
+.B \-v
+flags can be used at once (additional flags are ignored).
+.TP
+.SH FILES 
+.IP \fI/etc/kernelstub/configuration\fP
+Default location of the kernelstub configuration file.
+The file is a JSON format file with two main configurations in it;
+.I 'default'
+and
+.I 'user'.
+The 'esp_path' key is a string, 'config_rev' is an int, 'kernel_options' is a
+list of strings, and all other keys are booleans.
+.br
+It is highly recommended to use the kernelstub utility to modify the 
+configuration rather than by editing the configuration file directly.
+See the 
+.B CONFIGURATION
+section for more details.
+.PP
+.IP \fI/etc/default/kernelstub\fP
+This is a vendor-supplied file that can contain certain options for individual
+OSs or hardware-specific values. 
+.SH CONFIGURATION
+Specific configuration defaults may have been modified by your OS developer or
+hardware vendor. 
+.br
+Each kernelstub configuration contains the following keys:
+.IP \fIkernel_options\fP
+This is a list of strings, with each string being an individual kernel cmdline
+option.
+.br
+Default: ["quiet", "splash"]
+.br
+Configured using the 
+.B \-a, -d, 
+and 
+.B -o
+flags.
+.PP
+.IP \fIesp_path\fP
+String - Points to the path where the EFI System Partition is mounted.
+.br
+Default: "/boot/efi".
+.br
+Configured using the 
+.B \-e
+flag. 
+.PP
+.IP \fIsetup_loader\fP
+boolean - enables or disables installing the loader entry file.
+.br
+.I false:
+(default) Skips installing a loader entry file.
+.br
+.I true:
+Installs a loader entry file.
+.br
+Configured using the 
+.B \-l
+/
+.B \-n
+flags. 
+.PP
+.IP \fImanage_mode\fP
+boolean - toggles between installing the efistub bootloader or using 
+management-only mode.
+.br
+.I false:
+(default) sets up the Linux kernel built-in efistub bootloader in the system
+NVRAM.
+.br
+.I true:
+Skips setting up the built-in efistub bootloader.
+.br
+Configured using the 
+.B \-s
+/
+.B \-m
+flags. 
+.PP
+.IP \fIforce_update\fP
+boolean - Forcibly overwrites the main systemd-boot configuration on each 
+update.
+.br
+.I false:
+(default) Does not automatically modify the systemd-boot configuration to make 
+the current OS the default.
+.br
+.I true:
+Overwrites the systemd-boot configuration on each update to ensure the current
+OS is the default.
+.br
+This option cannot be enabled from the command line and must be enabled in the
+configuration file directly. 
+This is due to its ability cause the system to lose alternate boot entries. 
+.PP
+.IP \fIlive_mode\fP
+boolean - Live mode allows updates on run on the live system without triggering
+kernelstub. 
+When live mode is enabled, kernelstub silently exits successfully
+to allow software updates to work without overwriting the current boot 
+configuration.
+If kernelstub is run manually, live mode will be automatically disabled. 
+.I false:
+(default) Disables live mode.
+.br
+.I true:
+Enables live mode.
+.PP
+.IP \fIconfig_rev\fP
+integer - Tells kernelstub what format of configuration to expect. 
+.br
+If this value is lower than the current configuration revision supported by the
+code, kernelstub will attempt to automatically migrate the configuration to the
+new version. 
+.PP
+.SH BUGS
+Please report bugs to https://github.com/isantop/kernelstub/issues
+.SH EXAMPLE
+To set up the kernel efistub bootloader to be the default boot option
+.PP
+.RS 
+\f(CWsudo kernelstub\fP
+.RE
+.PP
+To include some output
+.PP
+.RS 
+\f(CWsudo kernelstub \-v\fP
+.RE
+.PP
+To use kernelstub as a manager for systemd-boot configurations
+.PP
+.RS 
+\f(CWsudo kernelstub \-vlm\fP
+.RE
+Note that the l and m flags are only required once; they are saved in the 
+configuration file.
+.PP
+To add the "quiet" kernel option and remove the "splash" option:
+.PP
+.RS 
+\f(CWsudo kernelstub \-a 'quiet' -d 'splash'\fP
+.RE
+.PP
+If you have lost your boot configuration because another OS overwrote your 
+setup, you can recover like so
+.PP
+.RS 
+\f(CWsudo mount /dev/root_partition /mnt\fP
+.br
+\f(CWsudo mount /dev/esp_partition /mnt/boot/efi\fP
+.br
+\f(CWsudo kernelstub \\\fP
+\f(CW    \--root-partition /mnt \\\fP
+\f(CW    \--esp-path /mnt/boot/efi \\\fP
+\f(CW    \--kernel-path /mnt/vmlinuz \\\fP
+\f(CW    \--initrd-path /mnt/initrd.img \\\fP
+\f(CW    \--options 'quiet splash' \\\fP
+\f(CW    \-vslf\fP
+.RE
+.PP
+Adjust your mount commands to correctly mount your root and ESP partitions.
+.SH AUTHOR
+Ian Santopietro <isantop@gmail.com>
+.SH INTERNET RESOURCES
+Main website/git repository:  https://github.com/isantop/kernelstub
+.br
+
+
