@@ -25,7 +25,11 @@ terms.
 import platform
 
 class OS():
+    """
+    Kernelstub OS object.
 
+    Provides helper functions for getting and storing OS information.
+    """
     name_pretty = "Linux"
     name = "Linux"
     version = "1.0"
@@ -43,8 +47,12 @@ class OS():
         self.cmdline = self.get_os_cmdline()
 
     def clean_names(self, name):
-        # This is a list of characters we can't/don't want to have in technical
-        # names for the OS. name_pretty will still have them.
+        """
+        Remove bad characters from names.
+
+        This is a list of characters we can't/don't want to have in technical
+        names for the OS. name_pretty will still have them.
+        """
         badchar = {
             ' ' : '_',
             '~' : '-',
@@ -88,6 +96,7 @@ class OS():
         return name
 
     def get_os_cmdline(self):
+        """Gets a clean list of current OS boot options."""
         with open('/proc/cmdline') as cmdline_file:
             cmdline_list = cmdline_file.readlines()[0].split(" ")
 
@@ -100,6 +109,7 @@ class OS():
         return cmdline
 
     def get_os_name(self):
+        """Get the current OS name."""
         os_release = self.get_os_release()
         for item in os_release:
             if item.startswith('NAME='):
@@ -107,13 +117,15 @@ class OS():
                 return self.strip_quotes(name[:-1])
 
     def get_os_version(self):
+        """Get the current OS version."""
         os_release = self.get_os_release()
         for item in os_release:
             if item.startswith('VERSION_ID='):
-                version =  item.split('=')[1]
+                version = item.split('=')[1]
                 return self.strip_quotes(version[:-1])
 
     def strip_quotes(self, value):
+        """Return `value` without quotation marks."""
         new_value = value
         if value.startswith('"'):
             new_value = new_value[1:]
@@ -122,6 +134,7 @@ class OS():
         return new_value
 
     def get_os_release(self):
+        """Return a list with the current OS release data."""
         try:
             with open('/etc/os-release') as os_release_file:
                 os_release = os_release_file.readlines()

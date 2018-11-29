@@ -22,12 +22,20 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import json, os, logging
+import json
+import logging
+import os
 
 class ConfigError(Exception):
-    pass
+    """Exception raised when we can't get a valid configuration."""
 
 class Config():
+    """
+    Kernelstub Configuration Object
+
+    Loads, parses and saves configuration files and parameters for
+    kernelstub.
+    """
 
     config_path = "/etc/kernelstub/configuration"
     config = {}
@@ -51,10 +59,19 @@ class Config():
         os.makedirs('/etc/kernelstub/', exist_ok=True)
 
     def load_config(self):
+        """
+        Loads a configuration from a file, or loads the default.
+
+        If the configuration is old, it should be upgraded to a newer version.
+        If the configuration file doesn't match expected conventions, try to
+        correct it and warn the user about the issue.
+
+        Returns a valid configuration dictionary.
+        """
         self.log.info('Looking for configuration...')
 
         if os.path.exists(self.config_path):
-            self.log.debug('Checking %s' % self.config_path)
+            self.log.debug('Checking %s', self.config_path)
 
             with open(self.config_path) as config_file:
                 self.config = json.load(config_file)
@@ -77,7 +94,7 @@ class Config():
             self.config['user'] = self.config['default'].copy()
 
         try:
-            self.log.debug('Configuration version: %s' % self.config['user']['config_rev'])
+            self.log.debug('Configuration version: %s', self.config['user']['config_rev'])
             if self.config['user']['config_rev'] < self.config_default['default']['config_rev']:
                 self.log.warning("Updating old configuration.")
                 self.config = self.update_config(self.config)
@@ -85,12 +102,16 @@ class Config():
             elif self.config['user']['config_rev'] == self.config_default['default']['config_rev']:
                 self.log.debug("Configuration up to date")
                 # Double-checking in case OEMs do bad things with the config file
-                if type(self.config['user']['kernel_options']) is str:
-                    self.log.warning('Invalid kernel_options format!\n\n'
-                                     'Usually outdated or buggy maintainer packages from your hardware OEM. '
-                                     'Contact your hardware vendor to inform them to fix their packages.')
+                if isinstance(self.config['user']['kernel_options'], str):
+                    self.log.warning(
+                        'Invalid kernel_options format!\n\n Usually outdated or '
+                        'buggy maintainer packages from your hardware OEM. '
+                        'Contact your hardware vendor to inform them to fix '
+                        'their packages.'
+                    )
                     try:
-                        self.config['user']['kernel_options'] = self.parse_options(self.config['user']['kernel_options'].split())
+                        options = self.parse_options(self.config['user']['kernel_options'])
+                        self.config['user']['kernel_options'] = options.split()
                     except:
                         raise ConfigError('Malformed configuration file found!')
                         exit(169)
@@ -103,34 +124,48 @@ class Config():
         return self.config
 
     def save_config(self, path='/etc/kernelstub/configuration'):
-        self.log.debug('Saving configuration to %s' % path)
+        """Saves the configuration we've used to the file."""
+        self.log.debug('Saving configuration to %s', path)
 
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
-        
+
         self.log.debug('Configuration saved!')
         return 0
 
     def update_config(self, config):
+        """Updates old configuration to a new version and returns the new one"""
         if config['user']['config_rev'] < 2:
             config['user']['live_mode'] = False
             config['default']['live_mode'] = False
         if config['user']['config_rev'] < 3:
-            if type(config['user']['kernel_options']) is str:
-                config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
-            if type(config['default']['kernel_options']) is str:
-                config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
+            if isinstance(config['user']['kernel_options'], str):
+                options = self.parse_options(config['user']['kernel_options'])
+                config['user']['kernel_options'] = options.split()
+            if isinstance(config['default']['kernel_options'], str):
+                options = self.parse_options(config['default']['kernel_options'])
+                config['default']['kernel_options'] = options.split()
         config['user']['config_rev'] = 3
         config['default']['config_rev'] = 3
         return config
 
     def parse_options(self, options):
+        """
+        Parse a list of kernel options
+
+        Takes a list object and ensure that each item in the list is a single
+        linux kernel option. Returns the resulting list.
+
+        Positional Argument:
+        options -- The list of kernel options.
+
+        """
         self.log.debug(options)
         for index, option in enumerate(options):
             if '"' in option:
                 matched = False
                 itr = 1
-                while matched == False:
+                while matched is False:
                     try:
                         next_option = options[index + itr]
                         option = '%s %s' % (option, next_option)
@@ -145,5 +180,6 @@ class Config():
         return options
 
     def print_config(self):
+        """Returns a printable version of the configuration"""
         output_config = json.dumps(self.config, indent=2)
         return output_config

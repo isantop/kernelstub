@@ -39,193 +39,202 @@ terms.
  kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
-import argparse, os
+import argparse
+import os
 
 from kernelstub import application
 
-def main(options=None): # Do the thing
+def main(options=None):
+    """ Do the thing - Main Kernelstub Function"""
     kernelstub = application.Kernelstub()
     # Set up argument processing
     parser = argparse.ArgumentParser(
-        description = "Automatic Kernel EFIstub manager")
+        description="Automatic Kernel EFIstub manager")
     loader_stub = parser.add_mutually_exclusive_group()
     install_loader = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         '-c',
         '--dry-run',
-        action = 'store_true',
-        dest = 'dry_run',
-        help = 'Don\'t perform any actions, just simulate them.'
+        action='store_true',
+        dest='dry_run',
+        help='Don\'t perform any actions, just simulate them.'
     )
     parser.add_argument(
         '-p',
         '--print-config',
-        action = 'store_true',
-        dest = 'print_config',
-        help = 'Print the current configuration and exit'
+        action='store_true',
+        dest='print_config',
+        help='Print the current configuration and exit'
     )
 
     parser.add_argument(
         '-e',
-        dest = 'esp_path',
-        metavar = 'ESP,',
-        help = ''
+        dest='esp_path',
+        metavar='ESP,',
+        help=''
     )
     parser.add_argument(
         '--esp-path',
-        dest = 'esp_path',
-        metavar = 'ESP',
-        help = 'Manually specify the path to the ESP. Default is /boot/efi'
+        dest='esp_path',
+        metavar='ESP',
+        help='Manually specify the path to the ESP. Default is /boot/efi'
     )
 
     parser.add_argument(
         '-r',
-        dest = 'root_path',
-        metavar = 'ROOT',
-        help = ''
+        dest='root_path',
+        metavar='ROOT',
+        help=''
     )
     parser.add_argument(
         '--root-path',
-        dest = 'root_path',
-        metavar = 'ROOT',
-        help = 'The path where the root filesystem to use is mounted.'
+        dest='root_path',
+        metavar='ROOT',
+        help='The path where the root filesystem to use is mounted.'
     )
 
     parser.add_argument(
         '-k',
-        dest = 'kernel_path',
-        metavar= 'PATH,',
-        help = ''
+        dest='kernel_path',
+        metavar='PATH,',
+        help=''
     )
     parser.add_argument(
         '--kernel-path',
-        dest = 'kernel_path',
-        metavar= 'PATH',
-        help = 'The path to the kernel image.'
+        dest='kernel_path',
+        metavar='PATH',
+        help='The path to the kernel image.'
     )
 
     parser.add_argument(
         '-i',
-        dest = 'initrd_path',
-        metavar = 'PATH,',
-        help = ''
+        dest='initrd_path',
+        metavar='PATH,',
+        help=''
     )
     parser.add_argument(
         '--initrd-path',
-        dest = 'initrd_path',
-        metavar = 'PATH',
-        help = 'The path to the initrd image.'
+        dest='initrd_path',
+        metavar='PATH',
+        help='The path to the initrd image.'
     )
 
     parser.add_argument(
         '-o',
-        dest = 'k_options',
-        metavar = '"OPTIONS",',
-        help = ''
+        dest='k_options',
+        metavar='"OPTIONS",',
+        help=''
     )
     parser.add_argument(
         '--options',
-        dest = 'k_options',
-        metavar = '"OPTIONS"',
-        help = 'The total boot options to be passed to the kernel'
+        dest='k_options',
+        metavar='"OPTIONS"',
+        help='The total boot options to be passed to the kernel'
     )
 
     parser.add_argument(
         '-a',
-        dest = 'add_options',
-        metavar = '"OPTIONS",',
-        help = ''
+        dest='add_options',
+        metavar='"OPTIONS",',
+        help=''
     )
     parser.add_argument(
         '--add-options',
-        dest = 'add_options',
-        metavar = '"OPTIONS"',
-        help = ('Boot options to add to the configuration '
-               '(if they aren\'t already present)')
-   )
+        dest='add_options',
+        metavar='"OPTIONS"',
+        help=(
+            'Boot options to add to the configuration (if they aren\'t '
+            'already present)'
+        )
+    )
 
     parser.add_argument(
         '-d',
-        dest = 'remove_options',
-        metavar = "OPTIONS",
-        help = ''
+        dest='remove_options',
+        metavar="OPTIONS",
+        help=''
     )
     parser.add_argument(
         '--delete-options',
-        dest = 'remove_options',
-        metavar = '"OPTIONS"',
-        help = ('Boot options to remove from the configuration '
-                '(if they\'re present already)')
+        dest='remove_options',
+        metavar='"OPTIONS"',
+        help=(
+            'Boot options to remove from the configuration (if they\'re '
+            'present already)'
+        )
     )
 
     parser.add_argument(
         '-g',
-        dest = 'log_file',
-        metavar = 'LOG',
-        help = ''
+        dest='log_file',
+        metavar='LOG',
+        help=''
     )
     parser.add_argument(
         '--log-file',
-        dest = 'log_file',
-        metavar = 'LOG',
-        help = ('The path to the log file to use. Defaults to ' 
-               '/var/log/kernelstub.log')
+        dest='log_file',
+        metavar='LOG',
+        help=(
+            'The path to the log file to use. Defaults to '
+            '/var/log/kernelstub.log'
+        )
     )
 
     install_loader.add_argument(
         '-l',
         '--loader',
-        action = 'store_true',
-        dest = 'setup_loader',
-        help = 'Creates a systemd-boot compatible loader configuration'
+        action='store_true',
+        dest='setup_loader',
+        help='Creates a systemd-boot compatible loader configuration'
     )
     install_loader.add_argument(
         '-n',
         '--no-loader',
-        action = 'store_true',
-        dest = 'off_loader',
-        help = 'Turns off creating loader configuration'
+        action='store_true',
+        dest='off_loader',
+        help='Turns off creating loader configuration'
     )
 
     loader_stub.add_argument(
         '-s',
         '--stub',
-        action = 'store_true',
-        dest = 'install_stub',
-        help = 'Set up NVRAM entries for the copied kernel'
+        action='store_true',
+        dest='install_stub',
+        help='Set up NVRAM entries for the copied kernel'
     )
 
     loader_stub.add_argument(
         '-m',
         '--manage-only',
-        action = 'store_true',
-        dest = 'manage_mode',
-        help = 'Only copy entries, don\'t set up the NVRAM'
+        action='store_true',
+        dest='manage_mode',
+        help='Only copy entries, don\'t set up the NVRAM'
     )
 
     parser.add_argument(
         '-f',
         '--force-update',
-        action = 'store_true',
-        dest = 'force_update',
-        help = ('Forcibly update any loader.conf to set the new entry as the ' 
-               'default')
+        action='store_true',
+        dest='force_update',
+        help=(
+            'Forcibly update any loader.conf to set the new entry as the default'
+        )
     )
 
     parser.add_argument(
         '-v',
         '--verbose',
-        action = 'count',
-        dest = 'verbosity',
-        help = 'Increase program verbosity and display extra output.'
+        action='count',
+        dest='verbosity',
+        help='Increase program verbosity and display extra output.'
     )
 
     parser.add_argument(
         '--preserve-live-mode',
-        action = 'store_true',
-        dest = 'preserve_live',
-        help = argparse.SUPPRESS
+        action='store_true',
+        dest='preserve_live',
+        help=argparse.SUPPRESS
     )
 
     args = parser.parse_args()
@@ -234,8 +243,9 @@ def main(options=None): # Do the thing
 
     if os.geteuid() != 0:
         parser.print_help()
-        print('kernelstub: ERROR: You need to be root or use sudo to run ' 
-              'kernelstub!')
+        print(
+            'kernelstub:ERROR: You need to be root or use sudo to run kernelstub'
+        )
         exit(176)
 
     kernelstub.main(args)

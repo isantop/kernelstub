@@ -39,17 +39,8 @@ terms.
  kernelstub will load parameters from the /etc/default/kernelstub config file.
 """
 
-import logging, os
-
-systemd_support = False
-try:
-    from systemd.journal import JournalHandler
-    systemd_support = True
-
-except ImportError:
-    pass
-
-import logging.handlers as handlers
+import logging
+import os
 
 from . import drive as Drive
 from . import nvram as Nvram
@@ -57,32 +48,33 @@ from . import opsys as Opsys
 from . import installer as Installer
 from . import config as Config
 
-class CmdLineError(Exception):
+SYSTEMD_SUPPORT = False
+try:
+    from systemd.journal import JournalHandler
+    SYSTEMD_SUPPORT = True
+
+except ImportError:
     pass
 
+class CmdLineError(Exception):
+    """ Exception raised when we can't find any kernel parameters """
+
 class Kernelstub():
+    """ Main Kernelstub Class """
 
-    def parse_options(self, options):
-        for index, option in enumerate(options):
-            if '"' in option:
-                matched = False
-                itr = 1
-                while matched == False:
-                    try:
-                        next_option = options[index + itr]
-                        option = '%s %s' % (option, next_option)
-                        options[index + itr] = ""
-                        if '"' in next_option:
-                            matched = True
-                        else:
-                            itr = itr + 1
-                    except IndexError:
-                        matched = True
-            options[index] = option
-        return options
+    def mktable(self, data, padding):
+        """
+        Makes a table from a dictionary.
 
-    def main(self, args): # Do the thing
+        returns: a str containing the table.
+        """
+        table = ''
+        for i in data:
+            table += '    {0:{pad}} {1}\n'.format(i, data[i], pad=padding)
+        return table
 
+    def main(self, args):
+        """ Do the thing """
         log_file_path = '/var/log/kernelstub.log'
         if args.log_file:
             log_file_path = args.log_file
@@ -115,7 +107,7 @@ class Kernelstub():
         console_log.setFormatter(stream_fmt)
         console_log.setLevel(console_level)
 
-        file_log = handlers.RotatingFileHandler(
+        file_log = logging.handlers.RotatingFileHandler(
             log_file_path, maxBytes=(1048576*5), backupCount=5)
         file_log.setFormatter(file_fmt)
         file_log.setLevel(file_level)
@@ -123,7 +115,7 @@ class Kernelstub():
         log.addHandler(console_log)
         log.addHandler(file_log)
 
-        if systemd_support:
+        if SYSTEMD_SUPPORT:
             journald_log = JournalHandler()
             journald_log.setLevel(file_level)
             journald_log.setFormatter(stream_fmt)
@@ -131,7 +123,7 @@ class Kernelstub():
 
         log.setLevel(logging.DEBUG)
 
-        log.debug('Got command line options: %s' % args)
+        log.debug('Got command line options: %s', args)
 
         # Figure out runtime options
         no_run = False
@@ -151,45 +143,44 @@ class Kernelstub():
         opsys = Opsys.OS()
 
         if args.kernel_path:
-            log.debug(
-                'Manually specified kernel path:\n ' +
-                '               %s' % args.kernel_path)
+            log.debug('Manual kernel path:\n %s', args.kernel_path)
             opsys.kernel_path = args.kernel_path
         else:
             opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
 
         if args.initrd_path:
-            log.debug(
-                'Manually specified initrd path:\n ' +
-                '               %s' % args.initrd_path)
+            log.debug('Manual initrd path:\n %s', args.initrd_path)
             opsys.initrd_path = args.initrd_path
         else:
             opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
-            log.exception('Can\'t find the kernel image! \n\n'
-                         'Please use the --kernel-path option to specify '
-                         'the path to the kernel image')
+            log.exception(
+                'Can\'t find the kernel image! \n\n Please use the '
+                '--kernel-path option to specify the path to the kernel image'
+            )
             exit(0)
 
         if not os.path.exists(opsys.initrd_path):
-            log.exception('Can\'t find the initrd image! \n\n'
-                         'Please use the --initrd-path option to specify '
-                         'the path to the initrd image')
+            log.exception(
+                'Can\'t find the initrd image! \n\n Please use the '
+                '--initrd-path option to specify the path to the initrd image'
+            )
             exit(0)
 
         # Check for kernel parameters. Without them, stop and fail
         if args.k_options:
-            configuration['kernel_options'] = self.parse_options(args.k_options.split())
+            configuration['kernel_options'] = config.parse_options(args.k_options.split())
         else:
             try:
                 configuration['kernel_options']
             except KeyError:
-                error = ("cmdline was 'InvalidConfig'\n\n"
-                         "Could not find any valid configuration. This "
-                         "probably means that the configuration file is "
-                         "corrupt. Either remove it to regenerate it from"
-                         "default or fix the existing one.")
+                error = (
+                    'cmdline was "InvalidConfig"\n\n Could not find any valid '
+                    'configuration. This probably means that the configuration '
+                    'file is corrupt. Either remove it to regenerate it from '
+                    'default or fix the existing one.'
+                )
                 log.exception(error)
                 raise CmdLineError("No Kernel Parameters found")
                 exit(168)
@@ -228,6 +219,7 @@ class Kernelstub():
             setup_loader = configuration['setup_loader']
             manage_mode = configuration['manage_mode']
             force = configuration['force_update']
+            live_mode = configuration['live_mode']
 
         except KeyError:
             log.exception(
@@ -237,7 +229,7 @@ class Kernelstub():
                 'If you can\'t figure it out, then deleting them should fix '
                 'the errors and cause kernelstub to regenerate them from '
                 'Default. \n\n You can use "-vv" to get the configuration used.')
-            log.debug('Configuration we got: \n\n%s' % config.print_config())
+            log.debug('Configuration we got: \n\n%s', config.print_config())
             exit(169)
 
 
@@ -257,7 +249,7 @@ class Kernelstub():
 
         if args.force_update:
             force = True
-        if configuration['force_update'] == True:
+        if configuration['force_update'] is True:
             force = True
 
         log.debug('Structing objects')
@@ -267,35 +259,66 @@ class Kernelstub():
         installer = Installer.Installer(nvram, opsys, drive)
 
         # Log some helpful information, to file and optionally console
-        info = (
-            '    OS:..................%s %s\n' %(opsys.name_pretty,opsys.version) +
-            '    Root partition:......%s\n'    % drive.root_fs +
-            '    Root FS UUID:........%s\n'    % drive.root_uuid +
-            '    ESP Path:............%s\n'    % esp_path +
-            '    ESP Partition:.......%s\n'    % drive.esp_fs +
-            '    ESP Partition #:.....%s\n'    % drive.esp_num +
-            '    NVRAM entry #:.......%s\n'    % nvram.os_entry_index +
-            '    Boot Variable #:.....%s\n'    % nvram.order_num +
-            '    Kernel Boot Options:.%s\n'    % " ".join(kernel_opts) +
-            '    Kernel Image Path:...%s\n'    % opsys.kernel_path +
-            '    Initrd Image Path:...%s\n'    % opsys.initrd_path +
-            '    Force-overwrite:.....%s\n'    % str(force))
+        data_system = {
+            'Root:': drive.root_fs,
+            'ESP:': drive.esp_fs,
+            'Kernel Path:': opsys.kernel_path,
+            'Initrd Path:': opsys.initrd_path,
+            'Boot Options:': " ".join(kernel_opts),
+        }
+        data_debug = {
+            'OS:': "{} {}".format(opsys.name_pretty, opsys.version),
+            'ESP Partition #:': drive.esp_num,
+            'NVRAM entry #:': nvram.os_entry_index,
+            'Boot Variable #:': nvram.order_num,
+            'Root FS UUID:': drive.root_uuid,
+        }
+        data_config = {
+            'Kernel Options:': " ".join(kernel_opts),
+            'ESP Path:': esp_path,
+            'Install loader config:': setup_loader,
+            'Management Mode:': manage_mode,
+            'Force Overwrite:': str(force),
+            'Live Disk Mode:': live_mode,
+            'Config revision:': configuration['config_rev']
+        }
+        if args.print_config:
+            log.info(
+                'System information:\n\n%s', self.mktable(data_system, 22)
+            )
+            log.debug(
+                'Debug information:\n\n%s', self.mktable(data_debug, 22)
+            )
+            log.info(
+                'Active configuration details:\n\n%s',
+                self.mktable(data_config, 22)
+            )
+            exit(0)
 
-        log.info('System information: \n\n%s' % info)
+        log.info(
+            'System information:\n\n%s', self.mktable(data_system, 16)
+        )
+        log.debug(
+            'Debug information:\n\n%s', self.mktable(data_debug, 16)
+        )
+        log.debug(
+            'Active configuration:\n\n%s', self.mktable(data_config, 22)
+        )
 
         if args.print_config:
-            all_config = (
-                '   ESP Location:..................%s\n' % configuration['esp_path'] +
-                '   Management Mode:...............%s\n' % configuration['manage_mode'] +
-                '   Install Loader configuration:..%s\n' % configuration['setup_loader'] +
-                '   Configuration version:.........%s\n' % configuration['config_rev'])
-            log.info('Configuration details: \n\n%s' % all_config)
+            log.info(
+                'Active configuration details:\n\n%s',
+                self.mktable(data_config, 22)
+            )
             exit(0)
 
         log.debug('Setting up boot...')
 
-        kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, " ".join(kernel_opts))
-        log.debug('kopts: %s' % kopts)
+        kopts = 'root=UUID={uuid} ro {options}'.format(
+            uuid=drive.root_uuid,
+            options=" ".join(kernel_opts)
+        )
+        log.debug('kopts: %s', kopts)
 
 
 
@@ -309,11 +332,13 @@ class Kernelstub():
                 kopts,
                 setup_loader=setup_loader,
                 simulate=no_run)
-        except Exception as e:
-            log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
-                      'You don\'t have an old kernel installed. If you do, try ' +
-                      'with -vv to see debuging information')
-            log.debug(e)
+        except Exception as e_e:
+            log.debug(
+                'Couldn\'t back up old kernel. \nThis might just mean you '
+                'don\'t have an older kernel installed. If you do, try with -vv'
+                ' to see debugging information'
+            )
+            log.debug(e_e)
 
         installer.copy_cmdline(simulate=no_run)
 
@@ -328,4 +353,3 @@ class Kernelstub():
         log.debug('Setup complete!\n\n')
 
         return 0
-

@@ -22,15 +22,21 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, logging
+import os
+import logging
 
 class NoBlockDevError(Exception):
-    pass
+    """No Block Device Found Exception"""
 
 class UUIDNotFoundError(Exception):
-    pass
+    """No UUID for device found Exception"""
 
 class Drive():
+    """
+    Kernelstub Drive Object
+
+    Stores and retrieves information related to the current drive.
+    """
 
     drive_name = 'none'
     root_fs = '/'
@@ -46,8 +52,8 @@ class Drive():
 
         self.esp_path = esp_path
         self.root_path = root_path
-        self.log.debug('root path = %s' % self.root_path)
-        self.log.debug('esp_path = %s' % self.esp_path)
+        self.log.debug('root path = %s', self.root_path)
+        self.log.debug('esp_path = %s', self.esp_path)
 
         self.mtab = self.get_drives()
 
@@ -57,25 +63,29 @@ class Drive():
             self.drive_name = self.get_drive_dev(self.esp_fs)
             self.esp_num = self.esp_fs[-1]
             self.root_uuid = self.get_uuid(self.root_fs[5:])
-        except NoBlockDevError as e:
-            self.log.exception('Could not find a block device for the a ' +
-                               'partition. This is a critical error and we ' +
-                               'cannot continue.')
-            self.log.debug(e)
+        except NoBlockDevError as e_e:
+            self.log.exception(
+                'Could not find a block device for the a partition. This is a'
+                'critical error and we cannot continue.'
+            )
+            self.log.debug(e_e)
             exit(174)
-        except UUIDNotFoundError as e:
-            self.log.exception('Could not get a UUID for the a filesystem. ' +
-                               'This is a critical error and we cannot continue')
-            self.log.debug(e)
+        except UUIDNotFoundError as e_e:
+            self.log.exception(
+                'Could not find a block device for the a partition. This is a '
+                'critical error and we cannot continue.'
+            )
+            self.log.debug(e_e)
             exit(177)
 
 
-        self.log.debug('Root is on /dev/%s' % self.drive_name)
-        self.log.debug('root_fs = %s ' % self.root_fs)
-        self.log.debug('root_uuid is %s' % self.root_uuid)
+        self.log.debug('Root is on /dev/%s', self.drive_name)
+        self.log.debug('root_fs = %s ', self.root_fs)
+        self.log.debug('root_uuid is %s', self.root_uuid)
 
 
     def get_drives(self):
+        """Returns a list of information about mounted filesystems."""
         self.log.debug('Getting a list of drives')
         with open('/proc/mounts', mode='r') as proc_mounts:
             mtab = proc_mounts.readlines()
@@ -84,33 +94,37 @@ class Drive():
         return mtab
 
     def get_part_dev(self, path):
-        self.log.debug('Getting the block device file for %s' % path)
+        """Returns a block device file for `path`."""
+        self.log.debug('Getting the block device file for %s', path)
         for mount in self.mtab:
             drive = mount.split(" ")
             if drive[1] == path:
                 part_dev = os.path.realpath(drive[0])
-                self.log.debug('%s is on %s' % (path, part_dev))
+                self.log.debug('%s is on %s', path, part_dev)
                 return part_dev
-        raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
+        raise NoBlockDevError(
+            'Couldn\'t find the block device for {}'.format(path)
+        )
 
-    def get_drive_dev(self, esp):
+    def get_drive_dev(self, blockdev):
+        """Returns a block device for the drive partition blockdev is on."""
         # Ported from bash, out of @jackpot51's firmware updater
-        efi_name = os.path.basename(esp)
-        efi_sys = os.readlink('/sys/class/block/%s' % efi_name)
+        efi_name = os.path.basename(blockdev)
+        efi_sys = os.readlink('/sys/class/block/%s', efi_name)
         disk_sys = os.path.dirname(efi_sys)
         disk_name = os.path.basename(disk_sys)
-        self.log.debug('ESP is a partition on /dev/%s' % disk_name)
+        self.log.debug('ESP is a partition on /dev/%s', disk_name)
         return disk_name
 
-    def get_uuid(self, fs):
+    def get_uuid(self, filesystem):
+        """Get a UUID for a filesystem."""
         all_uuids = os.listdir('/dev/disk/by-uuid')
-        self.log.debug('Looking for UUID for %s' % fs)
-        self.log.debug('List of UUIDs:\n%s' % all_uuids)
+        self.log.debug('Looking for UUID for %s', filesystem)
+        self.log.debug('List of UUIDs:\n%s', all_uuids)
 
         for uuid in all_uuids:
             uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
-            if fs in os.path.realpath(uuid_path):
+            if filesystem in os.path.realpath(uuid_path):
                 return uuid
 
         raise UUIDNotFoundError
-    

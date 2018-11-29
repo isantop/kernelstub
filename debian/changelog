@@ -1,3 +1,10 @@
+kernelstub (3.2.0) cosmic; urgency=medium
+
+  * Reformatted output
+  * Revisions to make code cleaner and more pythonic
+
+ -- Ian Santopietro <ian@system76.com>  Wed, 28 Nov 2018 15:08:31 -0700
+
 kernelstub (3.1.0) bionic; urgency=medium
 
   * Add logging to systemd journald
