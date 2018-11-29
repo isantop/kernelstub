@@ -124,7 +124,18 @@ class Kernelstub():
 
         log.setLevel(logging.DEBUG)
 
+        # Figure out our command line options.
         log.debug('Got command line options: %s', args)
+
+        if args.dry_run:
+            log.warning(
+                'DEPRECATED!\n\n'
+                'The simulate or dry-run option has been removed from '
+                'kernelstub and no longer functions. This will be removed in a '
+                'future version. Since you likely intend no action, we will now '
+                'exit.'
+            )
+            exit()
 
         config = Config.Config()
         configuration = config.config['user']

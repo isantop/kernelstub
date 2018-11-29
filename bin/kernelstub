@@ -58,7 +58,7 @@ def main(options=None):
         '--dry-run',
         action='store_true',
         dest='dry_run',
-        help='Don\'t perform any actions, just simulate them.'
+        help=argparse.SUPPRESS
     )
     parser.add_argument(
         '-p',
