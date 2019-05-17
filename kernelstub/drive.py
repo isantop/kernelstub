@@ -63,6 +63,8 @@ class Drive():
             self.drive_name = self.get_drive_dev(self.esp_fs)
             self.esp_num = self.esp_fs[-1]
             self.root_uuid = self.get_uuid(self.root_fs[5:])
+            self.uuid_name = self.root_uuid.split('-')
+            self.uuid_name = self.uuid_name[0]
         except NoBlockDevError as e_e:
             self.log.exception(
                 'Could not find a block device for the a partition. This is a'

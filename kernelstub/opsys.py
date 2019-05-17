@@ -37,6 +37,7 @@ class OS():
     kernel_name = 'vmlinuz'
     initrd_name = 'initrd.img'
     kernel_release = platform.release()
+    hostname = platform.node()
     kernel_path = '/vmlinuz'
     initrd_path = '/initrd.img'
 
