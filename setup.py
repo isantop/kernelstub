@@ -21,21 +21,27 @@ Portions of test-related code authored by Jason DeRose <jason@system76.com>
 
 from distutils.core import setup
 from distutils.cmd import Command
-import os, subprocess, sys
+import os
+import subprocess
+import sys
 
 TREE = os.path.dirname(os.path.abspath(__file__))
 DIRS = [
     'kernelstub',
-    'bin']
+    'bin'
+]
 
 
 def run_under_same_interpreter(opname, script, args):
+    """Re-run with the same as current interpreter."""
     print('\n** running: {}...'.format(script), file=sys.stderr)
     if not os.access(script, os.R_OK | os.X_OK):
-        print('ERROR: cannot read and execute: {!r}'.format(script),
+        print(
+            'ERROR: cannot read and execute: {!r}'.format(script),
             file=sys.stderr
         )
-        print('Consider running `setup.py test --skip-{}`'.format(opname),
+        print(
+            'Consider running `setup.py test --skip-{}`'.format(opname),
             file=sys.stderr
         )
         sys.exit(3)
@@ -45,6 +51,7 @@ def run_under_same_interpreter(opname, script, args):
     print('** PASSED: {}\n'.format(script), file=sys.stderr)
 
 def run_pyflakes3():
+    """Run a round of pyflakes3."""
     script = '/usr/bin/pyflakes3'
     names = [
         'setup.py',
@@ -55,6 +62,7 @@ def run_pyflakes3():
 
 
 class Test(Command):
+    """Basic sanity checks on our code."""
     description = 'run pyflakes3'
 
     user_options = [
@@ -72,8 +80,9 @@ class Test(Command):
         if not self.skip_flakes:
             run_pyflakes3()
 
-setup(name='kernelstub',
-    version='3.1.0',
+setup(
+    name='kernelstub',
+    version='3.2.0',
     description='Automatic kernel efistub manager for UEFI',
     url='https://launchpad.net/kernelstub',
     author='Ian Santopietro',
@@ -85,5 +94,6 @@ setup(name='kernelstub',
     data_files=[
         ('/etc/kernel/postinst.d', ['data/kernel/zz-kernelstub']),
         ('/etc/initramfs/post-update.d', ['data/initramfs/zz-kernelstub']),
-        ('/etc/default', ['data/config/kernelstub.SAMPLE'])]
-    )
+        ('/etc/default', ['data/config/kernelstub.SAMPLE'])
+    ]
+)

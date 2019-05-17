@@ -22,13 +22,20 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, shutil, logging
+import logging
+import os
+import shutil
 
 class FileOpsError(Exception):
-    pass
+    """Exception thrown when a file operation fails."""
 
 class Installer():
+    """
+    Installer class for Kernelstub.
 
+    Takes the information processed by kernelstub and performs the boot
+    configuration and setup.
+    """
     loader_dir = '/boot/efi/loader'
     entry_dir = '/boot/efi/loader/entries'
     os_dir_name = 'linux-kernelstub'
@@ -46,7 +53,7 @@ class Installer():
         self.work_dir = os.path.join(self.drive.esp_path, "EFI")
         self.loader_dir = os.path.join(self.drive.esp_path, "loader")
         self.entry_dir = os.path.join(self.loader_dir, "entries")
-        self.os_dir_name = "%s-%s" % (self.opsys.name, self.drive.root_uuid)
+        self.os_dir_name = "{}-{}".format(self.opsys.name, self.drive.root_uuid)
         self.os_folder = os.path.join(self.work_dir, self.os_dir_name)
         self.kernel_dest = os.path.join(self.os_folder, self.opsys.kernel_name)
         self.initrd_dest = os.path.join(self.os_folder, self.opsys.initrd_name)
@@ -57,71 +64,84 @@ class Installer():
             os.makedirs(self.entry_dir)
 
 
-    def backup_old(self, kernel_opts, setup_loader=False, simulate=False):
+    def backup_old(self, kernel_opts, setup_loader=False):
+        """Copy the previous kernel (if present) into the ESP."""
         self.log.info('Backing up old kernel')
 
-        kernel_name = "%s-previous.efi" % self.opsys.kernel_name
+        kernel_name = "{}-previous.efi".format(self.opsys.kernel_name)
         kernel_dest = os.path.join(self.os_folder, kernel_name)
         try:
             self.copy_files(
-                '%s.old' % self.opsys.kernel_path,
-                kernel_dest,
-                simulate=simulate)
-        except:
-            self.log.debug('Couldn\'t back up old kernel. There\'s ' +
-                           'probably only one kernel installed.')
+                '{}.old'.format(self.opsys.kernel_path),
+                kernel_dest)
+        except OSError:
+            self.log.debug(
+                'Couldn\'t back up old kernel. There\'s probably only one '
+                'kernel installed.'
+            )
             self.old_kernel = False
-            pass
 
-        initrd_name = "%s-previous" % self.opsys.initrd_name
+        initrd_name = "{}-previous".format(self.opsys.initrd_name)
         initrd_dest = os.path.join(self.os_folder, initrd_name)
         try:
             self.copy_files(
-                '%s.old' % self.opsys.initrd_path,
-                initrd_dest,
-                simulate=simulate)
-        except:
-            self.log.debug('Couldn\'t back up old initrd.img. There\'s ' +
-                           'probably only one kernel installed.')
+                '{}.old'.format(self.opsys.initrd_path),
+                initrd_dest)
+        except OSError:
+            self.log.debug(
+                'Couldn\'t back up old kernel. There\'s probably only one '
+                'kernel installed.'
+            )
             self.old_kernel = False
-            pass
 
         if setup_loader and self.old_kernel:
             self.ensure_dir(self.entry_dir)
-            linux_line = '/EFI/%s-%s/%s-previous.efi' % (self.opsys.name,
-                                                         self.drive.root_uuid,
-                                                         self.opsys.kernel_name)
-            initrd_line = '/EFI/%s-%s/%s-previous' % (self.opsys.name,
-                                                      self.drive.root_uuid,
-                                                      self.opsys.initrd_name)
+            linux_line = '/EFI/{}-{}/{}-previous.efi'.format(
+                self.opsys.name,
+                self.drive.root_uuid,
+                self.opsys.kernel_name
+            )
+            initrd_line = '/EFI/{}-{}/{}-previous'.format(
+                self.opsys.name,
+                self.drive.root_uuid,
+                self.opsys.initrd_name
+            )
+            entry_file = '{}-{}({})-oldkern'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
-                self.opsys.name_pretty,
+                '{} ({}) - previous kernel'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
-                os.path.join(self.entry_dir, '%s-oldkern' % self.opsys.name))
+                os.path.join(
+                    self.entry_dir, entry_file
+                )
+            )
 
-    def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False, simulate=False):
+    def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False):
+        """Copy the active kernel into the ESP."""
         self.log.info('Copying Kernel into ESP')
         self.kernel_dest = os.path.join(
             self.os_folder,
-            "%s.efi" % self.opsys.kernel_name)
-        self.ensure_dir(self.os_folder, simulate=simulate)
-        self.log.debug('kernel being copied to %s' % self.kernel_dest)
+            "{}.efi".format(self.opsys.kernel_name))
+        self.ensure_dir(self.os_folder)
+        self.log.debug('kernel being copied to %s', self.kernel_dest)
 
         try:
             self.copy_files(
                 self.opsys.kernel_path,
-                self.kernel_dest,
-                simulate=simulate)
+                self.kernel_dest)
 
-        except FileOpsError as e:
+        except FileOpsError as e_e:
             self.log.exception(
-                'Couldn\'t copy the kernel onto the ESP!\n' +
-                'This is a critical error and we cannot continue. Check your ' +
-                'settings to see if there is a typo. Otherwise, check ' +
+                'Couldn\'t copy the kernel onto the ESP!\n'
+                'This is a critical error and we cannot continue. Check your '
+                'settings to see if there is a typo. Otherwise, check '
                 'permissions and try again.')
-            self.log.debug(e)
+            self.log.debug(e_e)
             exit(170)
 
         self.log.info('Copying initrd.img into ESP')
@@ -129,116 +149,118 @@ class Installer():
         try:
             self.copy_files(
                 self.opsys.initrd_path,
-                self.initrd_dest,
-                simulate=simulate)
+                self.initrd_dest)
 
-        except FileOpsError as e:
-            self.log.exception('Couldn\'t copy the initrd onto the ESP!\n' +
-                               'This is a critical error and we cannot ' +
-                               'continue. Check your settings to see if ' +
-                               'there is a typo. Otherwise, check permissions ' +
-                               'and try again.')
-            self.log.debug(e)
+        except FileOpsError as e_e:
+            self.log.exception(
+                'Couldn\'t copy the initrd onto the ESP!\n This is a critical '
+                'error and we cannot continue. Check your settings to see if '
+                'there is a typo. Otherwise, check permissions and try again.'
+            )
+            self.log.debug(e_e)
             exit(171)
 
         self.log.debug('Copy complete')
 
         if setup_loader:
             self.log.info('Setting up loader.conf configuration')
-            linux_line = '/EFI/%s-%s/%s.efi' % (self.opsys.name,
-                                                self.drive.root_uuid,
-                                                self.opsys.kernel_name)
-            initrd_line = '/EFI/%s-%s/%s' % (self.opsys.name,
-                                             self.drive.root_uuid,
-                                             self.opsys.initrd_name)
-            if simulate:
-                self.log.info("Simulate creation of entry...")
-                self.log.info('Loader entry: %s/%s-current\n' %(self.entry_dir,
-                                                                self.opsys.name) +
-                              'title %s\n' % self.opsys.name_pretty +
-                              'linux %s\n' % linux_line +
-                              'initrd %s\n' % initrd_line +
-                              'options %s\n' % kernel_opts)
-                return 0
+            linux_line = '/EFI/{}-{}/{}.efi'.format(
+                self.opsys.name,
+                self.drive.root_uuid,
+                self.opsys.kernel_name
+            )
+            initrd_line = '/EFI/{}-{}/{}'.format(
+                self.opsys.name,
+                self.drive.root_uuid,
+                self.opsys.initrd_name
+            )
 
             if not overwrite:
-                if not os.path.exists('%s/loader.conf' % self.loader_dir):
+                if not os.path.exists('{}/loader.conf'.format(self.loader_dir)):
                     overwrite = True
 
             if overwrite:
                 self.ensure_dir(self.loader_dir)
                 with open(
-                    '%s/loader.conf' % self.loader_dir, mode='w') as loader:
-
-                    default_line = 'default %s-current\n' % self.opsys.name
+                        '{}/loader.conf'.format(self.loader_dir), mode='w'
+                ) as loader:
+                    default_name = '{}-{}({})-current'.format(
+                        self.opsys.name, 
+                        self.opsys.hostname, 
+                        self.drive.uuid_name
+                    )
+                    default_line = 'default {}\n'.format(default_name)
                     loader.write(default_line)
 
             self.ensure_dir(self.entry_dir)
+            entry_file = '{}-{}({})-current'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
-                self.opsys.name_pretty,
+                '{} ({})'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
-                os.path.join(self.entry_dir, '%s-current' % self.opsys.name))
+                os.path.join(
+                    self.entry_dir, entry_file
+                )
+            )
 
-
-
-
-
-    def setup_stub(self, kernel_opts, simulate=False):
+    def setup_stub(self, kernel_opts):
+        """Set up the kernel efistub bootloader."""
         self.log.info("Setting up Kernel EFISTUB loader...")
-        self.copy_cmdline(simulate=simulate)
+        self.copy_cmdline()
         self.nvram.update()
 
         if self.nvram.os_entry_index >= 0:
             self.log.info("Deleting old boot entry")
-            self.nvram.delete_boot_entry(self.nvram.order_num, simulate)
+            self.nvram.delete_boot_entry(self.nvram.order_num)
 
         else:
             self.log.debug("No old entry found, skipping removal.")
 
-        self.nvram.add_entry(self.opsys, self.drive, kernel_opts, simulate)
+        self.nvram.add_entry(self.opsys, self.drive, kernel_opts)
         self.nvram.update()
         nvram_lines = "\n".join(self.nvram.nvram)
-        self.log.info('NVRAM configured, new values: \n\n%s\n' % nvram_lines)
+        self.log.info('NVRAM configured, new values: \n\n%s\n', nvram_lines)
 
-    def copy_cmdline(self, simulate):
+    def copy_cmdline(self):
+        """Copy the current boot options into the ESP."""
         self.copy_files(
             '/proc/cmdline',
-            self.os_folder,
-            simulate = simulate
+            self.os_folder
         )
 
 
     def make_loader_entry(self, title, linux, initrd, options, filename):
-        self.log.info('Making entry file for %s' % title)
-        with open('%s.conf' % filename, mode='w') as entry:
-            entry.write('title %s\n' % title)
-            entry.write('linux %s\n' % linux)
-            entry.write('initrd %s\n' % initrd)
-            entry.write('options %s\n' % options)
+        """Create a systemd-boot loader entry file."""
+        self.log.info('Making entry file for %s', title)
+        with open('{}.conf'.format(filename), mode='w') as entry:
+            entry.write('title {}\n'.format(title))
+            entry.write('linux {}\n'.format(linux))
+            entry.write('initrd {}\n'.format(initrd))
+            entry.write('options {}\n'.format(options))
         self.log.debug('Entry created!')
 
-    def ensure_dir(self, directory, simulate=False):
-        if not simulate:
-            try:
-                os.makedirs(directory, exist_ok=True)
-                return True
-            except Exception as e:
-                self.log.exception('Couldn\'t make sure %s exists.' % directory)
-                self.log.debug(e)
-                return False
-
-    def copy_files(self, src, dest, simulate): # Copy file src into dest
-        if simulate:
-            self.log.info('Simulate copying: %s => %s' % (src, dest))
+    def ensure_dir(self, directory):
+        """Ensure that a folder exists."""
+        try:
+            os.makedirs(directory, exist_ok=True)
             return True
-        else:
-            try:
-                self.log.debug('Copying: %s => %s' % (src, dest))
-                shutil.copy(src, dest)
-                return True
-            except Exception as e:
-                self.log.debug(e)
-                raise FileOpsError("Could not copy one or more files.")
-                return False
+        except Exception as e_e:
+            self.log.exception('Couldn\'t make sure %s exists.', directory)
+            self.log.debug(e_e)
+            return False
+
+    def copy_files(self, src, dest):
+        """Copy src into dest."""
+        try:
+            self.log.debug('Copying: %s => %s', src, dest)
+            shutil.copy(src, dest)
+            return True
+        except Exception as e_e:
+            self.log.debug(e_e)
+            raise FileOpsError("Could not copy one or more files.")
+            return False

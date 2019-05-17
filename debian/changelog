@@ -1,3 +1,12 @@
+kernelstub (3.2.0) disco; urgency=medium
+
+  * Reformatted output
+  * Revisions to make code cleaner and more pythonic
+  * Adds fix for buggy UUID detection code (#22)
+  * Adds UUID and hostname to entries for better organization (#23)
+
+ -- Ian Santopietro <isantop@gmail.com>  Fri, 17 May 2019 11:43:49 -0600
+
 kernelstub (3.1.0) bionic; urgency=medium
 
   * Add logging to systemd journald
