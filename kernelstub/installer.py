@@ -106,17 +106,18 @@ class Installer():
                 self.drive.root_uuid,
                 self.opsys.initrd_name
             )
+            entry_file = '{}-{}({})-oldkern'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
-                '{} ({})-previous kernel'.format(self.opsys.name_pretty, self.opsys.hostname),
+                '{} ({}) - previous kernel'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
                 os.path.join(
-                    self.entry_dir, '{}-{}({})-oldkern'.format(
-                        self.opsys.name, 
-                        self.opsys.hostname, 
-                        self.drive.uuid_name
-                    )
+                    self.entry_dir, entry_file
                 )
             )
 
@@ -183,22 +184,27 @@ class Installer():
                 with open(
                         '{}/loader.conf'.format(self.loader_dir), mode='w'
                 ) as loader:
-
-                    default_line = 'default {}-current\n'.format(self.opsys.name)
+                    default_name = '{}-{}({})-current'.format(
+                        self.opsys.name, 
+                        self.opsys.hostname, 
+                        self.drive.uuid_name
+                    )
+                    default_line = 'default {}\n'.format(default_name)
                     loader.write(default_line)
 
             self.ensure_dir(self.entry_dir)
+            entry_file = '{}-{}({})-current'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
                 '{} ({})'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
                 os.path.join(
-                    self.entry_dir, '{}-{}({})-current'.format(
-                        self.opsys.name, 
-                        self.opsys.hostname, 
-                        self.drive.uuid_name
-                    )
+                    self.entry_dir, entry_file
                 )
             )
 
