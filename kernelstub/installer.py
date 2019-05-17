@@ -106,12 +106,20 @@ class Installer():
                 self.drive.root_uuid,
                 self.opsys.initrd_name
             )
+            entry_file = '{}-{}({})-oldkern'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
-                self.opsys.name_pretty,
+                '{} ({}) - previous kernel'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
-                os.path.join(self.entry_dir, '{}-oldkern'.format(self.opsys.name)))
+                os.path.join(
+                    self.entry_dir, entry_file
+                )
+            )
 
     def setup_kernel(self, kernel_opts, setup_loader=False, overwrite=False):
         """Copy the active kernel into the ESP."""
@@ -156,12 +164,12 @@ class Installer():
 
         if setup_loader:
             self.log.info('Setting up loader.conf configuration')
-            linux_line = '/EFI/{}-{}/{}-previous.efi'.format(
+            linux_line = '/EFI/{}-{}/{}.efi'.format(
                 self.opsys.name,
                 self.drive.root_uuid,
                 self.opsys.kernel_name
             )
-            initrd_line = '/EFI/{}-{}/{}-previous'.format(
+            initrd_line = '/EFI/{}-{}/{}'.format(
                 self.opsys.name,
                 self.drive.root_uuid,
                 self.opsys.initrd_name
@@ -176,17 +184,29 @@ class Installer():
                 with open(
                         '{}/loader.conf'.format(self.loader_dir), mode='w'
                 ) as loader:
-
-                    default_line = 'default {}-current\n'.format(self.opsys.name)
+                    default_name = '{}-{}({})-current'.format(
+                        self.opsys.name, 
+                        self.opsys.hostname, 
+                        self.drive.uuid_name
+                    )
+                    default_line = 'default {}\n'.format(default_name)
                     loader.write(default_line)
 
             self.ensure_dir(self.entry_dir)
+            entry_file = '{}-{}({})-current'.format(
+                self.opsys.name, 
+                self.opsys.hostname, 
+                self.drive.uuid_name
+            )
             self.make_loader_entry(
-                self.opsys.name_pretty,
+                '{} ({})'.format(self.opsys.name_pretty, self.opsys.hostname),
                 linux_line,
                 initrd_line,
                 kernel_opts,
-                os.path.join(self.entry_dir, '{}-current'.format(self.opsys.name)))
+                os.path.join(
+                    self.entry_dir, entry_file
+                )
+            )
 
     def setup_stub(self, kernel_opts):
         """Set up the kernel efistub bootloader."""

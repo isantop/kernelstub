@@ -1,9 +1,11 @@
-kernelstub (3.2.0) cosmic; urgency=medium
+kernelstub (3.2.0) disco; urgency=medium
 
   * Reformatted output
   * Revisions to make code cleaner and more pythonic
+  * Adds fix for buggy UUID detection code (#22)
+  * Adds UUID and hostname to entries for better organization (#23)
 
- -- Ian Santopietro <ian@system76.com>  Wed, 28 Nov 2018 15:08:31 -0700
+ -- Ian Santopietro <isantop@gmail.com>  Fri, 17 May 2019 11:43:49 -0600
 
 kernelstub (3.1.0) bionic; urgency=medium
 
