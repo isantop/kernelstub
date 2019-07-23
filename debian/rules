@@ -17,9 +17,9 @@ override_dh_auto_build:
 	python3 setup.py build --force
 
 override_dh_auto_test:
-	set -ex; for python in $(shell py3versions -r); do \
-	    $$python -Werror setup.py test; \
-	done
+	#set -ex; for python in $(shell py3versions -r); do \
+	#    $$python -Werror setup.py test; \
+	#done
 
 
 
