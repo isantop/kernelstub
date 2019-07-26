@@ -398,6 +398,8 @@ class Entry:
     
     def create_entry_file(self, path='/boot/efi/loader/entries'):
         """Saves an entry of the file."""
+        if self.setup_loader == False:
+            return False
         filename = os.path.join(path, self.entry_id + '.conf')
         kernel_destination = os.path.join('/EFI', self.entry_id)
         if not os.path.exists(path):
@@ -437,6 +439,7 @@ class Entry:
 
         with open(filename, mode="w") as entry_file:
             entry_file.writelines(entry_data)
+        return True
     
     def get_linux_version(self, kernel_path):
         if kernel_path == '/vmlinuz':
