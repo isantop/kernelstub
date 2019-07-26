@@ -27,6 +27,126 @@ import logging
 import os
 import subprocess
 
+def get_uuid(path):
+    #self.log.debug('Looking for UUID for path %s' % path)
+    try:
+        args = ['findmnt', '-n', '-o', 'uuid', '--mountpoint', path]
+        result = subprocess.run(args, stdout=subprocess.PIPE)
+        uuid = result.stdout.decode('ASCII')
+        uuid = uuid.strip()
+        return uuid
+    except OSError as e:
+        raise UUIDNotFoundError from e
+
+def get_drives():
+    #self.log.debug('Getting a list of drives')
+    with open('/proc/mounts', mode='r') as proc_mounts:
+        mtab = proc_mounts.readlines()
+    #self.log.debug(mtab)
+    return mtab
+
+def get_part_dev(mtab, path):
+    #self.log.debug('Getting the block device file for %s' % path)
+    for mount in mtab:
+        drive = mount.split(" ")
+        if drive[1] == path:
+            part_dev = os.path.realpath(drive[0])
+            #self.log.debug('%s is on %s' % (path, part_dev))
+            return part_dev
+    raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
+
+def get_drive_dev(esp):
+    # Ported from bash, out of @jackpot51's firmware updater
+    efi_name = os.path.basename(esp)
+    efi_sys = os.readlink('/sys/class/block/%s' % efi_name)
+    disk_sys = os.path.dirname(efi_sys)
+    disk_name = os.path.basename(disk_sys)
+    #self.log.debug('ESP is a partition on /dev/%s' % disk_name)
+    return disk_name
+
+def clean_names(name):
+    """
+    Remove bad characters from names.
+
+    This is a list of characters we can't/don't want to have in technical
+    names for the OS. name_pretty will still have them.
+    """
+    badchar = {
+        ' ' : '_',
+        '~' : '-',
+        '!' : '',
+        "'" : "",
+        '<' : '',
+        '>' : '',
+        ':' : '',
+        '"' : '',
+        '/' : '',
+        '\\' : '',
+        '|' : '',
+        '?' : '',
+        '*' : '',
+        'CON' : '',
+        'PRN' : '',
+        'AUX' : '',
+        'NUL' : '',
+        'COM1' : '',
+        'COM2' : '',
+        'COM3' : '',
+        'COM4' : '',
+        'COM5' : '',
+        'COM6' : '',
+        'COM7' : '',
+        'COM8' : '',
+        'COM9' : '',
+        'LPT1' : '',
+        'LPT2' : '',
+        'LPT3' : '',
+        'LPT4' : '',
+        'LPT5' : '',
+        'LPT6' : '',
+        'LPT7' : '',
+        'LPT8' : '',
+        'LPT9' : '',
+    }
+
+    for char in badchar:
+        name = name.replace(char, badchar[char])
+    return name
+
+def get_os_name():
+    """Get the current OS name."""
+    os_release = get_os_release()
+    for item in os_release:
+        if item.startswith('NAME='):
+            name = item.split('=')[1]
+            return strip_quotes(name[:-1])
+
+def get_os_version():
+    """Get the current OS version."""
+    os_release = get_os_release()
+    for item in os_release:
+        if item.startswith('VERSION_ID='):
+            version = item.split('=')[1]
+            return strip_quotes(version[:-1])
+
+def get_os_release():
+    """Return a list with the current OS release data."""
+    try:
+        with open('/etc/os-release') as os_release_file:
+            os_release = os_release_file.readlines()
+    except FileNotFoundError:
+        pass
+
+    return os_release
+def strip_quotes(value):
+    """Return `value` without quotation marks."""
+    new_value = value
+    if value.startswith('"'):
+        new_value = new_value[1:]
+    if value.endswith('"'):
+        new_value = new_value[:-1]
+    return new_value
+
 class ConfigError(Exception):
     """Exception raised when we can't get a valid configuration."""
 
@@ -36,20 +156,26 @@ class UUIDNotFoundError(Exception):
 class NoBlockDevError(Exception):
     pass
 
+class UnknownTypeError(Exception):
+    pass
+
 class Entry:
+
+    mtab = get_drives()
 
     def __init__(
         self,
         entry_id='none',
         title='none',
         root_fs=['/'],
-        exec_path=['/vmlinuz', 'linux'],
+        exec_path=['/vmlinuz'],
         initrd_path='/initrd.img',
         options=[],
         machine_id='none',
         setup_loader=True,
         setup_nvram=False,
-        in_master_config=False):
+        in_master_config=False,
+        config_path=None):
         
         """Kernelstub Entry Object
         
@@ -77,20 +203,38 @@ class Entry:
             in_master_config (bool): Whether this entry is in the master 
                 config file.
         """
-        #: dict: A dictionary representation of the entry configuration.
-        self.entry_dict = {}
-        self._mtab = self.get_drives()
-
-        self.title = title
-        self.root_fs = root_fs
-        self.exec_path = exec_path
-        self.initrd_path = initrd_path
-        self.options = options
-        self.machine_id = machine_id
-        self.setup_loader = setup_loader
-        self.setup_nvram = setup_nvram
-        self.in_master_config = in_master_config
-        self.entry_id = entry_id
+        self.mtab = get_drives()
+        if config_path:
+            self.entry_dict = self.load_entry_from_file(config_path)
+            self.title = self.entry_dict['title']
+            self.root_fs = [self.entry_dict['device_path'],self.entry_dict['root_path']]
+            try:
+                self.options = self.entry_dict['options']
+            except KeyError:
+                self.options = options
+            self.exec_path = [self.entry_dict['exec_path'], self.entry_dict['entry_type']]
+            try:
+                self.initrd_path = self.entry_dict['initrd_path']
+            except KeyError:
+                self.initrd_path = initrd_path
+            self.machine_id = self.entry_dict['machine_id']
+            self.setup_loader = self.entry_dict['loader']
+            self.setup_nvram = self.entry_dict['nvram']
+            self.in_master_config = False
+            self.entry_id = entry_id
+        
+        else:
+            self.entry_dict = {}
+            self.title = title
+            self.root_fs = root_fs
+            self.options = options
+            self.exec_path = exec_path
+            self.initrd_path = initrd_path
+            self.machine_id = machine_id
+            self.setup_loader = setup_loader
+            self.setup_nvram = setup_nvram
+            self.in_master_config = in_master_config
+            self.entry_id = entry_id
 
     @property
     def entry_id(self):
@@ -101,7 +245,7 @@ class Entry:
     def entry_id(self, entry_id):
         if entry_id == 'none':
             entry_id = '{name}_{id}'.format(
-                name=self.clean_names(self.title),
+                name=clean_names(self.title),
                 id=self.machine_id
             )
         self._entry_id = entry_id
@@ -115,8 +259,8 @@ class Entry:
     def title(self, title):
         if title == 'none':
             title = '{name} {version}'.format(
-                name=self.get_os_name(),
-                version=self.get_os_version()
+                name=get_os_name(),
+                version=get_os_version()
             )
         self._title = title
         self.entry_dict['title'] = title
@@ -132,7 +276,7 @@ class Entry:
     def root_fs(self, fs):
         if len(fs) == 1:
             dev_path = fs[0]
-            dev_node = self.get_part_dev(fs[0])
+            dev_node = get_part_dev(self.mtab, fs[0])
         else: 
             dev_path = fs[1]
             dev_node = fs[0]
@@ -152,14 +296,33 @@ class Entry:
     
     @exec_path.setter
     def exec_path(self, exec_path):
-        self._exec_path = exec_path
-        self.entry_dict['exec_path'] = exec_path[0]
-        self.entry_dict['entry_type'] = exec_path[1]
+        """If we only get one item in exec_path, try to detect if it's an EFI
+        executable or a linux image.
+        """
+        path = exec_path[0]
+        if len(exec_path) == 1:
+            if exec_path[0][-4:].lower() == '.efi':
+                e_type = 'efi'
+            elif 'vmlinu' in exec_path[0]:
+                e_type = 'linux'
+                root_uuid = 'root=UUID={}'.format(get_uuid(self.root_fs[1]))
+                try:
+                    self.options.append(root_uuid)
+                except AttributeError:
+                    self.options = [root_uuid]
+        else:
+            e_type = exec_path[1]
+        self._exec_path = [path, e_type]
+        self.entry_dict['exec_path'] = path
+        self.entry_dict['entry_type'] = e_type
 
     @property
     def initrd_path(self):
         """str: Path to the initrd for a "linux" type entry."""
-        return self._initrd_path
+        try:
+            return self._initrd_path
+        except AttributeError:
+            return None
     
     @initrd_path.setter
     def initrd_path(self, path):
@@ -173,7 +336,10 @@ class Entry:
         """:obj:`list` of str: A list of options to use when running 
         the executable.
         """
-        return self._options
+        if self._options:
+            return self._options
+        else:
+            return None
     
     @options.setter
     def options(self, options):
@@ -199,7 +365,7 @@ class Entry:
                 ) as id_file:
                     m_id = id_file.readlines()[0].strip()
             except FileNotFoundError:
-                m_id = self.get_uuid(self.root_fs[1])
+                m_id = get_uuid(self.root_fs[1])
 
         self._machine_id = m_id
         self.entry_dict['machine_id'] = m_id
@@ -211,6 +377,7 @@ class Entry:
     @setup_loader.setter
     def setup_loader(self, setup):
         self._setup_loader = setup
+        self.entry_dict['loader'] = setup
 
     @property
     def setup_nvram(self):
@@ -219,130 +386,65 @@ class Entry:
     @setup_nvram.setter
     def setup_nvram(self, setup):
         self._setup_nvram = setup
+        self.entry_dict['nvram'] = setup
     
-    def get_uuid(self, path):
-        #self.log.debug('Looking for UUID for path %s' % path)
-        try:
-            args = ['findmnt', '-n', '-o', 'uuid', '--mountpoint', path]
-            result = subprocess.run(args, stdout=subprocess.PIPE)
-            uuid = result.stdout.decode('ASCII')
-            uuid = uuid.strip()
-            return uuid
-        except OSError as e:
-            raise UUIDNotFoundError from e
+    def save_config_to_disk(self, path='/etc/kernelstub'):
+        """Save the configuration to a JSON file."""
+        filename = os.path.join(path, self.entry_id)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(filename, mode='w') as config_file:
+            json.dump(self.entry_dict, config_file, indent=2)
     
-    def get_drives(self):
-        #self.log.debug('Getting a list of drives')
-        with open('/proc/mounts', mode='r') as proc_mounts:
-            mtab = proc_mounts.readlines()
+    def create_entry_file(self, path='/boot/efi/loader/entries'):
+        """Saves an entry of the file."""
+        filename = os.path.join(path, self.entry_id + '.conf')
+        kernel_destination = os.path.join('/EFI', self.entry_id)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        entry_data = []
 
-        #self.log.debug(mtab)
-        return mtab
-    
-    def get_part_dev(self, path):
-        #self.log.debug('Getting the block device file for %s' % path)
-        for mount in self._mtab:
-            drive = mount.split(" ")
-            if drive[1] == path:
-                part_dev = os.path.realpath(drive[0])
-                #self.log.debug('%s is on %s' % (path, part_dev))
-                return part_dev
-        raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
-    
-    def get_drive_dev(self, esp):
-        # Ported from bash, out of @jackpot51's firmware updater
-        efi_name = os.path.basename(esp)
-        efi_sys = os.readlink('/sys/class/block/%s' % efi_name)
-        disk_sys = os.path.dirname(efi_sys)
-        disk_name = os.path.basename(disk_sys)
-        #self.log.debug('ESP is a partition on /dev/%s' % disk_name)
-        return disk_name
-    
-    def clean_names(self, name):
-        """
-        Remove bad characters from names.
+        warning = (
+            '## THIS FILE IS GENERATED AUTOMATICALLY\n'
+            '## To modify this file, use the `kernelstub` command.\n\n'
+        )
+        entry_data.append(warning)
 
-        This is a list of characters we can't/don't want to have in technical
-        names for the OS. name_pretty will still have them.
-        """
-        badchar = {
-            ' ' : '_',
-            '~' : '-',
-            '!' : '',
-            "'" : "",
-            '<' : '',
-            '>' : '',
-            ':' : '',
-            '"' : '',
-            '/' : '',
-            '\\' : '',
-            '|' : '',
-            '?' : '',
-            '*' : '',
-            'CON' : '',
-            'PRN' : '',
-            'AUX' : '',
-            'NUL' : '',
-            'COM1' : '',
-            'COM2' : '',
-            'COM3' : '',
-            'COM4' : '',
-            'COM5' : '',
-            'COM6' : '',
-            'COM7' : '',
-            'COM8' : '',
-            'COM9' : '',
-            'LPT1' : '',
-            'LPT2' : '',
-            'LPT3' : '',
-            'LPT4' : '',
-            'LPT5' : '',
-            'LPT6' : '',
-            'LPT7' : '',
-            'LPT8' : '',
-            'LPT9' : '',
-        }
+        title_line = 'title {}\n'.format(self.title)
+        entry_data.append(title_line)
+        mid_line = 'machine-id {}\n'.format(self.machine_id)
+        entry_data.append(mid_line)
 
-        for char in badchar:
-            name = name.replace(char, badchar[char])
-        return name
-    
-    def get_os_name(self):
-        """Get the current OS name."""
-        os_release = self.get_os_release()
-        for item in os_release:
-            if item.startswith('NAME='):
-                name = item.split('=')[1]
-                return self.strip_quotes(name[:-1])
-    
-    def get_os_version(self):
-        """Get the current OS version."""
-        os_release = self.get_os_release()
-        for item in os_release:
-            if item.startswith('VERSION_ID='):
-                version = item.split('=')[1]
-                return self.strip_quotes(version[:-1])
+        if self.exec_path[1] == 'linux':
+            version_line = 'version {}\n'.format(
+                self.get_linux_version(self.exec_path[0]))
+            entry_data.append(version_line)
+            exec_line = 'linux {}\n'.format(
+                os.path.join(kernel_destination, 'vmlinuz.efi'))
+            entry_data.append(exec_line)
+        else:
+            exec_line = 'efi {}\n'.format(self.exec_path[0])
+            entry_data.append(exec_line)
 
-    def get_os_release(self):
-        """Return a list with the current OS release data."""
-        try:
-            with open('/etc/os-release') as os_release_file:
-                os_release = os_release_file.readlines()
-        except FileNotFoundError:
-            os_release = [
-                'NAME="{}"\n'.format(self.name),
-                'ID=linux\n',
-                'ID_LIKE=linux\n',
-                'VERSION_ID="{}"\n'.format(self.version)
-            ]
+        if self.initrd_path:
+            initrd_line = 'initrd {}\n'.format(
+                os.path.join(kernel_destination, 'initrd.img'))
+            entry_data.append(initrd_line)
 
-        return os_release
-    def strip_quotes(self, value):
-        """Return `value` without quotation marks."""
-        new_value = value
-        if value.startswith('"'):
-            new_value = new_value[1:]
-        if value.endswith('"'):
-            new_value = new_value[:-1]
-        return new_value
+        if self.options:
+            opts_line = 'options {}\n'.format(" ".join(self.options))
+            entry_data.append(opts_line)
+
+        with open(filename, mode="w") as entry_file:
+            entry_file.writelines(entry_data)
     
+    def get_linux_version(self, kernel_path):
+        if kernel_path == '/vmlinuz':
+            kernel_path = '/{}'.format(os.readlink(kernel_path))
+        kernel_version = kernel_path.replace('/boot/vmlinuz-','')
+        return kernel_version
+
+    def load_entry_from_file(self, path):
+        with open(path) as entry_file:
+            config_dict = json.load(entry_file)
+        return config_dict
