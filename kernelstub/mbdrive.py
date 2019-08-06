@@ -43,34 +43,15 @@ class DriveError(Exception):
         self.msg = msg
         self.code = code
 
-
-def get_uuid(path):
-    #self.log.debug('Looking for UUID for path %s' % path)
-    try:
-        args = ['findmnt', '-n', '-o', 'uuid', '--mountpoint', path]
-        result = subprocess.run(args, stdout=subprocess.PIPE)
-        uuid = result.stdout.decode('ASCII')
-        uuid = uuid.strip()
-        return uuid
-    except OSError as e:
-        raise DriveError(f'Could not find the UUID for {path}') from e
-
 def get_drives():
-    #self.log.debug('Getting a list of drives')
+    """ Get the current system mtab.
+
+    Returns:
+        A :obj:`list` of the current mounts. 
+    """
     with open('/proc/mounts', mode='r') as proc_mounts:
         mtab = proc_mounts.readlines()
-    #self.log.debug(mtab)
     return mtab
-
-def get_part_dev(mtab, path):
-    #self.log.debug('Getting the block device file for %s' % path)
-    for mount in mtab:
-        drive = mount.split(" ")
-        if drive[1] == path:
-            part_dev = os.path.realpath(drive[0])
-            #self.log.debug('%s is on %s' % (path, part_dev))
-            return part_dev
-    raise DriveError(f'Couldn\'t find the block device for {path}')
 
 class Drive():
     """
@@ -173,7 +154,7 @@ class Drive():
         efi_sys = os.readlink('/sys/class/block/{}'.format(efi_name))
         disk_sys = os.path.dirname(efi_sys)
 
-        # We have a virtual mapper device, return dm name.
+        # We have a virtual mapper device, return dm-#.
         if "virtual" in disk_sys:
             return os.path.basename(efi_sys)
 
@@ -226,13 +207,19 @@ class Drive():
             mount_point = self.mount_point
         if mount_point:
             self.mount_point = mount_point
-        mount_cmd = ['pkexec','mount']
+        mount_cmd = ['sudo','mount']
         
         if type:
             mount_cmd += [f'-t {type}']
         
         mount_cmd += [node, mount_point]
-        subprocess.run(mount_cmd)
+        result = subprocess.run(mount_cmd, capture_output=True)
+        if not result.returncode == 0:
+            raise DriveError(
+                f'Could not nmount the drive {self.node}:\n'
+                f'{result.stderr.decode("UTF-8")}'
+                f'mount return code: {result.returncode}'
+            )
 
     def unmount_drive(self, drive=None):
         """ Unmounts the drive from the system.
@@ -245,5 +232,11 @@ class Drive():
         if not drive:
             drive = self.node
 
-        umount_cmd = ['pkexec', 'umount', drive]
-        subprocess.run(umount_cmd)
+        umount_cmd = ['sudo', 'umount', drive]
+        result = subprocess.run(umount_cmd, capture_output=True)
+        if not result.returncode == 0:
+            raise DriveError(
+                f'Could not unmount the drive {self.node}:\n'
+                f'{result.stderr.decode("UTF-8")}'
+                f'umount return code: {result.returncode}'
+            )
