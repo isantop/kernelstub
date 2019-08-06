@@ -41,7 +41,7 @@ class DriveError(Exception):
             exception.
         code (int): Exception error code.
     """
-    def __init__(self, msg, code=4):
+    def __init__(self, msg, code=5):
         self.msg = msg
         self.code = code
 
