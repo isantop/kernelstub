@@ -163,7 +163,7 @@ class Drive():
                     uuid = fs.split()[-1]
                     return uuid
         except OSError as e:
-            raise DriveError(f'Could not find the UUID for {path}') from e
+            raise DriveError(f'Could not find the UUID for {self.node}') from e
     
     @property
     def drive_name(self):
