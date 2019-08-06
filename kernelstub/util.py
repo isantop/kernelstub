@@ -37,6 +37,22 @@ def get_os_release():
 
     return os_release
 
+def get_os_name():
+    """Get the current OS name."""
+    os_release = get_os_release()
+    for item in os_release:
+        if item.startswith('NAME='):
+            name = item.split('=')[1]
+            return strip_quotes(name[:-1])
+
+def get_os_version():
+    """Get the current OS version."""
+    os_release = get_os_release()
+    for item in os_release:
+        if item.startswith('VERSION_ID='):
+            version = item.split('=')[1]
+            return strip_quotes(version[:-1])
+
 def clean_names(name):
     """
     Remove bad characters from names.
@@ -110,3 +126,35 @@ def get_drives():
         parsed['options'] = unparsed[3]
         mtab[unparsed[0]] = parsed
     return mtab
+
+def parse_options(options):
+    """
+    Parse a list of kernel options
+
+    Takes a list object and ensure that each item in the list is a single
+    linux kernel option. Returns the resulting list.
+
+    Args:
+        options (str): The string of kernel options.
+    
+    Returns:
+        a :obj:`list` with each option as a :obj:`str`.
+
+    """
+    for index, option in enumerate(options):
+        if '"' in option:
+            matched = False
+            itr = 1
+            while matched is False:
+                try:
+                    next_option = options[index + itr]
+                    option = '{} {}'.format(option, next_option)
+                    options[index + itr] = ""
+                    if '"' in next_option:
+                        matched = True
+                    else:
+                        itr += 1
+                except IndexError:
+                    matched = True
+        options[index] = option
+    return options

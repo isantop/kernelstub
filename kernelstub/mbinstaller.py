@@ -52,5 +52,5 @@ class Installer():
     @property
     def esp(self):
         """str: path where the system EFI System Partition is mounted."""
-        return self._esp
+        #return self._esp
     
