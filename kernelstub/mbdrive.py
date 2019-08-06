@@ -26,6 +26,8 @@ import os
 import logging
 import subprocess
 
+from . import util
+
 class DriveError(Exception):
     """Exception used for drive errors. Pass details of the error in msg.
 
@@ -42,16 +44,6 @@ class DriveError(Exception):
     def __init__(self, msg, code=4):
         self.msg = msg
         self.code = code
-
-def get_drives():
-    """ Get the current system mtab.
-
-    Returns:
-        A :obj:`list` of the current mounts. 
-    """
-    with open('/proc/mounts', mode='r') as proc_mounts:
-        mtab = proc_mounts.readlines()
-    return mtab
 
 class Drive():
     """
@@ -70,6 +62,8 @@ class Drive():
             if node not in self.mtab and mount_point:
                 self.mount_drive(node, mount_point)
                 self.mount_point = self.equate_node_mountpoint(node)[1]
+            else:
+                self.mount_point = self.equate_node_mountpoint(node)[1]
 
         if mount_point:
             self.mount_point = mount_point
@@ -78,19 +72,7 @@ class Drive():
     @property
     def mtab(self):
         """:obj`dict`: A list of partitions on the system."""
-        with open('/proc/mounts') as proc_mounts:
-            mtab_list = proc_mounts.readlines()
-        self.log.debug('Got mtab: %s', mtab_list)
-
-        mtab = {}
-        for partition in mtab_list:
-            unparsed = partition.split()
-            parsed = {}
-            parsed['node'] = unparsed[0]
-            parsed['mount_point'] = unparsed[1]
-            parsed['type'] = unparsed[2]
-            parsed['options'] = unparsed[3]
-            mtab[unparsed[0]] = parsed
+        mtab = util.get_drives()
         return mtab
 
     @property
@@ -176,7 +158,6 @@ class Drive():
         Returns: 
             :obj:`tuple` of str: the node, the mountpoint
         """
-        print(part)
         for mount in self.mtab:
             for key in self.mtab[mount]:
                 if self.mtab[mount][key] == part:
