@@ -26,16 +26,23 @@ import os
 import logging
 import subprocess
 
-from . import mbopsys as opsys
+class DriveError(Exception):
+    """Exception used for drive errors. Pass details of the error in msg.
 
-class NoBlockDevError(Exception):
-    """No Block Device Found Exception"""
+    Attributes: 
+        msg (str): Human-readable message describing the error that threw the 
+            exception.
+        code (:obj:`int`, optional, default=4): Exception error code.
+    
+    Arguments:
+        msg (str): Human-readable message describing the error that threw the 
+            exception.
+        code (int): Exception error code.
+    """
+    def __init__(self, msg, code=4):
+        self.msg = msg
+        self.code = code
 
-class UUIDNotFoundError(Exception):
-    """No UUID for device found Exception"""
-
-class DriveNotFoundError(Exception):
-    """Couldn't find a drive exception."""
 
 def get_uuid(path):
     #self.log.debug('Looking for UUID for path %s' % path)
@@ -46,7 +53,7 @@ def get_uuid(path):
         uuid = uuid.strip()
         return uuid
     except OSError as e:
-        raise UUIDNotFoundError from e
+        raise DriveError(f'Could not find the UUID for {path}') from e
 
 def get_drives():
     #self.log.debug('Getting a list of drives')
@@ -63,9 +70,7 @@ def get_part_dev(mtab, path):
             part_dev = os.path.realpath(drive[0])
             #self.log.debug('%s is on %s' % (path, part_dev))
             return part_dev
-    raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
-
-ops = opsys.OS()
+    raise DriveError(f'Couldn\'t find the block device for {path}')
 
 class Drive():
     """
@@ -125,7 +130,7 @@ class Drive():
             #     pass
             self._node = node_path
         else:
-            raise DriveNotFoundError
+            raise DriveError(f'Could not set the node {node_path}')
     
     @property
     def mount_point(self):
@@ -140,7 +145,7 @@ class Drive():
         if mount_point:
             self._mount_point = mount_point
         else:
-            raise DriveNotFoundError
+            raise DriveError(f'Could not set the mount point {mount_point}')
     
     @property
     def uuid(self):
@@ -158,15 +163,21 @@ class Drive():
                     uuid = fs.split()[-1]
                     return uuid
         except OSError as e:
-            raise UUIDNotFoundError from e
+            raise DriveError(f'Could not find the UUID for {path}') from e
     
     @property
     def drive_name(self):
         """str: The device node for the drive device this partitions is on."""
         # Ported from bash, out of @jackpot51's firmware updater
-        efi_name = os.path.basename(self.node)
+        efi_name = os.path.basename(os.path.realpath(self.node))
         efi_sys = os.readlink('/sys/class/block/{}'.format(efi_name))
         disk_sys = os.path.dirname(efi_sys)
+
+        # We have a virtual mapper device, return dm name.
+        if "virtual" in disk_sys:
+            return os.path.basename(efi_sys)
+
+        # Otherwise, return the device node for the disk.
         disk_name = os.path.basename(disk_sys)
         self.log.debug('ESP is a partition on /dev/%s', disk_name)
         return disk_name
@@ -190,7 +201,9 @@ class Drive():
                 if self.mtab[mount][key] == part:
                     return (self.mtab[mount]['node'], self.mtab[mount]['mount_point'])
         
-        raise DriveNotFoundError
+        raise DriveError(
+            f'Could not match {part} with any known mount-point or node.'
+        )
     
     def mount_drive(self, mount_point=None, node=None, type=None):
         """ Mounts the drive into the system.
