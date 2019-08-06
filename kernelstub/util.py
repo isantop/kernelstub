@@ -53,6 +53,10 @@ def get_os_version():
             version = item.split('=')[1]
             return strip_quotes(version[:-1])
 
+def get_hostname():
+        """str: The current OS hostname."""
+        return platform.node()
+
 def clean_names(name):
     """
     Remove bad characters from names.
@@ -74,6 +78,8 @@ def clean_names(name):
         '|' : '',
         '?' : '',
         '*' : '',
+        '(' : '',
+        ')' : '',
         'CON' : '',
         'PRN' : '',
         'AUX' : '',

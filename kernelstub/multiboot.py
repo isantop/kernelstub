@@ -29,6 +29,7 @@ import subprocess
 
 from . import mbdrive 
 from . import util
+from . import mbopsys
 
 class EntryError(Exception):
     """Exception used for entry errors. Pass details of the error in msg.
@@ -68,8 +69,8 @@ class Entry:
             if not self.drive.is_mounted:
                 self.drive.mount_drive()
         
-        self.entry_id = entry_id
         self.title = title
+        self.entry_id = entry_id
         self.options = options
 
     @property
@@ -83,7 +84,7 @@ class Entry:
         and machine ID. 
         """
         if not e_id:
-            e_id = util.clean_names(self.title)
+            e_id = util.clean_names(self.title.replace(' - ', '-'))
             e_id += f'-{self.machine_id}'
         self._entry_id = e_id
     
@@ -96,7 +97,10 @@ class Entry:
     def title(self, title):
         """ If we didn't get a title, look it up from the current running OS."""
         if not title:
-            self._title = f'{util.get_os_name()} {util.get_os_version}'
+            os_name = util.get_os_name()
+            os_version = util.get_os_version()
+            os_hostname = util.get_hostname()
+            self._title = f'{os_name} {os_version} ({os_hostname})'
     
     @property
     def linux(self):
@@ -147,6 +151,8 @@ class Entry:
         a list.
         """
         if self.linux:
+            if not options:
+                options = "quiet splash"
             try:
                 self._options = util.parse_options(options.split())
             #if options is a list already, there is no split()
@@ -168,3 +174,55 @@ class Entry:
         if self.linux:
             return 'linux'
         return 'efi'
+    
+    @property
+    def version(self):
+        """str: For linux type entries, try to find the kernel version number."""
+        if self.linux:
+            kernel_path = os.path.join(self.drive.mount_point, self.exec_path[0])
+            kernel_path = os.path.realpath(kernel_path)
+            return kernel_path.split('vmlinuz-')[-1]
+    
+    @property
+    def config(self):
+        """:obj:`dict`: the configuration settings for this entry."""
+        config_dict = {}
+        config_dict['title'] = self.title
+        config_dict['root_partition'] = self.drive.node
+        config_dict['mount_point'] = self.drive.mount_point
+        config_dict['exec_path'] = self.exec_path
+        config_dict['options'] = self.options
+        config_dict['config_rev'] = 4
+        return config_dict
+    
+    def save_config(self, config_path='/etc/kernelstub/entries.d'):
+        """ Save this entry's configuration to disk. 
+
+        Arguments:
+            config_path (str): The path to the configuration directory to 
+                save in.
+        """
+        path = os.path.join(config_path, self.entry_id)
+        with open(path, mode='w') as config_file:
+            json.dump(self.config, config_file, indent=2)
+
+    def save_entry(self, esp_path='/boot/efi', entry_path='loader/entries'):
+        """ Save the entry to the esp."""
+        save_path = os.path.join(esp_path, entry_path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        entry_name = os.path.join(save_path, f'{self.entry_id}.conf')
+        
+        entry_contents = []
+        entry_contents.append('## THIS FILE IS GENERATED AUTOMATICALLY!!\n')
+        entry_contents.append('## To modify this file, use the `kernelstub` command.\n\n')
+        entry_contents.append(f'title {self.title}\n')
+        entry_contents.append(f'machine-id {self.machine_id}\n')
+        entry_contents.append(f'{self.type} {self.exec_path[0]}\n')
+        if self.linux:
+            entry_contents.append(f'initrd {self.exec_path[1]}\n')
+            entry_contents.append(f'options {" ".join(self.options)}\n')
+            entry_contents.append(f'version {self.version}\n')
+        
+        with open(entry_name, mode='w') as entry_file:
+            entry_file.writelines(entry_contents)
