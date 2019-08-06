@@ -25,6 +25,7 @@ terms.
 import json
 import logging
 import os
+import shutil
 import subprocess
 
 from . import mbdrive 
@@ -64,8 +65,8 @@ class Entry:
             exec_path=['/vmlinuz', '/initrd.img'],
             options=None):
         self.exec_path = exec_path
+        self.drive = mbdrive.Drive(node=node, mount_point=mount_point)
         if self.linux:
-            self.drive = mbdrive.Drive(node=node, mount_point=mount_point)
             if not self.drive.is_mounted:
                 self.drive.mount_drive()
         
@@ -100,7 +101,9 @@ class Entry:
             os_name = util.get_os_name()
             os_version = util.get_os_version()
             os_hostname = util.get_hostname()
-            self._title = f'{os_name} {os_version} ({os_hostname})'
+            title = f'{os_name} {os_version} ({os_hostname})'
+        self._title = title
+        
     
     @property
     def linux(self):
@@ -143,7 +146,10 @@ class Entry:
         pass to the executable. Currently this is ignored unless the entry is a
         linux entry.
         """
-        return self._options
+        try:
+            return self._options
+        except AttributeError:
+            return None
     
     @options.setter
     def options(self, options):
@@ -205,6 +211,27 @@ class Entry:
         path = os.path.join(config_path, self.entry_id)
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
+    
+    def load_config(self, config_path='/etc/kernelstub'):
+        """ Loads the configuration for this entry from the disk. 
+        """
+
+        with open(config_path) as config_file:
+            config_dict = json.load(config_file)
+        
+        self.entry_id = os.path.basename(config_path).replace('.conf', '')
+        self.exec_path = config_dict['exec_path']
+        if self.linux:
+            node = config_dict['root_partition']
+            mount_point = config_dict['mount_point']
+            self.drive = mbdrive.Drive(node=node, mount_point=mount_point)
+            if not self.drive.is_mounted:
+                self.drive.mount_drive()
+            
+            self.options = config_dict['options']
+        
+        self.title = config_dict['title']
+
 
     def save_entry(self, esp_path='/boot/efi', entry_path='loader/entries'):
         """ Save the entry to the esp."""
@@ -212,17 +239,57 @@ class Entry:
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         entry_name = os.path.join(save_path, f'{self.entry_id}.conf')
+
+        exec_dests = self.install_kernel(esp_path=esp_path)
         
         entry_contents = []
         entry_contents.append('## THIS FILE IS GENERATED AUTOMATICALLY!!\n')
         entry_contents.append('## To modify this file, use the `kernelstub` command.\n\n')
         entry_contents.append(f'title {self.title}\n')
         entry_contents.append(f'machine-id {self.machine_id}\n')
-        entry_contents.append(f'{self.type} {self.exec_path[0]}\n')
+        entry_contents.append(f'{self.type} {exec_dests[0]}\n')
+        
         if self.linux:
-            entry_contents.append(f'initrd {self.exec_path[1]}\n')
-            entry_contents.append(f'options {" ".join(self.options)}\n')
+            real_options = [f'root=UUID={self.drive.uuid} ro']
+            real_options += self.options
+            entry_contents.append(f'initrd {exec_dests[1]}\n')
+            entry_contents.append(f'options {" ".join(real_options)}\n')
             entry_contents.append(f'version {self.version}\n')
         
         with open(entry_name, mode='w') as entry_file:
             entry_file.writelines(entry_contents)
+    
+    def install_kernel(
+            self, 
+            esp_path='/boot/efi', 
+            kernel_name='vmlinuz.efi', 
+            init_name='initrd.img'):
+        """ If this is a linux entry, install the kernel to the ESP."""
+        if self.linux:
+            esp_dest_path = os.path.join(esp_path, 'EFI')
+            dest_dir = os.path.join(esp_dest_path, self.entry_id)
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
+            
+            # Copy the kernel
+            kernel_src = os.path.join(self.drive.mount_point, self.exec_path[0])
+            kernel_dest = os.path.join(dest_dir, kernel_name)
+            shutil.copyfile(kernel_src, kernel_dest)
+
+            # Copy the initrd image
+            init_src = os.path.join(self.drive.mount_point, self.exec_path[1])
+            init_dest = os.path.join(dest_dir, init_name)
+            shutil.copyfile(init_src, init_dest)
+
+            real_options = [f'root=UUID={self.drive.uuid} ro']
+            real_options += self.options
+            with open(os.path.join(dest_dir, 'cmdline'), mode='w') as cmdline_file:
+                cmdline_file.writelines([" ".join(real_options)])
+            
+            return [
+                kernel_dest.replace(esp_path, ''), 
+                init_dest.replace(esp_path, '')
+            ]
+        
+        else:
+            return [self.exec_path[0]]

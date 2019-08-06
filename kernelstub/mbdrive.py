@@ -59,15 +59,13 @@ class Drive():
 
         if node: 
             self.node = node
-            if node not in self.mtab and mount_point:
-                self.mount_drive(node, mount_point)
-                self.mount_point = self.equate_node_mountpoint(node)[1]
-            else:
-                self.mount_point = self.equate_node_mountpoint(node)[1]
 
         if mount_point:
             self.mount_point = mount_point
-            self.node = self.equate_node_mountpoint(mount_point)[0]
+            try:
+                self.node = self.equate_node_mountpoint(mount_point)[0]
+            except DriveError:
+                self.node = node
     
     @property
     def mtab(self):
