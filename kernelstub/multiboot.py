@@ -138,6 +138,7 @@ def get_os_release():
         pass
 
     return os_release
+    
 def strip_quotes(value):
     """Return `value` without quotation marks."""
     new_value = value
@@ -287,7 +288,7 @@ class Entry:
     
     @property
     def exec_path(self):
-        """:obj:`tuple` of str: A tuple pointing to the executable path, and the
+        """:obj:`list` of str: A list pointing to the executable path, and the
         executable type. If the type is 'linux', the path must point to the 
         linux kernel image path, relative to the entry's mountpoint. If it is of
         'efi' type, the path must be relative to the ESP.
@@ -318,7 +319,7 @@ class Entry:
 
     @property
     def initrd_path(self):
-        """str: Path to the initrd for a "linux" type entry."""
+        """:obj:`list` of str: Path to the initrd for a "linux" type entry."""
         try:
             return self._initrd_path
         except AttributeError:
