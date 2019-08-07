@@ -5,6 +5,4 @@ INITRD="$2"
 
 kernelstub \
   --verbose \
-  --initrd-path "/initrd.img" \
-  --kernel-path "/vmlinuz" \
   --preserve-live-mode

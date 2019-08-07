@@ -156,7 +156,9 @@ class Kernelstub():
                 '               %s' % args.kernel_path)
             opsys.kernel_path = args.kernel_path
         else:
-            opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
+            opsys.kernel_path = os.path.join(root_path, 'boot', opsys.kernel_name)
+            if not os.path.exists(opsys.kernel_path):
+                opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
 
         if args.initrd_path:
             log.debug(
@@ -164,16 +166,18 @@ class Kernelstub():
                 '               %s' % args.initrd_path)
             opsys.initrd_path = args.initrd_path
         else:
-            opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
+            opsys.initrd_path = os.path.join(root_path, 'boot', opsys.initrd_name)
+            if not os.path.exists(opsys.initrd_path):
+                opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
-            log.exception('Can\'t find the kernel image! \n\n'
+            log.exception('Can\'t find the kernel image \'' + opsys.kernel_path + '\'! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
             exit(0)
 
         if not os.path.exists(opsys.initrd_path):
-            log.exception('Can\'t find the initrd image! \n\n'
+            log.exception('Can\'t find the initrd image \'' + opsys.initrd_path + '\'! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
             exit(0)
@@ -328,4 +332,3 @@ class Kernelstub():
         log.debug('Setup complete!\n\n')
 
         return 0
-

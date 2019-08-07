@@ -2,8 +2,6 @@
 
 kernelstub \
 	--esp-path "/boot/efi" \
-	--kernel-path "/vmlinuz" \
-	--initrd-path "/initrd.img" \
 	--options "quiet loglevel=0" \
 	--loader \
 	--manage-only \
