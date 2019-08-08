@@ -2,7 +2,7 @@
 
 """
  kernelstub
- The automatic manager for using the Linux Kernel EFI Stub to boot
+ Comprehensive automatic ESP Management for Linux.
 
  Copyright 2017-2018 Ian Santopietro <isantop@gmail.com>
 

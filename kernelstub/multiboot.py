@@ -2,7 +2,7 @@
 
 """
  kernelstub
- The automatic manager for using the Linux Kernel EFI Stub to boot
+ Comprehensive automatic ESP Management for Linux.
 
  Copyright 2017-2018 Ian Santopietro <isantop@gmail.com>
 
@@ -212,9 +212,13 @@ class Entry:
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
     
-    def load_config(self, config_path='/etc/kernelstub'):
+    def load_config(
+        self, 
+        config_name='kernelstub_config', 
+        config_dir='/etc/kernelstub/entries.d'):
         """ Loads the configuration for this entry from the disk. 
         """
+        config_path = os.path.join(config_dir, config_name)
 
         with open(config_path) as config_file:
             config_dict = json.load(config_file)
@@ -233,20 +237,24 @@ class Entry:
         self.title = config_dict['title']
 
 
-    def save_entry(self, esp_path='/boot/efi', entry_path='loader/entries'):
+    def save_entry(self, esp_path='/boot/efi', entry_dir='loader/entries'):
         """ Save the entry to the esp."""
-        save_path = os.path.join(esp_path, entry_path)
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        entry_name = os.path.join(save_path, f'{self.entry_id}.conf')
+        entry_path = os.path.join(esp_path, entry_dir, f'{self.entry_id}.conf')
 
+        # Get the paths we're going to be pointing at, and install needed files.
         exec_dests = self.install_kernel(esp_path=esp_path)
         
         entry_contents = []
         entry_contents.append('## THIS FILE IS GENERATED AUTOMATICALLY!!\n')
-        entry_contents.append('## To modify this file, use the `kernelstub` command.\n\n')
+        entry_contents.append('## To modify this file, use `kernelstub`\n\n')
         entry_contents.append(f'title {self.title}\n')
         entry_contents.append(f'machine-id {self.machine_id}\n')
+        
+        # If this is a linux and we could detect the version, add it.
+        if self.linux and self.version:
+            entry_contents.append(f'version {self.version}\n')
+        
+        # Add in the executable to load
         entry_contents.append(f'{self.type} {exec_dests[0]}\n')
         
         if self.linux:
@@ -254,9 +262,8 @@ class Entry:
             real_options += self.options
             entry_contents.append(f'initrd {exec_dests[1]}\n')
             entry_contents.append(f'options {" ".join(real_options)}\n')
-            entry_contents.append(f'version {self.version}\n')
         
-        with open(entry_name, mode='w') as entry_file:
+        with open(entry_path, mode='w') as entry_file:
             entry_file.writelines(entry_contents)
     
     def install_kernel(
