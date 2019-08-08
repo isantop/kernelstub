@@ -132,7 +132,7 @@ class SystemConfiguration:
         else:
             raise ConfigError(
                 'Invalid configuration detected, '
-                f'config_rev {self.config_rev} is not understood'
+                f'config_rev {self.config_rev} is not understood.'
             )
     
     def load_config(self):
