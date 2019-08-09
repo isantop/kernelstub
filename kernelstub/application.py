@@ -43,12 +43,6 @@ import logging
 import logging.handlers as handlers
 import os
 
-from . import drive as Drive
-from . import nvram as Nvram
-from . import opsys as Opsys
-from . import installer as Installer
-from . import config as Config
-
 SYSTEMD_SUPPORT = False
 try:
     from systemd.journal import JournalHandler

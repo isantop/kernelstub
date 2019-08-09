@@ -27,10 +27,10 @@ import logging
 import os
 import shutil
 import subprocess
+import uuid
 
-from . import mbdrive 
+from . import mbdrive as drive 
 from . import util
-from . import mbopsys
 
 class EntryError(Exception):
     """Exception used for entry errors. Pass details of the error in msg.
@@ -63,16 +63,36 @@ class Entry:
             mount_point='/',
             node=None,
             exec_path=['/vmlinuz', '/initrd.img'],
-            options=None):
+            options=None,
+            index=None,
+            esp_path='/boot/efi'):
+
+        self.log = logging.getLogger('kernelstub.Entry')
+        self.log.debug('Loaded kernelstub.Entry')
+        self._esp_path = esp_path
         self.exec_path = exec_path
-        self.drive = mbdrive.Drive(node=node, mount_point=mount_point)
+        self.drive = drive.Drive(node=node, mount_point=mount_point)
         if self.linux:
             if not self.drive.is_mounted:
                 self.drive.mount_drive()
         
         self.title = title
-        self.entry_id = entry_id
         self.options = options
+        self.index = index
+        self.entry_id = entry_id
+    
+    @property
+    def index(self):
+        """str: a unique, typeable index for this entry."""
+        return self._index
+    
+    @index.setter
+    def index(self, idx):
+        """Generate an index if not provided"""
+        if not idx:
+            idx = str(uuid.uuid4())
+            idx = idx[-4:]
+        self._index = idx[:10]
 
     @property
     def entry_id(self):
@@ -87,6 +107,7 @@ class Entry:
         if not e_id:
             e_id = util.clean_names(self.title.replace(' - ', '-'))
             e_id += f'-{self.machine_id}'
+            e_id += f'-{self.index}'
         self._entry_id = e_id
     
     @property
@@ -193,6 +214,8 @@ class Entry:
     def config(self):
         """:obj:`dict`: the configuration settings for this entry."""
         config_dict = {}
+        config_dict['index'] = self.index
+        config_dict['entry_id'] = self.entry_id
         config_dict['title'] = self.title
         config_dict['root_partition'] = self.drive.node
         config_dict['mount_point'] = self.drive.mount_point
@@ -201,34 +224,55 @@ class Entry:
         config_dict['config_rev'] = 4
         return config_dict
     
-    def save_config(self, config_path='/etc/kernelstub/entries.d'):
+    @property
+    def print_config(self):
+        """:obj:`dict`: a printable version of Config."""
+        print_conf = {}
+        print_conf['Entry:'] = self.index
+        print_conf['Title'] = self.title
+        if self.linux:
+            print_conf['Kernel'] = self.exec_path[0]
+            print_conf['Initramfs'] = self.exec_path[1]
+            print_conf['Root Partition'] = self.drive.node
+            print_conf['Mount Point'] = self.drive.mount_point
+            print_conf['Kernel Options'] = " ".join(self.options)
+        else:
+            print_conf['Loader'] = self.exec_path[0]
+
+        print_conf['ID'] = self.entry_id
+        return print_conf
+    
+    def save_config(self, config_path='/etc/kernelstub/'):
         """ Save this entry's configuration to disk. 
 
         Arguments:
             config_path (str): The path to the configuration directory to 
                 save in.
         """
-        path = os.path.join(config_path, self.entry_id)
-        with open(path, mode='w') as config_file:
+        if not os.path.exists(os.path.join(config_path, 'entries.d')):
+            os.makedirs(os.path.join(config_path, 'entries.d'))
+        config_path = os.path.join(config_path, 'entries.d', self.entry_id)
+        with open(config_path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
     
     def load_config(
         self, 
         config_name='kernelstub_config', 
-        config_dir='/etc/kernelstub/entries.d'):
+        config_dir='/etc/kernelstub/'):
         """ Loads the configuration for this entry from the disk. 
         """
-        config_path = os.path.join(config_dir, config_name)
+        config_path = os.path.join(config_dir, 'entries.d', config_name)
 
         with open(config_path) as config_file:
             config_dict = json.load(config_file)
         
         self.entry_id = os.path.basename(config_path).replace('.conf', '')
         self.exec_path = config_dict['exec_path']
+        self.index = config_dict['index']
         if self.linux:
             node = config_dict['root_partition']
             mount_point = config_dict['mount_point']
-            self.drive = mbdrive.Drive(node=node, mount_point=mount_point)
+            self.drive = drive.Drive(node=node, mount_point=mount_point)
             if not self.drive.is_mounted:
                 self.drive.mount_drive()
             
@@ -237,13 +281,18 @@ class Entry:
         self.title = config_dict['title']
 
 
-    def save_entry(self, esp_path='/boot/efi', entry_dir='loader/entries'):
+    def save_entry(self, esp_path=None, entry_dir='loader/entries'):
         """ Save the entry to the esp."""
+        if not esp_path:
+            esp_path = self._esp_path
+        
+        if not os.path.exists(os.path.join(esp_path, entry_dir)):
+            os.makedirs(os.path.join(esp_path, entry_dir))
         entry_path = os.path.join(esp_path, entry_dir, f'{self.entry_id}.conf')
 
         # Get the paths we're going to be pointing at, and install needed files.
         exec_dests = self.install_kernel(esp_path=esp_path)
-        
+        self.log.debug('Executalble destinations: %s', exec_dests)
         entry_contents = []
         entry_contents.append('## THIS FILE IS GENERATED AUTOMATICALLY!!\n')
         entry_contents.append('## To modify this file, use `kernelstub`\n\n')
@@ -268,13 +317,16 @@ class Entry:
     
     def install_kernel(
             self, 
-            esp_path='/boot/efi', 
+            esp_path=None, 
             kernel_name='vmlinuz.efi', 
             init_name='initrd.img'):
         """ If this is a linux entry, install the kernel to the ESP."""
+        if not esp_path:
+            esp_path = self._esp_path
+
         if self.linux:
-            esp_dest_path = os.path.join(esp_path, 'EFI')
-            dest_dir = os.path.join(esp_dest_path, self.entry_id)
+            loaders_dir = os.path.join(esp_path, 'EFI')
+            dest_dir = os.path.join(loaders_dir, self.entry_id)
             if not os.path.exists(dest_dir):
                 os.makedirs(dest_dir)
             

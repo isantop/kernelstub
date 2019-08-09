@@ -61,6 +61,7 @@ class SystemConfiguration:
         self.log.debug('Loaded kernelstub.SystemConfiguration')
         self.config = {}
         self.config_path = config_path
+        self.config_file = os.path.join(config_path, 'system')
         self.update_config()
         self.config_rev = CURRENT_CONFIGURATION_REVISION
         self.esp = drive.Drive(mount_point=self.esp_path)
@@ -68,15 +69,33 @@ class SystemConfiguration:
     @property
     def config_rev(self):
         """ int: The revision of the current configuration. """
-        return self.config['config_rev']
+        try:
+            return self.config['config_rev']
+        except KeyError:
+            self.config['config_rev'] = CURRENT_CONFIGURATION_REVISION
+            return self.config['config_rev']
     
     @config_rev.setter
     def config_rev(self, revision):
         self.config['config_rev'] = revision
+    
+    @property
+    def config_file(self):
+        """ str: The path to the system configuration file."""
+        try:
+            return self._config_file
+        except AttributeError:
+            return os.path.join(self.config_path, 'system')
+
+    @config_file.setter
+    def config_file(self, path):
+        self._config_file = os.path.join(self.config_path, 'system')
+        if path:
+            self._config_file = path
 
     @property
     def config_path(self):
-        """ str: The path to the system configuration file."""
+        """ str: The path to the system configuration directory."""
         return self._config_path
     
     @config_path.setter
@@ -102,7 +121,10 @@ class SystemConfiguration:
     @property
     def default_entry(self):
         """ str: the entry_id of the default entry. """
-        return self.config['default_entry']
+        try:
+            return self.config['default_entry']
+        except KeyError:
+            return None
 
     @default_entry.setter
     def default_entry(self, entry_id):
@@ -115,7 +137,10 @@ class SystemConfiguration:
         """int: The number of seconds for which to display the boot menu. 
         After this, the default_entry is loaded.
         """
-        return self.config['menu_timeout']
+        try:
+            return self.config['menu_timeout']
+        except KeyError:
+            return 0
     
     @menu_timeout.setter
     def menu_timeout(self, timeout):
@@ -137,15 +162,14 @@ class SystemConfiguration:
     
     def load_config(self):
         """ Load a configuration file from disk."""
-        config_dir = os.path.dirname(self.config_path)
-        self.log.debug('Loading configuration from %s', self.config_path)
+        self.log.debug('Loading configuration from %s', self.config_file)
 
-        if not os.path.exists(config_dir):
-            self.log.warn('No configuration directory %s, creating it', config_dir)
-            os.makedirs(config_dir)
+        if not os.path.exists(self.config_path):
+            self.log.warn('No configuration directory %s, creating it', self.config_path)
+            os.makedirs(self.config_path)
 
         try: 
-            with open(self.config_path) as config_file:
+            with open(self.config_file) as config_file:
                 self.config = json.load(config_file)
         except FileNotFoundError:
             self.log.warn(
@@ -161,7 +185,7 @@ class SystemConfiguration:
     
     def save_config(self):
         """ Save our current configuration to disk."""
-        with open(self.config_path, mode='w') as config_file:
+        with open(self.config_file, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
         self.save_loader_conf()
         self.log.debug(
