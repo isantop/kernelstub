@@ -382,22 +382,34 @@ class Entry:
             # Copy the kernel
             kernel_src = os.path.join(self.drive.mount_point, self.exec_path[0])
             kernel_dest = os.path.join(dest_dir, kernel_name)
-            shutil.copyfile(kernel_src, kernel_dest)
-            self.log.debug(
-                'Linux copied from %s to %s.',
-                kernel_src,
-                kernel_dest
-            )
+            try:
+                shutil.copyfile(kernel_src, kernel_dest)
+                self.log.debug(
+                    'Linux copied from %s to %s.',
+                    kernel_src,
+                    kernel_dest
+                )
+            except FileNotFoundError:
+                self.log.exception(
+                    'Couldn\'t copy kernel image %s; File not found.',
+                    kernel_src,
+                )
 
             # Copy the initrd image
             init_src = os.path.join(self.drive.mount_point, self.exec_path[1])
             init_dest = os.path.join(dest_dir, init_name)
-            shutil.copyfile(init_src, init_dest)
-            self.log.debug(
-                'Initrd copied from %s to %s.',
-                init_src,
-                init_dest
-            )
+            try:
+                shutil.copyfile(init_src, init_dest)
+                self.log.debug(
+                    'Initrd copied from %s to %s.',
+                    init_src,
+                    init_dest
+                )
+            except FileNotFoundError:
+                self.log.exception(
+                    'Couldn\'t copy kernel image %s; File not found.',
+                    kernel_src,
+                )
 
             real_options = [f'root=UUID={self.drive.uuid} ro']
             real_options += self.options
