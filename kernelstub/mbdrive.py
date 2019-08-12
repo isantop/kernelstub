@@ -85,10 +85,6 @@ class Drive():
     def node(self, node_path):
         """Try to set the node automatically by the mount-point, if mounted."""
         if node_path:
-            # try:
-            #     node_path = os.path.realpath(node_path)
-            # except OSError:
-            #     pass
             self._node = node_path
         else:
             raise DriveError(f'Could not set the node {node_path}')
@@ -140,7 +136,7 @@ class Drive():
 
         # Otherwise, return the device node for the disk.
         disk_name = os.path.basename(disk_sys)
-        self.log.debug('ESP is a partition on /dev/%s', disk_name)
+        self.log.debug('This is a partition on /dev/%s', disk_name)
         return disk_name
     
     @property
@@ -156,9 +152,16 @@ class Drive():
         Returns: 
             :obj:`tuple` of str: the node, the mountpoint
         """
+        self.log.debug('Trying to match %s in the mtab', part)
         for mount in self.mtab:
             for key in self.mtab[mount]:
                 if self.mtab[mount][key] == part:
+                    self.log.debug(
+                        'Matched %s to %s mounted on %s',
+                        part,
+                        self.mtab[mount]['node'],
+                        self.mtab[mount]['mount_point']
+                    )
                     return (self.mtab[mount]['node'], self.mtab[mount]['mount_point'])
         
         raise DriveError(
@@ -186,6 +189,9 @@ class Drive():
             mount_point = self.mount_point
         if mount_point:
             self.mount_point = mount_point
+        
+        self.log.debug('Mounting drive %s to %s', self.node, self.mount_point)
+        
         mount_cmd = ['sudo','mount']
         
         if type:
@@ -210,6 +216,8 @@ class Drive():
 
         if not drive:
             drive = self.node
+        
+        self.log.debug('Unmounting %s', drive)
 
         umount_cmd = ['sudo', 'umount', drive]
         result = subprocess.run(umount_cmd, capture_output=True)

@@ -164,6 +164,7 @@ class Entry:
                     self.log.debug('Trying %s', auto_initrd_path)
                     if os.path.exists(auto_initrd_path):
                         self._exec_path.append(auto_initrd_path)
+                        self.log.debug('Initrd found at %s', auto_initrd_path)
                         return
                     self.log.debug('Couldn\'t find %s', auto_initrd_path)
                 except FileNotFoundError:
@@ -174,6 +175,11 @@ class Entry:
             self.linux = False
             return
         elif len(path) == 2:
+            self.log.debug(
+                'Two execs supplied, kernel %s, initramfs %s',
+                path[0],
+                path[1]
+             )
             self.linux = True
             return
         else:
@@ -197,7 +203,9 @@ class Entry:
         """ We accept either a string  or list of options, and parse it into 
         a list.
         """
+        
         if self.linux:
+            self.log.debug('Setting options %s', options)
             if not options:
                 options = "quiet splash"
             try:
@@ -242,6 +250,7 @@ class Entry:
         config_dict['exec_path'] = self.exec_path
         config_dict['options'] = self.options
         config_dict['config_rev'] = 4
+        self.log.debug('Configuration for %s:/n%s', self._entry_id, config_dict)
         return config_dict
     
     @property
@@ -277,11 +286,17 @@ class Entry:
             config_path (str): The path to the configuration directory to 
                 save in.
         """
+        self.log.debug('Saving configuration of %s', self.entry_id)
         if not os.path.exists(os.path.join(config_path, 'entries.d')):
+            self.log.warn(
+                'Configuration directory %s not found, creating it...',
+                f'{config_path}/entries.d'
+            )
             os.makedirs(os.path.join(config_path, 'entries.d'))
         config_path = os.path.join(config_path, 'entries.d', self.entry_id)
         with open(config_path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
+            self.log.debug('Configuration saved!')
     
     def load_config(
         self, 
@@ -290,6 +305,7 @@ class Entry:
         """ Loads the configuration for this entry from the disk. 
         """
         config_path = os.path.join(config_dir, 'entries.d', config_name)
+        self.log.debug('Loading configuration from %s', config_path)
 
         with open(config_path) as config_file:
             config_dict = json.load(config_file)
@@ -307,14 +323,17 @@ class Entry:
             self.options = config_dict['options']
         
         self.title = config_dict['title']
+        self.log.debug('Loaded configuration for entry %s', self.entry_id)
 
 
     def save_entry(self, esp_path=None, entry_dir='loader/entries'):
         """ Save the entry to the esp."""
+        self.log.debug('Saving the entry %s to disk', self.entry_id)
         if not esp_path:
             esp_path = self._esp_path
         
         if not os.path.exists(os.path.join(esp_path, entry_dir)):
+            self.log.warn('Entry path not found, creating it.')
             os.makedirs(os.path.join(esp_path, entry_dir))
         entry_path = os.path.join(esp_path, entry_dir, f'{self.entry_id}.conf')
 
@@ -342,6 +361,7 @@ class Entry:
         
         with open(entry_path, mode='w') as entry_file:
             entry_file.writelines(entry_contents)
+            self.log.debug('Sucessfully saved entry to %s', entry_path)
     
     def install_kernel(
             self, 
@@ -349,6 +369,7 @@ class Entry:
             kernel_name='vmlinuz.efi', 
             init_name='initrd.img'):
         """ If this is a linux entry, install the kernel to the ESP."""
+        self.log.debug('Installing files to the ESP.')
         if not esp_path:
             esp_path = self._esp_path
 
@@ -362,16 +383,27 @@ class Entry:
             kernel_src = os.path.join(self.drive.mount_point, self.exec_path[0])
             kernel_dest = os.path.join(dest_dir, kernel_name)
             shutil.copyfile(kernel_src, kernel_dest)
+            self.log.debug(
+                'Linux copied from %s to %s.',
+                kernel_src,
+                kernel_dest
+            )
 
             # Copy the initrd image
             init_src = os.path.join(self.drive.mount_point, self.exec_path[1])
             init_dest = os.path.join(dest_dir, init_name)
             shutil.copyfile(init_src, init_dest)
+            self.log.debug(
+                'Initrd copied from %s to %s.',
+                init_src,
+                init_dest
+            )
 
             real_options = [f'root=UUID={self.drive.uuid} ro']
             real_options += self.options
             with open(os.path.join(dest_dir, 'cmdline'), mode='w') as cmdline_file:
                 cmdline_file.writelines([" ".join(real_options)])
+                self.log.debug('Saved cmdline reference')
             
             return [
                 kernel_dest.replace(esp_path, ''), 
@@ -379,4 +411,5 @@ class Entry:
             ]
         
         else:
+            self.log.debug('We aren\'t using a linux entry, nothing to do.')
             return [self.exec_path[0]]
