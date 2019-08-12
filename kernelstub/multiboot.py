@@ -153,9 +153,29 @@ class Entry:
         """
         self._exec_path = path
         if len(path) == 1:
+            if 'vmlinu' in path[0]:
+                self.log.debug(
+                    '%s looks like a linux kernel, looking for initrd',
+                    path[0]
+                )
+                self.linux = True
+                try:
+                    auto_initrd_path = path[0].replace('vmlinuz', 'initrd.img')
+                    self.log.debug('Trying %s', auto_initrd_path)
+                    if os.path.exists(auto_initrd_path):
+                        self._exec_path.append(auto_initrd_path)
+                        return
+                    self.log.debug('Couldn\'t find %s', auto_initrd_path)
+                except FileNotFoundError:
+                    raise EntryError(
+                        f'Could not find an initrd image for kernel {path[0]}'
+                    )
+            self.log.debug('%s doesn\'t look like a linux kernel.', path[0])
             self.linux = False
+            return
         elif len(path) == 2:
             self.linux = True
+            return
         else:
             raise EntryError(
                 f'Too many items in `exec_path`, got {str(len(path))} items.'
@@ -231,8 +251,16 @@ class Entry:
         print_conf['Entry:'] = self.index
         print_conf['Title'] = self.title
         if self.linux:
-            print_conf['Kernel'] = self.exec_path[0]
-            print_conf['Initramfs'] = self.exec_path[1]
+            kernel_realpath = os.path.realpath(self.exec_path[0])
+            initrd_realpath = os.path.realpath(self.exec_path[1])
+            if kernel_realpath == self.exec_path[0]:
+                print_conf['Kernel'] = self.exec_path[0]
+            else: 
+                print_conf['Kernel'] = f'{self.exec_path[0]} => {kernel_realpath}'
+            if initrd_realpath == self.exec_path[1]:
+                print_conf['Initramfs'] = self.exec_path[1]
+            else:
+                print_conf['Initramfs'] = f'{self.exec_path[1]} => {initrd_realpath}'
             print_conf['Root Partition'] = self.drive.node
             print_conf['Mount Point'] = self.drive.mount_point
             print_conf['Kernel Options'] = " ".join(self.options)

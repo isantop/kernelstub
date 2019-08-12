@@ -114,12 +114,10 @@ class Kernelstub:
         
         parser.add_argument(
             'command',
+            nargs='?',
             help='Subcommand to run'
         )
         args = parser.parse_args(sys.argv[1:2])
-        if not hasattr(self, args.command):
-            parser.print_help()
-            exit(1)
     
         if os.geteuid() != 0:
             parser.print_help()
@@ -138,9 +136,9 @@ class Kernelstub:
         file_level = level[2]
 
         stream_fmt = logging.Formatter(
-            '%(name)-21s: %(levelname)-8s %(message)s')
+            '%(name)s: %(levelname)s: %(message)s')
         file_fmt = logging.Formatter(
-            '%(asctime)s - %(name)-21s: %(levelname)-8s %(message)s')
+            '%(asctime)s - %(name)s: %(levelname)s: %(message)s')
         self.log = logging.getLogger('kernelstub')
 
         console_log = logging.StreamHandler()
@@ -165,6 +163,14 @@ class Kernelstub:
 
         self.config = config.SystemConfiguration(config_path=config_path)
 
+        if not args.command:
+            self.update()
+            self.list()
+            exit(0)
+        if not hasattr(self, args.command):
+            self.log.error('Unrecognized command: %s', args.command)
+            parser.print_help()
+            exit(1)
         # Run the subcommand specified
         getattr(self, args.command)()
 
@@ -186,10 +192,10 @@ class Kernelstub:
             help='Path to the ESP'
         )
         parser.add_argument(
-            '-p',
-            '--print-config',
+            '-q',
+            '--quiet',
             action='store_true',
-            help='Display the current system configuration settings.'
+            help='Don\'t display configuration output.'
         )
         args = parser.parse_args(sys.argv[2:])
 
@@ -199,7 +205,7 @@ class Kernelstub:
         if args.esp_path:
             self.config.esp_path = args.esp_path
         
-        if args.print_config:
+        if not args.quiet:
             system_config = {}
             system_config['Default Entry:'] = self.config.default_entry.split('-')[-1]
             system_config['Menu Timeout:'] = f'{self.config.menu_timeout}s'
@@ -255,6 +261,7 @@ class Kernelstub:
         parser.add_argument(
             '-s',
             '--set-default',
+            action='store_true',
             help='Set this new entry as the default boot entry'
         )
         args = parser.parse_args(sys.argv[2:])
@@ -320,7 +327,10 @@ class Kernelstub:
                 entry = multiboot.Entry()
                 entry.load_config(config_name=file)
                 entry_index = entry.index.ljust(12, '.')
-                print(f'  {entry_index}{entry.title}')
+                if entry.entry_id == self.config.default_entry:
+                    print(f'  {entry_index}{entry.title} (default)')
+                else:
+                    print(f'  {entry_index}{entry.title}')
         
         if args.index:
             try:
@@ -329,7 +339,6 @@ class Kernelstub:
                 self.log.exception(e)
             
             entry.options = " ".join(entry.options)
-            #entry.exec_path = " , initrd: ".join(entry.exec_path)
             
             entry_table = mktable(entry.print_config, 15)
             print(entry_table)
@@ -442,6 +451,7 @@ class Kernelstub:
         entry_dir = os.path.join(self.config.config_path, 'entries.d')
         try:
             entry = find_entry_from_index(args.index, entry_dir)
+            self.log.debug('Got entry %s', entry.entry_id)
         except multiboot.EntryError as e:
             self.log.exception(e)
         
@@ -454,7 +464,8 @@ class Kernelstub:
         if args.exec_path:
             entry.exec_path = [args.exec_path]
         if args.initrd_path:
-            entry.exec_path.append(args.initrd_path)
+            entry.exec_path = [entry.exec_path[0], args.initrd_path]
+
         if args.options:
             entry.options = args.options
         
@@ -517,13 +528,20 @@ class Kernelstub:
             if not args.retain_entry:
                 loader_dir = os.path.join(self.config.esp_path, 'loader/entries')
                 loader_file = os.path.join(loader_dir, f'{entry.entry_id}.conf')
-                os.remove(loader_file)
+                try:
+                    os.remove(loader_file)
+                except FileNotFoundError:
+                    pass
 
                 boot_dir = os.path.join(
                     self.config.esp_path,
                     'EFI',
                     entry.entry_id
                 )
-                shutil.rmtree(boot_dir)
+                try:
+                    shutil.rmtree(boot_dir)
+                except FileNotFoundError:
+                    pass
+
 
 

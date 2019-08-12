@@ -4,7 +4,4 @@ INITRD="/boot/initrd.img-$1"
 KERNEL="$2"
 
 kernelstub \
-  --verbose \
-  --initrd-path "/initrd.img" \
-  --kernel-path "/vmlinuz" \
-  --preserve-live-mode
+  update
