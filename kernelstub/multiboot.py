@@ -72,9 +72,8 @@ class Entry:
         self._esp_path = esp_path
         self.exec_path = exec_path
         self.drive = drive.Drive(node=node, mount_point=mount_point)
-        if self.linux:
-            if not self.drive.is_mounted:
-                self.drive.mount_drive()
+        if not self.drive.is_mounted:
+            self.drive.mount_drive()
         
         self.title = title
         self.options = options
@@ -179,7 +178,19 @@ class Entry:
                 'Two execs supplied, kernel %s, initramfs %s',
                 path[0],
                 path[1]
-             )
+            )
+            if not os.path.exists(path[0]):
+                self.log.warn(
+                    'Two executables supplied, but kernel %s does not exist!',
+                    path[0]
+                ) 
+                self.log.info('Reverting to EFI type entry.')
+                self.linux = False
+                self._exec_path = [path[0]]
+                return
+            if not os.path.exists(path[1]):
+                self.log.error('Supplied initrd %s does not exist!', path[1])
+                raise EntryError(f'Supplied initrd {path[1]} does not exist')
             self.linux = True
             return
         else:
@@ -390,9 +401,8 @@ class Entry:
                     kernel_dest
                 )
             except FileNotFoundError:
-                self.log.exception(
-                    'Couldn\'t copy kernel image %s; File not found.',
-                    kernel_src,
+                raise EntryError(
+                    f'Couldn\'t copy kernel image {kernel_src}; File not found.'
                 )
 
             # Copy the initrd image
@@ -406,9 +416,8 @@ class Entry:
                     init_dest
                 )
             except FileNotFoundError:
-                self.log.exception(
-                    'Couldn\'t copy kernel image %s; File not found.',
-                    kernel_src,
+                raise EntryError(
+                    f'Couldn\'t copy initrd image {init_src}; File not found.'
                 )
 
             real_options = [f'root=UUID={self.drive.uuid} ro']

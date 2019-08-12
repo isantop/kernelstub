@@ -292,6 +292,8 @@ class Kernelstub:
 
         new_entry.save_config(config_path=self.config.config_path)
         new_entry.save_entry(esp_path=self.config.esp_path)
+        if not new_entry.drive.mount_point == '/':
+            new_entry.drive.unmount_drive()
 
         self.log.info(
             "New entry created: %s", 
@@ -486,6 +488,8 @@ class Kernelstub:
         
         entry.save_config(config_path=self.config.config_path)
         entry.save_entry(esp_path=self.config.esp_path)
+        if not entry.drive.mount_point == '/':
+            entry.drive.unmount_drive()
 
         self.log.info(
             'Entry %s updated: %s', 
