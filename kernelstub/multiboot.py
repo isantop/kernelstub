@@ -195,7 +195,7 @@ class Entry:
             return
         else:
             raise EntryError(
-                f'Too many items in `exec_path`, got {str(len(path))} items.'
+                f'Too many items in `exec_path`, got {len(path)} items.'
             )
     
     @property
