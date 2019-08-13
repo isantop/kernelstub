@@ -359,6 +359,7 @@ class Entry:
         
         # If this is a linux and we could detect the version, add it.
         if self.linux and self.version:
+            self.log.debug('Got linux version: %s', self.version)
             entry_contents.append(f'version {self.version}\n')
         
         # Add in the executable to load
@@ -385,6 +386,7 @@ class Entry:
             esp_path = self._esp_path
 
         if self.linux:
+            self.log.debug('Copying files for Linux installation.')
             loaders_dir = os.path.join(esp_path, 'EFI')
             dest_dir = os.path.join(loaders_dir, self.entry_id)
             if not os.path.exists(dest_dir):
