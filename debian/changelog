@@ -1,9 +1,11 @@
 kernelstub (4.0.0) UNRELEASED; urgency=medium
 
   * New multiboot support
-  * 
+  * Add entries for multiple kernels, a single kernel or other OSs.
+  * Entries don't need to be OSs, like the EFI Shell
+  * Entries are kept up to date automatically.
 
- -- Ian Santopietro <ian@akira>  Thu, 08 Aug 2019 10:44:44 -0600
+ -- Ian Santopietro <isantop@gmail.com>  Thu, 08 Aug 2019 10:44:44 -0600
 
 kernelstub (3.2.0) disco; urgency=medium
 
