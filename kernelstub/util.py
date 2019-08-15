@@ -28,10 +28,6 @@ Attributes:
     SYSTEMD_SUPPORT (bool): Whether the system supports systemd for logging.
 
 TODO:
-    * Finish adding detail to function docstrings.
-        > get_os_release
-        > get_os_name
-        > get_os_version
 """
 
 import argparse
@@ -50,7 +46,11 @@ except ImportError:
     pass
 
 def get_os_release():
-    """Return a list with the current OS release data."""
+    """Get information about the current OS from /etc/os-release.
+    
+    Returns:
+        A :list: with the information contained.
+    """
     try:
         with open('/etc/os-release') as os_release_file:
             os_release = os_release_file.readlines()
@@ -60,7 +60,11 @@ def get_os_release():
     return os_release
 
 def get_os_name():
-    """Get the current OS name."""
+    """Get the name of the currently running OS.
+    
+    Returns:
+        A :str: containing the official name of the OS.
+    """
     os_release = get_os_release()
     for item in os_release:
         if item.startswith('NAME='):
@@ -68,7 +72,11 @@ def get_os_name():
             return strip_quotes(name[:-1])
 
 def get_os_version():
-    """Get the current OS version."""
+    """Get the current OS version number
+    
+    Returns:
+        A :str: with the current OS official version number.
+    """
     os_release = get_os_release()
     for item in os_release:
         if item.startswith('VERSION_ID='):
