@@ -79,16 +79,17 @@ class Drive():
 
         self.log = logging.getLogger('kernelstub.Drive')
         self.log.debug('loaded kernelstub.Drive')
+        
+        if not node and mount_point:
+            self.equate_node_mountpoint(mount_point)
+        if not mount_point and node:
+            self.equate_node_mountpoint(node)
 
-        if node: 
-            self.node = node
-
-        if mount_point:
-            self.mount_point = mount_point
-            try:
-                self.node = self.equate_node_mountpoint(mount_point)[0]
-            except DriveError:
-                self.node = node
+        if self.is_mounted:
+            if not node and mount_point:
+                self.equate_node_mountpoint(mount_point)
+            elif not mount_point and node:
+                self.equate_node_mountpoint(node)
     
     @property
     def mtab(self):
@@ -109,6 +110,8 @@ class Drive():
         """Try to set the node automatically by the mount-point, if mounted."""
         if node_path:
             self._node = node_path
+            if not self.mount_point:
+                self.mount_point = self.equate_node_mountpoint(node_path)[1]
         else:
             raise DriveError(f'Could not set the node {node_path}')
     
@@ -124,6 +127,8 @@ class Drive():
     def mount_point(self, mount_point):
         if mount_point:
             self._mount_point = mount_point
+            if not self.node:
+                self.node = self.equate_node_mountpoint(mount_point)[0]
         else:
             raise DriveError(f'Could not set the mount point {mount_point}')
     

@@ -93,6 +93,9 @@ class Entry:
         self.log = logging.getLogger('kernelstub.Entry')
         self.log.debug('Loaded kernelstub.Entry')
         self.drive = drive.Drive()
+        self.drive.mount_point = '/'
+        self.exec_path = ['/vmlinuz']
+        self.options = "quiet splash"
     
     @property
     def index(self):
@@ -102,7 +105,6 @@ class Entry:
             idx = idx[-4:]
             self._index = idx
         return self._index
-    
     @index.setter
     def index(self, idx):
         """Generate an index if not provided"""
@@ -111,8 +113,11 @@ class Entry:
     @property
     def entry_id(self):
         """str: a machine-parseable unique ID for this entry."""
-        return self._entry_id
-
+        try: 
+            return self._entry_id
+        except AttributeError:
+            self.entry_id = None
+            return self._entry_id     
     @entry_id.setter
     def entry_id(self, e_id):
         """ If we didn't get an entry_id, generate a default from the OS name
@@ -127,8 +132,11 @@ class Entry:
     @property
     def title(self):
         """str: The human-readable name for this entry in the boot menu."""
-        return self._title
-    
+        try:
+            return self._title
+        except AttributeError:
+            self.title = None
+            return self._title
     @title.setter
     def title(self, title):
         """ If we didn't get a title, look it up from the current running OS."""
@@ -142,8 +150,10 @@ class Entry:
     @property
     def linux(self):
         """bool: True if this is a Linux entry, otherwise False"""
-        return self._linux
-    
+        try:
+            return self._linux
+        except AttributeError: 
+            return True
     @linux.setter
     def linux(self, linux):
         """ Only set 'linux' or 'efi', otherwise throw an exception."""
@@ -157,8 +167,7 @@ class Entry:
         should be two elements, one for the kernel image to boot and one for the
         initrd image (both relative to this OS's filesystem root).
         """
-        return self._exec_path
-    
+        return self._exec_path    
     @exec_path.setter
     def exec_path(self, path):
         """ If we have one item in this list, we are doing an efi entry and 
@@ -208,9 +217,11 @@ class Entry:
             self.linux = True
             return
         else:
-            raise EntryError(
-                f'Too many items in `exec_path`, got {len(path)} items.'
-            )
+            self.log.warn('Too many items in `exec_path`, got %s items.', len(path))
+            self.log.warn('Try `kernelstub update %s` to save the repair.', self.index)
+            self.log.info('Trying to remove the last item: %s', path[-1])
+            path.pop()
+            self.exec_path = path
     
     @property
     def options(self):
@@ -222,7 +233,6 @@ class Entry:
             return self._options
         except AttributeError:
             return None
-    
     @options.setter
     def options(self, options):
         """ We accept either a string  or list of options, and parse it into 
@@ -262,7 +272,45 @@ class Entry:
             kernel_path = os.path.join(self.drive.mount_point, self.exec_path[0])
             kernel_path = os.path.realpath(kernel_path)
             return kernel_path.split('vmlinuz-')[-1]
+
+    @property
+    def mount_point(self):
+        """str: The mount point of this entry's root partition."""
+        if self.drive.mount_point:
+            return self.drive.mount_point
+        elif self.drive.node:
+            self.drive.mount_point = self.drive.equate_node_mountpoint(
+                self.drive.node
+            )[1]
+            return self.drive.mount_point
+        else: 
+            self.drive.mount_point = '/'
+            return self.drive.mount_point
+    @mount_point.setter
+    def mount_point(self, mount_point):
+        """We need to update the drive object, then save the config."""
+        self.drive.mount_point = mount_point
     
+    @property
+    def node(self):
+        """str: The device node path for this entry's root partition."""
+        if self.drive.node:
+            return self.drive.node
+        elif self.drive.mount_point:
+            self.drive.node = self.drive.equate_node_mountpoint(
+                self.drive.mount_point
+            )[0]
+            return self.drive.mount_point
+        else: 
+            self.drive.mount_point = '/'
+            return self.drive.node
+
+        return self.drive.node
+    @node.setter
+    def node(self, node):
+        """We need to update the drive object, then save the config."""
+        self.drive.node = node
+
     @property
     def config(self):
         """:obj:`dict`: the configuration settings for this entry."""
@@ -284,6 +332,8 @@ class Entry:
         print_conf = {}
         print_conf['Entry:'] = self.index
         print_conf['Title'] = self.title
+        print_conf['Root Partition'] = self.node
+        print_conf['Mount Point'] = self.mount_point
         if self.linux:
             kernel_realpath = os.path.realpath(self.exec_path[0])
             initrd_realpath = os.path.realpath(self.exec_path[1])
@@ -295,8 +345,6 @@ class Entry:
                 print_conf['Initramfs'] = self.exec_path[1]
             else:
                 print_conf['Initramfs'] = f'{self.exec_path[1]} => {initrd_realpath}'
-            print_conf['Root Partition'] = self.drive.node
-            print_conf['Mount Point'] = self.drive.mount_point
             print_conf['Kernel Options'] = " ".join(self.options)
         else:
             print_conf['Loader'] = self.exec_path[0]
@@ -318,6 +366,7 @@ class Entry:
                 f'{config_path}/entries.d'
             )
             os.makedirs(os.path.join(config_path, 'entries.d'))
+        self.log.debug('%s configuration: \n%s', self.index, self.config)
         config_path = os.path.join(config_path, 'entries.d', self.entry_id)
         with open(config_path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
@@ -340,13 +389,12 @@ class Entry:
         with open(config_path) as config_file:
             config_dict = json.load(config_file)
         
+        self.index = config_dict['index']
+        self.node = config_dict['root_partition']
+        self.mount_point = config_dict['mount_point']
         self.entry_id = os.path.basename(config_path).replace('.conf', '')
         self.exec_path = config_dict['exec_path']
-        self.index = config_dict['index']
         if self.linux:
-            node = config_dict['root_partition']
-            mount_point = config_dict['mount_point']
-            self.drive = drive.Drive(node=node, mount_point=mount_point)
             if not self.drive.is_mounted:
                 self.drive.mount_drive()
             

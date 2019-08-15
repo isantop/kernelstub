@@ -126,6 +126,7 @@ class Kernelstub:
 
         # Argument processing takes place in util to keep this file clean.
         self.args = util.get_args(args)
+        self._no_unmount = ['/']
     
         if os.geteuid() != 0:
             print(
@@ -144,6 +145,7 @@ class Kernelstub:
         self.log.debug('Contents of args: %s', self.args)
 
         self.config = config.SystemConfiguration(config_path=config_path)
+        self._no_unmount.append(self.config.esp_path)
         
         if not self.args.func:
             self.args.index = None
@@ -162,7 +164,7 @@ class Kernelstub:
         if self.args.menu_timeout:
             self.config.menu_timeout = self.args.menu_timeout
         
-        if self.args.esp_path:
+        if self.args.esp:
             self.config.esp_path = self.args.esp_path
         
         if not self.args.quiet:
@@ -183,9 +185,6 @@ class Kernelstub:
         if self.args.index:
             new_entry.index = self.args.index
             self.log.debug('Index set to %s', new_entry.index)
-        if self.args.entry_id:
-            new_entry.entry_id = self.args.entry_id
-            self.log.debug('ID set to %s', new_entry.entry_id)
         if self.args.title:
             new_entry.title = self.args.title
             self.log.debug('Title set to %s', new_entry.title)
@@ -204,6 +203,9 @@ class Kernelstub:
         if self.args.options:
             new_entry.options = self.args.options
             self.log.debug('Options set to %s', new_entry.options)
+        if self.args.entry_id:
+            new_entry.entry_id = self.args.entry_id
+            self.log.debug('ID set to %s', new_entry.entry_id)
 
         new_entry.save_config(config_path=self.config.config_path)
         if new_entry.linux:
@@ -215,8 +217,7 @@ class Kernelstub:
                 )
                 new_entry.drive.mount_drive()
         new_entry.save_entry(esp_path=self.config.esp_path)
-        if not new_entry.drive.mount_point == '/':
-            new_entry.drive.unmount_drive()
+        self.safe_unmount(new_entry.drive)
 
         self.log.info(
             "New entry created: %s", 
@@ -254,7 +255,8 @@ class Kernelstub:
             except multiboot.EntryError as e:
                 self.log.exception(e)
             
-            entry.options = " ".join(entry.options)
+            if entry.options:
+                entry.options = " ".join(entry.options)
             
             entry_table = mktable(entry.print_config, 15)
             print(entry_table)
@@ -272,11 +274,11 @@ class Kernelstub:
             except multiboot.EntryError as e:
                 self.log.exception(e)
             
-            if not entry.drive.is_mounted:
-                entry.drive.mount_drive(mount_point='/mnt')
+            if entry.linux:
+                if not entry.drive.is_mounted:
+                    entry.drive.mount_drive(mount_point='/mnt')
             entry.save_entry(self.config.esp_path)
-            if not entry.drive.mount_point == '/':
-                entry.drive.unmount_drive()
+            self.safe_unmount(entry.drive)
         
         else:
             self.log.info('Updating all entries')
@@ -296,6 +298,7 @@ class Kernelstub:
         self.log.debug('Got arguments %s', self.args)
 
         entry_dir = os.path.join(self.config.config_path, 'entries.d')
+
         try:
             entry = find_entry_from_index(self.args.index, entry_dir)
             self.log.debug('Got entry %s', entry.entry_id)
@@ -305,36 +308,39 @@ class Kernelstub:
         if self.args.title:
             entry.title = self.args.title
         if self.args.mount_point:
-            entry.drive.mount_point = self.args.root_path
+            entry.mount_point = self.args.root_path
         if self.args.root:
-            entry.drive.node = self.args.root
+            entry.node = self.args.root
         if self.args.exec_path:
             entry.exec_path = [self.args.exec_path]
         if self.args.initrd_path:
             entry.exec_path = [entry.exec_path[0], self.args.initrd_path]
-
         if self.args.options:
             entry.options = self.args.options
-        
         if self.args.add_options:
             opts = util.parse_options(self.args.add_options.split())
             for option in opts:
                 if option not in entry.options:
                     entry.options.append(option)
-        
         if self.args.delete_options:
             opts = util.parse_options(self.args.delete_options.split())
             for option in opts:
                 if option in entry.options:
                     entry.options.remove(option)
-        
         if self.args.set_default:
             self.config.default_entry = entry.entry_id
         
         entry.save_config(config_path=self.config.config_path)
+        if entry.linux:
+            if not entry.drive.is_mounted:
+                self.log.debug(
+                    'Mounting linux entry drive %s to %s',
+                    entry.drive.node,
+                    entry.drive.mount_point
+                )
+                entry.drive.mount_drive()
         entry.save_entry(esp_path=self.config.esp_path)
-        if not entry.drive.mount_point == '/':
-            entry.drive.unmount_drive()
+        self.safe_unmount(entry.drive)
 
         self.log.info(
             'Entry %s updated: %s', 
@@ -355,11 +361,12 @@ class Kernelstub:
                 entry = find_entry_from_index(self.args.index, entry_dir)
             except multiboot.EntryError as e:
                 self.log.exception(e)
+            self.safe_unmount(entry.drive)
             
             entry_file = os.path.join(entry_dir, entry.entry_id)
             os.remove(entry_file)
 
-            if not self.args.retain_entry:
+            if not self.args.retain_data:
                 loader_dir = os.path.join(self.config.esp_path, 'loader/entries')
                 loader_file = os.path.join(loader_dir, f'{entry.entry_id}.conf')
                 try:
@@ -377,5 +384,24 @@ class Kernelstub:
                 except FileNotFoundError:
                     pass
 
-
-
+    def safe_unmount(self, drive):
+        """Unmount a drive, unless it's not safe to unmount it.
+        
+        Arguments:
+            drive (:obj:`kernelstub.mbdrive.Drive`): A kernelstub drive object
+                to potentially unmount.
+        
+        Returns:
+            True if the drive was unmounted, otherwise False.
+        """
+        if not drive.mount_point in self._no_unmount:
+            self.log.debug(
+                '%s not in %s, unmounting...',
+                drive.mount_point, 
+                self._no_unmount
+            )
+            drive.unmount_drive()
+            return True
+        elif not drive.is_mounted:
+            return
+        return False
