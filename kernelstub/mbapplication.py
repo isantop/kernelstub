@@ -23,7 +23,6 @@ terms.
 Main application
 
 TODO:
-    * Check docstrings in other modules and expand if incomplete.
     * Hook up new option flags
         > config
         > loader
