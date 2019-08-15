@@ -25,11 +25,6 @@ This module contains the main Entry object for Kernelstub, which represents the
 actual boot entry on the system. 
 
 TODO:
-    * Expand Entry Class docstring.
-    * Expand class method docstrings:
-        > load_config
-        > save_entry
-        > install_kernel
 """
 
 import json
@@ -333,6 +328,11 @@ class Entry:
         config_name='kernelstub_config', 
         config_dir='/etc/kernelstub/'):
         """ Loads the configuration for this entry from the disk. 
+
+        Arguments:
+            config_name (str): The name of this entry's configuration file in
+                `config_dir`
+            config_dir (str): The path where entries are stored.
         """
         config_path = os.path.join(config_dir, 'entries.d', config_name)
         self.log.debug('Loading configuration from %s', config_path)
@@ -355,9 +355,15 @@ class Entry:
         self.title = config_dict['title']
         self.log.debug('Loaded configuration for entry %s', self.entry_id)
 
-
     def save_entry(self, esp_path, entry_dir='loader/entries'):
-        """ Save the entry to the esp."""
+        """ Save the entry to the esp.
+        
+        Arguments:
+            esp_path (str): The path to the ESP mount point.
+            entry_dir (str, optional): The path of the directory on the ESP
+                where entry files are stored, relative to `esp_path`. Default
+                is 'loader/entries'.
+        """
         self.log.debug('Saving the entry %s to disk', self.entry_id)
         
         if not os.path.exists(os.path.join(esp_path, entry_dir)):
@@ -397,10 +403,22 @@ class Entry:
             esp_path=None, 
             kernel_name='vmlinuz.efi', 
             init_name='initrd.img'):
-        """ If this is a linux entry, install the kernel to the ESP."""
+        """ Installs the bootloader to the ESP and returns the paths to the 
+        bootloader files.
+        
+        Arguments:
+            esp_path (str): The path to the ESP mount point.
+            kernel_name (str): The filename on the ESP that the linux kernel 
+                image should use. This usually must end with '.efi'
+            init_name (str): The filename on the ESP that the initramfs image
+                should use. 
+        
+        Returns: 
+            A :obj:`tuple` with the installed path of the linux image, and the
+                installed path of the initrd image. Or, just the path to the 
+                EFI executable (if this isn't a linux entry)
+        """
         self.log.debug('Installing files to the ESP.')
-        if not esp_path:
-            esp_path = self._esp_path
 
         if self.linux:
             self.log.debug('Copying files for Linux installation.')
