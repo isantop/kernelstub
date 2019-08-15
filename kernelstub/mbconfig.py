@@ -21,7 +21,12 @@ THIS SOFTWARE.
 Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 
-Code to load multiboot-compatible configuration
+This module contains the SystemConfiguration class, which is used within 
+Kernelstub to represent the main program-wide configuration, as well as the 
+systemd-boot configuration.
+
+TODO:
+    * Expand SystemConfiguration class docstring
 """
 
 import json
@@ -189,8 +194,7 @@ class SystemConfiguration:
             self.menu_timeout = 0
             self.config_rev = CURRENT_CONFIGURATION_REVISION
 
-        self.log.debug('Sucessfully loaded config from %s', self.config_path)
-        
+        self.log.debug('Sucessfully loaded config from %s', self.config_path)       
     
     def save_config(self):
         """ Save our current configuration to disk."""

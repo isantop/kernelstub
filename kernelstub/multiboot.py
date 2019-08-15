@@ -20,6 +20,16 @@ THIS SOFTWARE.
 
 Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
+
+This module contains the main Entry object for Kernelstub, which represents the 
+actual boot entry on the system. 
+
+TODO:
+    * Expand Entry Class docstring.
+    * Expand class method docstrings:
+        > load_config
+        > save_entry
+        > install_kernel
 """
 
 import json
@@ -122,8 +132,7 @@ class Entry:
             os_version = util.get_os_version()
             os_hostname = util.get_hostname()
             title = f'{os_name} {os_version} ({os_hostname})'
-        self._title = title
-        
+        self._title = title     
     
     @property
     def linux(self):

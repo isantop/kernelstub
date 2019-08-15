@@ -20,6 +20,14 @@ THIS SOFTWARE.
 
 Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
+
+This module contains the Drive class, which is used within kernelstub to 
+represent block devices (like partitions and their filesystems.)
+
+TODO: 
+    * Expand Drive class docstring
+    * Expand class method docstrings:
+        > equate_node_mountpoint
 """
 
 import os
