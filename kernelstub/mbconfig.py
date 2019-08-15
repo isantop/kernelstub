@@ -26,7 +26,6 @@ Kernelstub to represent the main program-wide configuration, as well as the
 systemd-boot configuration.
 
 TODO:
-    * Expand SystemConfiguration class docstring
 """
 
 import json
@@ -53,15 +52,29 @@ class SystemConfiguration:
     """ An object representing the system configuration.
 
     Arguments:
-        config_path (str): The path to the system kernelstub configuration.
-            Default is `/etc/kernelstub/system`
+        config_path (str): The path to the system kernelstub configuration
+            directory. Default is `/etc/kernelstub/`
+        config_name (str): The name of the configuration file within 
+            the config_path
     
     Attributes:
         config_path (str): The path to the system kernelstub configuration.
-
+        log (:obj:`logging.Logger`): The logging service
+        config (dict): The dictionary containing all of the configuration 
+            parameters for both kernelstub and systemd-boot.
+        config_file (str): The path to the actual configuration file.
+        config_rev (int): The numerical revision of the current configuration.
+        esp_path (str): The path to where the EFI System Partition is mounted.
+        default_entry (str): The default boot entry to boot.
+        menu_timeout (int): The number of seconds for which to display the 
+            boot menu.
     """
 
-    def __init__(self, config_path='/etc/kernelstub'):
+    def __init__(
+        self, 
+        config_path='/etc/kernelstub',
+        config_name='system'):
+
         self.log = logging.getLogger('kernelstub.SystemConfiguration')
         self.log.debug('Loaded kernelstub.SystemConfiguration')
         self.config = {}
