@@ -63,44 +63,54 @@ class Entry:
     """ An object to represent a boot entry on the system. 
 
     Attributes:
-
-    Arguments: 
+        log (:obj:`logging.Logger`): The logging service
+        drive (:obj:`kernelstub.mbdrive.Drive`) The drive object for this 
+            entry's root partition.
+        index (str): A short, unique, typeable reference for this entry, used 
+            when manipulating entries within kernelstub. By default, we use the
+            last four characters of a Type-4 (random) UUID.
+        entry_id (str): This is used for identifying the entry to 
+            systemd-boot, as well as naming its files on-disk. By default, it
+            will be auto-generated from the entry `title` and the disk UUID.
+        title (str): How the boot menu should display this entry. If
+            not provided, it will be the current OS name, version, and hostname.
+        linux (bool): Whether the entry is a linux-type entry or a normal
+            EFI entry.
+        exec_path (list): A list of paths (as :str:) to this entry's
+            boot loaders. For EFI-type entries, this should be relative to the
+            ESP root. For linux-style entries, this should be the path to the 
+            linux kernel and the path to the initramfs image, both relative to
+            the partition's mountpoint.
+        options (list): A list of options to be passed to the
+            executeable. Currently only used for linux-type entries. Default is
+            "quiet splash"
+        machine_id (str): A unique machine ID for this entry. This is either in
+            /etc/machine-id, or is equal to the root-partition's UUID.
+        type (str): Either 'linux' or 'efi', depending on what type of entry 
+            this is.
+        version (str): The version number of the linux kernel used by 
+            this entry.
+        config (dict): A dictionary representation of this entry's configuration.
+        print_config (dict): A printable version of `config`.
     """
-    def __init__(
-            self,
-            entry_id=None,
-            title=None,
-            mount_point='/',
-            node=None,
-            exec_path=['/vmlinuz', '/initrd.img'],
-            options=None,
-            index=None,
-            esp_path='/boot/efi'):
+    def __init__(self):
 
         self.log = logging.getLogger('kernelstub.Entry')
         self.log.debug('Loaded kernelstub.Entry')
-        self._esp_path = esp_path
-        self.exec_path = exec_path
-        self.drive = drive.Drive(node=node, mount_point=mount_point)
-        if not self.drive.is_mounted:
-            self.drive.mount_drive()
-        
-        self.title = title
-        self.options = options
-        self.index = index
-        self.entry_id = entry_id
+        self.drive = drive.Drive()
     
     @property
     def index(self):
         """str: a unique, typeable index for this entry."""
+        if not self._index:
+            idx = str(uuid.uuid4())
+            idx = idx[-4:]
+            self._index = idx
         return self._index
     
     @index.setter
     def index(self, idx):
         """Generate an index if not provided"""
-        if not idx:
-            idx = str(uuid.uuid4())
-            idx = idx[-4:]
         self._index = idx[:10]
 
     @property
@@ -346,11 +356,9 @@ class Entry:
         self.log.debug('Loaded configuration for entry %s', self.entry_id)
 
 
-    def save_entry(self, esp_path=None, entry_dir='loader/entries'):
+    def save_entry(self, esp_path, entry_dir='loader/entries'):
         """ Save the entry to the esp."""
         self.log.debug('Saving the entry %s to disk', self.entry_id)
-        if not esp_path:
-            esp_path = self._esp_path
         
         if not os.path.exists(os.path.join(esp_path, entry_dir)):
             self.log.warn('Entry path not found, creating it.')

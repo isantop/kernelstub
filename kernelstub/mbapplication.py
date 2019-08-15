@@ -175,31 +175,45 @@ class Kernelstub:
     
     def create(self):
         """ Create a new entry."""
-        kwargs = {}
-
-        if self.args.entry_id:
-            kwargs['entry_id'] = self.args.entry_id
-        if self.args.title:
-            kwargs['title'] = self.args.title
-        if self.args.mount_point:
-            kwargs['mount_point'] = self.args.mount_point
-        if self.args.root:
-            kwargs['node'] = self.args.root
-        if self.args.exec_path:
-            kwargs['exec_path'] = [self.args.exec_path]
-        if self.args.initrd_path:
-            kwargs['exec_path'].append(self.args.initrd_path)
-        if self.args.options:
-            kwargs['options'] = self.args.options
-        if self.args.index:
-            kwargs['index'] = self.args.index
-        
         self.log.debug('Got arguments %s', self.args)
-        self.log.debug('Passing self.args to new entry: %s', kwargs)
 
-        new_entry = multiboot.Entry(**kwargs)
+        self.log.debug('Creating new entry')
+        new_entry = multiboot.Entry()
+
+        if self.args.index:
+            new_entry.index = self.args.index
+            self.log.debug('Index set to %s', new_entry.index)
+        if self.args.entry_id:
+            new_entry.entry_id = self.args.entry_id
+            self.log.debug('ID set to %s', new_entry.entry_id)
+        if self.args.title:
+            new_entry.title = self.args.title
+            self.log.debug('Title set to %s', new_entry.title)
+        if self.args.mount_point:
+            new_entry.drive.mount_point = self.args.mount_point
+            self.log.debug('Mount point set to %s', new_entry.drive.mount_point)
+        if self.args.root:
+            new_entry.drive.node = self.args.root
+            self.log.debug('Drive node set to %s', new_entry.drive.node)
+        if self.args.exec_path:
+            new_entry.exec_path = [self.args.exec_path]
+            self.log.debug('Exec set to %s', new_entry.exec_path)
+        if self.args.initrd_path:
+            new_entry.exec_path.append(self.args.initrd_path)
+            self.log.debug('Exec set to %s', new_entry.exec_path)
+        if self.args.options:
+            new_entry.options = self.args.options
+            self.log.debug('Options set to %s', new_entry.options)
 
         new_entry.save_config(config_path=self.config.config_path)
+        if new_entry.linux:
+            if not new_entry.drive.is_mounted:
+                self.log.debug(
+                    'Mounting linux entry drive %s to %s',
+                    new_entry.drive.node,
+                    new_entry.drive.mount_point
+                )
+                new_entry.drive.mount_drive()
         new_entry.save_entry(esp_path=self.config.esp_path)
         if not new_entry.drive.mount_point == '/':
             new_entry.drive.unmount_drive()
@@ -260,7 +274,7 @@ class Kernelstub:
             
             if not entry.drive.is_mounted:
                 entry.drive.mount_drive(mount_point='/mnt')
-            entry.save_entry(esp_path=self.config.esp_path)
+            entry.save_entry(self.config.esp_path)
             if not entry.drive.mount_point == '/':
                 entry.drive.unmount_drive()
         
