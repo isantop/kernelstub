@@ -23,7 +23,6 @@ terms.
 Main application
 
 TODO:
-    * Add detail to replace_dict_keys docstring
     * Check docstrings in other modules and expand if incomplete.
     * Hook up new option flags
         > config
@@ -40,7 +39,14 @@ from . import multiboot
 from . import util
 
 def replace_dict_keys(data):
-    """ Replaces verbose keys in data with human-friendly ones."""
+    """ Replaces internally-named keys in dictionaries with human-friendly ones.
+    
+    Arguments: 
+        data (dict): The dictionary to replace the keys in.
+    
+    Returns:
+        An :obj:`dict` with the keys replaced.
+    """
     keys = {
         'index': 'Index',
         'entry_id': 'ID',
