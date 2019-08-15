@@ -25,9 +25,6 @@ This module contains the Drive class, which is used within kernelstub to
 represent block devices (like partitions and their filesystems.)
 
 TODO: 
-    * Expand Drive class docstring
-    * Expand class method docstrings:
-        > equate_node_mountpoint
 """
 
 import os
@@ -58,6 +55,24 @@ class Drive():
     Kernelstub Drive Object
 
     Stores and retrieves information related to the current drive.
+
+
+    Arguments:
+        node (str): The path for this device's device node (e.g. /dev/sda1)
+        mount_point (str): The path where this device is/should be mounted.
+    
+    Attributes:
+        log (:obj:`logging.Logger`): The logging service
+        mtab (dict): Information on the currently mounted drives
+        node (str): The path for this device's node.
+        mount_point (str): The path where this filesystem gets mounted. If 
+            the device is already mounted, this should be the current mount
+            point. Otherwise, this is the location where the drive should be
+            mounted to.
+        uuid (str): The UUID of this block device's filesystem. Note that the
+            format may differ depending on the filesystem, so it should not be 
+            considered a standard-format UUID.
+        is_mounted (bool): Whether or not the device is currently mounted.
     """
 
     def __init__(self, node=None, mount_point=None):
@@ -157,8 +172,11 @@ class Drive():
     def equate_node_mountpoint(self, part):
         """Try to match a device node with a mountpoint, or vice versa.
 
+        Arguments:
+            part (str): The device node or mount point to try and match.
+
         Returns: 
-            :obj:`tuple` of str: the node, the mountpoint
+            A :obj:`tuple` of str: as the node, the mountpoint
         """
         self.log.debug('Trying to match %s in the mtab', part)
         for mount in self.mtab:
