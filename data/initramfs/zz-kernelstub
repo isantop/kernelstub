@@ -4,4 +4,5 @@ KERNEL="/boot/vmlinuz-$1"
 INITRD="$2"
 
 kernelstub \
-  update
+  --preserve-live-mode \
+  update 

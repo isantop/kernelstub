@@ -124,32 +124,70 @@ class Kernelstub:
         args=None):
 
         # Argument processing takes place in util to keep this file clean.
+        loader_dir = 'loader'
         self.args = util.get_args(args)
         self._no_unmount = ['/']
-    
-        if os.geteuid() != 0:
-            print(
-                'kernelstub: error: You need to be root or use sudo to '
-                'run kernelstub'
-            )
-            exit(176)
         
         if self.args.verbose:
             verbosity=2
         if self.args.quiet:
             verbosity=0
+        if self.args.config:
+            if os.path.exists(self.args.config):
+                config_path = self.args.config
+        if self.args.loader:
+            loader_dir = self.args.loader
+        if self.args.log_file:
+            log_file_path = self.args.log_file
 
         self.log = util.setup_logging(verbosity, log_file_path)
         self.log.debug('kernelstub loaded')
+            
+        if os.geteuid() != 0:
+            self.log.error('You need to be root or use sudo to run kernelstub')
+            exit(176)
         self.log.debug('Contents of args: %s', self.args)
 
         self.config = config.SystemConfiguration(config_path=config_path)
+        self.config.loader_dir = loader_dir
         self._no_unmount.append(self.config.esp_path)
+
+        if self.args.preserve_live_mode and self.config.live_mode:
+            # Live mode is active, warn the user and do nothing.
+            self.log.error(
+                'Live mode is active, no action is taken.\n\n'
+                'If this is a live disk, this is probably normal and you can '
+                'safely ignore this message. \n\n'
+                'If this is an installed system, you should run `sudo '
+                'kernelstub update` manually to get the system out of live '
+                'mode and proceed with the update.'
+            )
+            exit(0)
+        if self.args.preserve_live_mode and self.args.enable_live_mode:
+            self.log.info('Enabling live mode.')
+            self.config.live_mode = True
+            self.log.warn(
+                'All automatic kernelstub functionality has been disabled until '
+                'live mode is disabled (by running kernelstub without the '
+                '--preserve-live-mode flag). This means your kernel will not be '
+                'automatically tracked on updates. Unless you are an OS '
+                'distributor, this probably isn\'t what you want. If that '
+                'applies to you, you should re-run kernelstub without the '
+                '--preserve-live-mode flag to disable it.'
+            )
+            exit(0)
+        if not self.args.preserve_live_mode and self.config.live_mode:
+            self.log.info('Disabling live mode')
+            self.config.live_mode = False
+        if self.args.preserve_live_mode and not self.config.live_mode:
+            self.log.warn(
+                'Live mode is not active, --preserve-live-mode is ignored'
+            )
         
         if not self.args.func:
             self.args.index = None
             self.update()
-            self.list()
+            self.lst()
             exit(0)
 
         if not hasattr(self, self.args.func):
@@ -172,7 +210,10 @@ class Kernelstub:
             system_config['Menu Timeout:'] = f'{self.config.menu_timeout}s'
             system_config['ESP Path:'] = self.config.esp_path
 
-            print(f'System Configuration:{mktable(system_config, 15)}')
+            self.log.info(
+                'System configuration\n\n%s', 
+                mktable(system_config, 15)
+            )
     
     def create(self):
         """ Create a new entry."""
@@ -227,7 +268,7 @@ class Kernelstub:
             self.config.default_entry = new_entry.entry_id
             self.log.info('Entry %s set as default', new_entry.index)
 
-    def list(self):
+    def lst(self):
         """ List all entries"""
         self.log.debug('Contents of sys.argv: %s', sys.argv[2:])
         self.log.debug('Got arguments %s', self.args)
@@ -237,16 +278,17 @@ class Kernelstub:
         if not os.path.exists(entry_dir):
             self.log.warn('No entries in %s', entry_dir)
             return
-        print("Current Entries:\n")
+        entries = []
         for file in os.listdir(entry_dir):
             if os.path.isfile(os.path.join(entry_dir, file)):
                 entry = multiboot.Entry()
                 entry.load_config(config_name=file)
                 entry_index = entry.index.ljust(12, '.')
                 if entry.entry_id == self.config.default_entry:
-                    print(f'  {entry_index}{entry.title} (default)')
+                    entries.append(f'  {entry_index}{entry.title} (default)')
                 else:
-                    print(f'  {entry_index}{entry.title}')
+                    entries.append(f'  {entry_index}{entry.title}')
+        self.log.info('Current Entries:\n%s', '\n'.join(entries))
         
         if self.args.index:
             try:
@@ -258,7 +300,10 @@ class Kernelstub:
                 entry.options = " ".join(entry.options)
             
             entry_table = mktable(entry.print_config, 15)
-            print(entry_table)
+            self.log.info('%s configuration:\n%s',
+                entry.title,
+                entry_table
+            )
     
     def update(self):
         """ Update any boot entries automatically."""

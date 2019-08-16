@@ -255,15 +255,25 @@ def get_args(raw_args=None):
         '--config',
         help='Path to configuration directory'
     )
-    parser.add_argument(
+    parser.add_argument( 
         '-l',
         '--loader',
-        help='Path to ESP loader directory'
+        help=argparse.SUPPRESS # This option is not complete
     )
     parser.add_argument(
         '-g',
         '--log-file',
         help='Path to log file'
+    )
+    parser.add_argument(
+        '--preserve-live-mode',
+        action='store_true',
+        help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        '--enable-live-mode',
+        action='store_true',
+        help=argparse.SUPPRESS
     )
     # parser.add_argument(
     #     'command',
@@ -357,7 +367,7 @@ def get_args(raw_args=None):
             'configuration for an entry'
         )
     )
-    parser_list.set_defaults(func="list")
+    parser_list.set_defaults(func="lst")
     parser_list.add_argument(
         'index',
         nargs='?',
@@ -486,7 +496,7 @@ def setup_logging(verbosity, log_file_path):
     file_level = level[2]
 
     stream_fmt = logging.Formatter(
-        '%(name)s: %(levelname)s: %(message)s')
+        '%(levelname)s: %(message)s')
     file_fmt = logging.Formatter(
         '%(asctime)s - %(name)s: %(levelname)s: %(message)s')
     log = logging.getLogger('kernelstub')

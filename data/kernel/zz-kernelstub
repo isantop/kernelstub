@@ -4,4 +4,5 @@ INITRD="/boot/initrd.img-$1"
 KERNEL="$2"
 
 kernelstub \
+  --preserve-live-mode \
   update

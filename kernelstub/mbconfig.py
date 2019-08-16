@@ -64,10 +64,12 @@ class SystemConfiguration:
             parameters for both kernelstub and systemd-boot.
         config_file (str): The path to the actual configuration file.
         config_rev (int): The numerical revision of the current configuration.
+        loader_dir (str): The path where loader configuration is stored.
         esp_path (str): The path to where the EFI System Partition is mounted.
         default_entry (str): The default boot entry to boot.
         menu_timeout (int): The number of seconds for which to display the 
             boot menu.
+        live_mode (bool): Whether the system is currently running in live mode.
     """
 
     def __init__(
@@ -92,7 +94,18 @@ class SystemConfiguration:
             self.log.warn(bad_esp_error)
             self.esp_path = '/boot/efi'
             self.esp = drive.Drive(mount_point=self.esp_path)
-    
+
+    @property
+    def loader_dir(self):
+        """str: the path relative to `esp_path` where the loader configuration
+        is stored.
+        """
+        return self.config['loader_dir']
+    @loader_dir.setter
+    def loader_dir(self, loader_dir):
+        self.config['loader_dir'] = loader_dir
+        self.save_config()
+
     @property
     def config_rev(self):
         """ int: The revision of the current configuration. """
@@ -137,8 +150,7 @@ class SystemConfiguration:
     @property
     def esp_path(self):
         """ str: The path to the ESP mountpoint on the system."""
-        return self.config['esp_path']
-    
+        return self.config['esp_path'] 
     @esp_path.setter
     def esp_path(self, esp_path):
         if esp_path:
@@ -174,6 +186,25 @@ class SystemConfiguration:
         self.config['menu_timeout'] = int(timeout)
         self.save_config()
     
+    @property
+    def live_mode(self):
+        """bool: Whether the system is currently in "live mode". In live mode, 
+        the system will not perform any action or otherwise modify the system.
+        This is useful if kernelstub is being run from a live disk, so that it 
+        doesn't inadvertently modify the system. When both this configuration 
+        option and the '--preserve-live-mode' flags are set, live mode is 
+        enabled and no action is taken. If either of these is missing, then live
+        mode is ignored. 
+        """
+        try:
+            return self.config['live_mode']
+        except KeyError:
+            return False
+    @live_mode.setter
+    def live_mode(self, state):
+        self.config['live_mode'] = state
+        self.save_config()
+
     def update_config(self):
         """ Update the configuration to a new version if necessary."""
         # The configuration is current
@@ -204,6 +235,7 @@ class SystemConfiguration:
                 self.config_path
             )
             self.esp_path = '/boot/efi'
+            self.loader_dir = 'loader'
             self.menu_timeout = 0
             self.config_rev = CURRENT_CONFIGURATION_REVISION
 
