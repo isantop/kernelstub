@@ -204,27 +204,31 @@ def parse_options(options):
     """
     try: 
         options.split()
-        buff = ''
-        quote = False
+        buffer = ''
+        has_quote = False
         options_list = []
         for ch in options:
-            if not quote:
+            if not has_quote:
                 if not ch is " ":
-                    buff += ch
+                    buffer += ch
                     if ch is "'" or ch is '"':
-                        quote = True
-                elif not quote and ch is " ":
-                    options_list.append(buff)
-                    buff = ''
-            elif quote: 
-                buff += ch
+                        has_quote = True
+                elif not has_quote and ch is " ":
+                    options_list.append(buffer)
+                    buffer = ''
+            elif has_quote: 
+                buffer += ch
                 if ch is '"' or ch is "'":
-                    quote = False
-                    options_list.append(buff)
-                    buff = ''
+                    has_quote = False
+                    options_list.append(buffer)
+                    buffer = ''
+    
         while('' in options_list):
+            # Remove any empty options
             options_list.remove('')
+    
         return options_list
+    
     except AttributeError:
         # Looks like we got a list, don't parse:
         return options
