@@ -21,16 +21,9 @@ THIS SOFTWARE.
 Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 
-This is a utility module for kernelstub which contains several package-wide 
-functions which are useful to these 
-
-Attributes:
-    SYSTEMD_SUPPORT (bool): Whether the system supports systemd for logging.
+This is a unit testcase for the Util module
 
 TODO:
-    * Write tests
-    * Test tests
-    * Add testing to app
 """
 
 import subprocess
