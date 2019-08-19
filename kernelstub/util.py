@@ -34,7 +34,6 @@ import argparse
 import logging
 from logging import handlers
 import platform
-import sys
 
 # Try detecting systemd support
 SYSTEMD_SUPPORT = False

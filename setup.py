@@ -19,7 +19,7 @@ Portions of test-related code authored by Jason DeRose <jason@system76.com>
 """
 
 
-from distutils.core import setup
+from setuptools import setup
 from distutils.cmd import Command
 import os
 import subprocess
@@ -31,6 +31,8 @@ DIRS = [
     'bin'
 ]
 
+def run_pytest():
+    return run_under_same_interpreter('test', '/usr/bin/pytest-3', [])
 
 def run_under_same_interpreter(opname, script, args):
     """Re-run with the same as current interpreter."""
@@ -47,8 +49,13 @@ def run_under_same_interpreter(opname, script, args):
         sys.exit(3)
     cmd = [sys.executable, script] + args
     print('check_call:', cmd, file=sys.stderr)
-    subprocess.check_call(cmd)
-    print('** PASSED: {}\n'.format(script), file=sys.stderr)
+    try:
+        subprocess.check_call(cmd)
+        print('** PASSED: {}\n'.format(script), file=sys.stderr)
+        return True
+    except subprocess.CalledProcessError:
+        print('** FAILED: {}\n'.format(script), file=sys.stderr)
+        return False
 
 def run_pyflakes3():
     """Run a round of pyflakes3."""
@@ -57,7 +64,7 @@ def run_pyflakes3():
         'setup.py',
     ] + DIRS
     args = [os.path.join(TREE, name) for name in names]
-    run_under_same_interpreter('flakes', script, args)
+    return run_under_same_interpreter('flakes', script, args)
 
 
 
@@ -67,26 +74,37 @@ class Test(Command):
 
     user_options = [
         ('skip-flakes', None, 'do not run pyflakes static checks'),
+        ('skip-test', None, 'Do run run unit tests')
     ]
 
     def initialize_options(self):
         self.skip_sphinx = 0
         self.skip_flakes = 0
+        self.skip_test = 0
 
     def finalize_options(self):
         pass
 
     def run(self):
         if not self.skip_flakes:
-            run_pyflakes3()
+            pf3 = run_pyflakes3()
+        if not self.skip_test:
+            pt3 = run_pytest()
+        if not pt3 or not pf3:
+            print(
+                'ERROR: One or more tests failed with errors.'
+            )
+            exit(3)
 
 setup(
     name='kernelstub',
-    version='3.2.0',
-    description='Automatic kernel efistub manager for UEFI',
-    url='https://launchpad.net/kernelstub',
+    version='4.0.0',
     author='Ian Santopietro',
     author_email='isantop@gmail.com',
+    url='https://launchpad.net/kernelstub',
+    description='Automatic kernel efistub manager for UEFI',
+    download_url='https://launchpad.net/kernelstub/releases',
+    tests_require=['pytest'],
     license='ISC',
     packages=['kernelstub'],
     scripts=['bin/kernelstub'],

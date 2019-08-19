@@ -43,6 +43,8 @@ from kernelstub import mbapplication as application
 
 def main(options=None):
     kernelstub = application.Kernelstub()
+    # if kernelstub:
+    #     return 0
 
 if __name__ == '__main__':
     main()

@@ -31,7 +31,6 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 import uuid
 
 from . import mbdrive as drive 
