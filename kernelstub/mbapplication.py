@@ -363,12 +363,12 @@ class Kernelstub:
         if self.args.options:
             entry.options = self.args.options
         if self.args.add_options:
-            opts = util.parse_options(self.args.add_options.split())
+            opts = util.parse_options(self.args.add_options)
             for option in opts:
                 if option not in entry.options:
                     entry.options.append(option)
         if self.args.delete_options:
-            opts = util.parse_options(self.args.delete_options.split())
+            opts = util.parse_options(self.args.delete_options)
             for option in opts:
                 if option in entry.options:
                     entry.options.remove(option)

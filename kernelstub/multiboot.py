@@ -244,7 +244,7 @@ class Entry:
             if not options:
                 options = "quiet splash"
             try:
-                self._options = util.parse_options(options.split())
+                self._options = util.parse_options(options)
             #if options is a list already, there is no split()
             except AttributeError:
                 self._options = options
