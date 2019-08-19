@@ -32,3 +32,65 @@ TODO:
     * Test tests
     * Add testing to app
 """
+
+import subprocess
+import unittest
+
+from . import util
+
+class UtilTestCase(unittest.TestCase):
+    def test_systemd(self):
+        try:
+            systemd_supported = subprocess.run(
+                ['journalctl', '--no-pager', '-n 1'], 
+                check=True
+            )
+            # We expect the return code to be 0, which bools to false, 
+            # Hence we assertNotEqual
+            self.assertNotEqual(
+                bool(systemd_supported.returncode),
+                util.SYSTEMD_SUPPORT
+            )
+        except subprocess.CalledProcessError:
+            self.assertFalse(util.SYSTEMD_SUPPORT)
+    
+    def test_clean_names(self):
+        bad_name = '"This: is~a_Bad!\'<name>/\\|_?*(whee)'
+        good_name = util.clean_names(bad_name)
+        expected_name = 'This_is-a_Badname_whee'
+        
+        self.assertIs(good_name, expected_name)
+    
+    def test_strip_quotes(self):
+        bad_string1 = '"This has quotes"'
+        good_string1 = util.strip_quotes(bad_string1)
+        bad_string2 = "'This has quotes'"
+        good_string2 = util.strip_quotes(bad_string2)
+        expected_string = 'This has quotes'
+
+        self.assertIs(good_string1, expected_string)
+        self.assertIs(good_string2, expected_string)
+    
+    def test_parse_options(self):
+        raw_options1 = 'default="true statement" acpi.osname="Linux" nvidia-drm.modeset=1 parsed="true"'
+        expected_options1 = [
+            'default="true statement"', 
+            'acpi.osname="Linux"', 
+            'nvidia-drm.modeset=1', 
+            'parsed="true"'
+        ]
+        clean_options1 = util.parse_options(raw_options1)
+
+        self.assertListEqual(clean_options1, expected_options1)
+
+        raw_options2 = [
+            'these options',
+            'are="wrong',
+            'but"',
+            'we want',
+            'to',
+            'test that',
+            'they are not="parsed"'
+        ]
+
+        self.assertListEqual(util.parse_options(raw_options2), raw_options2)
