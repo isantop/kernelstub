@@ -192,8 +192,8 @@ def parse_options(options):
     """
     Parse a list of kernel options
 
-    Takes a list object and ensure that each item in the list is a single
-    linux kernel option. Returns the resulting list.
+    Takes a string of kernel options and ensures that each item in the list is 
+    a single linux kernel option. Returns the resulting list.
 
     Args:
         options (str): The string of kernel options.

@@ -53,6 +53,8 @@ class UtilTestCase(unittest.TestCase):
             )
         except subprocess.CalledProcessError:
             self.assertFalse(util.SYSTEMD_SUPPORT)
+        except FileNotFoundError:
+            self.assertFalse(util.SYSTEMD_SUPPORT)
     
     def test_clean_names(self):
         bad_name = '"This: is~a_Bad!\'<name>/\\|_?*(whee)'
