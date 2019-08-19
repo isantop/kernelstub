@@ -2,20 +2,30 @@ Source: kernelstub
 Maintainer: Ian Santopietro <isantop@gmail.com>
 Section: python
 Priority: optional
-Build-Depends: python3-all, pyflakes3, debhelper (>= 7.4.3)
-Standards-Version: 3.9.1
-
-
-
-
+Build-Depends: python3-all, 
+               pyflakes3, 
+               python3-pytest, 
+               dh-python,
+               debhelper (>= 7.4.3)
+Standards-Version: 4.3.0
 
 Package: kernelstub
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, efibootmgr, util-linux
+Depends: ${misc:Depends}, 
+         ${python3:Depends}, 
+         systemd, 
+         util-linux (>= 2.31.1)
 Recommends: python3-systemd
-Description: Automatic kernel efistub manager for UEFI
+Description: Comprehensive automatic ESP Management for Linux
+ Kernelstub is a utility to automatically manage your OS's EFI System Partition
+ (ESP). It makes it simple to copy the current kernel and initramfs image onto
+ the ESP so that they are automatically probable by most EFI boot loaders as 
+ well as the EFI firmware itself.
 
 Package: pop-boot
 Architecture: all
-Depends: kernelstub, systemd
-Description: The fancy, magical, automatic boot package for Pop!_OS
+Depends: kernelstub, 
+         systemd, 
+         ${misc:Depends}
+Description: Fancy, magical, automatic boot package for Pop!_OS
+ This empty package sets up kernelstub on Pop!_OS

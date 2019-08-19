@@ -1,12 +1,24 @@
 #!/bin/bash
 
-kernelstub \
-	--esp-path "/boot/efi" \
-	--kernel-path "/vmlinuz" \
-	--initrd-path "/initrd.img" \
-	--options "quiet loglevel=0" \
-	--loader \
-	--manage-only \
-	--verbose
-
+#DEBHELPER#
+set -e
 bootctl install --path=/boot/efi
+
+kernelstub system \
+	--menu-timeout 0
+	--esp '/boot/efi'
+
+kernelstub create \
+	--mount-point '/' \
+	--exec-path /vmlinuz \
+	--initrd-path /initrd.img \
+	--options 'quiet splash loglevel=0 systemd.show_status=false' \
+	--index system \
+	--set-default
+
+kernelstub create \
+	--mount-point '/' \
+	--exec-path /vmlinuz.old \
+	--initrd-path /initrd.img.old \
+	--options 'quiet splash loglevel=0 systemd.show_status=false' \
+	--index oldkern 

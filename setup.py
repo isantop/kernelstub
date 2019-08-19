@@ -111,7 +111,6 @@ setup(
     cmdclass={'test': Test},
     data_files=[
         ('/etc/kernel/postinst.d', ['data/kernel/zz-kernelstub']),
-        ('/etc/initramfs/post-update.d', ['data/initramfs/zz-kernelstub']),
-        ('/etc/default', ['data/config/kernelstub.SAMPLE'])
+        ('/etc/initramfs/post-update.d', ['data/initramfs/zz-kernelstub'])
     ]
 )
