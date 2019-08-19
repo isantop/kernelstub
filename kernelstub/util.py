@@ -159,9 +159,9 @@ def strip_quotes(value):
         The :obj:`str` without quotation marks.
     """
     new_value = value
-    if value.startswith('"'):
+    if value.startswith('"') or value.startswith("'"):
         new_value = new_value[1:]
-    if value.endswith('"'):
+    if value.endswith('"') or value.endswith("'"):
         new_value = new_value[:-1]
     return new_value
 
@@ -202,22 +202,26 @@ def parse_options(options):
         a :obj:`list` with each option as a :obj:`str`.
 
     """
-    for index, option in enumerate(options):
-        if '"' in option:
-            matched = False
-            itr = 1
-            while matched is False:
-                try:
-                    next_option = options[index + itr]
-                    option = '{} {}'.format(option, next_option)
-                    options[index + itr] = ""
-                    if '"' in next_option:
-                        matched = True
-                    else:
-                        itr += 1
-                except IndexError:
-                    matched = True
-        options[index] = option
+    buff = ''
+    quote = False
+    options = []
+    for ch in optstr:
+        if not quote:
+            if not ch is " ":
+                buff += ch
+                if ch is "'" or ch is '"':
+                    quote = True
+            elif not quote and ch is " ":
+                options.append(buff)
+                buff = ''
+        elif quote: 
+            buff += ch
+            if ch is '"' or ch is "'":
+                quote = False
+                options.append(buff)
+                buff = ''
+    while('' in options):
+        options.remove('')
     return options
 
 def get_args(raw_args=None):
