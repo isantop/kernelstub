@@ -202,27 +202,32 @@ def parse_options(options):
         a :obj:`list` with each option as a :obj:`str`.
 
     """
-    buff = ''
-    quote = False
-    options = []
-    for ch in optstr:
-        if not quote:
-            if not ch is " ":
+    try: 
+        options.split()
+        buff = ''
+        quote = False
+        options_list = []
+        for ch in options:
+            if not quote:
+                if not ch is " ":
+                    buff += ch
+                    if ch is "'" or ch is '"':
+                        quote = True
+                elif not quote and ch is " ":
+                    options_list.append(buff)
+                    buff = ''
+            elif quote: 
                 buff += ch
-                if ch is "'" or ch is '"':
-                    quote = True
-            elif not quote and ch is " ":
-                options.append(buff)
-                buff = ''
-        elif quote: 
-            buff += ch
-            if ch is '"' or ch is "'":
-                quote = False
-                options.append(buff)
-                buff = ''
-    while('' in options):
-        options.remove('')
-    return options
+                if ch is '"' or ch is "'":
+                    quote = False
+                    options_list.append(buff)
+                    buff = ''
+        while('' in options_list):
+            options_list.remove('')
+        return options_list
+    except AttributeError:
+        # Looks like we got a list, don't parse:
+        return options
 
 def get_args(raw_args=None):
     """Set up command line argument parsing.
