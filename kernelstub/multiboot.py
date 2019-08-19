@@ -99,14 +99,16 @@ class Entry:
     @property
     def index(self):
         """str: a unique, typeable index for this entry."""
-        if not self._index:
+        try:
+            return self._index
+        except AttributeError:
             idx = str(uuid.uuid4())
             idx = idx[-4:]
             self._index = idx
-        return self._index
+            return self._index
     @index.setter
     def index(self, idx):
-        """Generate an index if not provided"""
+        """Truncate to the first ten chars"""
         self._index = idx[:10]
 
     @property
@@ -224,7 +226,7 @@ class Entry:
     
     @property
     def options(self):
-        """:obj:`list` of :obj:`str`: A list containing strings of options to 
+        """str: A string of options to 
         pass to the executable. Currently this is ignored unless the entry is a
         linux entry.
         """
@@ -243,6 +245,7 @@ class Entry:
             if not options:
                 options = "quiet splash"
             try:
+                options.split()
                 self._options = util.parse_options(options)
             #if options is a list already, there is no split()
             except AttributeError:
