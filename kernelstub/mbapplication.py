@@ -24,9 +24,7 @@ Main application
 
 TODO:
     * Hook up new option flags
-        > config
         > loader
-        > log-file
 """
 
 import os
@@ -121,10 +119,12 @@ class Kernelstub:
         verbosity=1,
         log_file_path='/var/log/kernelstub.log',
         config_path='/etc/kernelstub',
-        args=None):
+        args=None,
+        nosave=False):
 
         # Argument processing takes place in util to keep this file clean.
         loader_dir = 'loader'
+        self.nosave = nosave
         self.args = util.get_args(args)
         self._no_unmount = ['/']
         
@@ -247,26 +247,27 @@ class Kernelstub:
             new_entry.entry_id = self.args.entry_id
             self.log.debug('ID set to %s', new_entry.entry_id)
 
-        new_entry.save_config(config_path=self.config.config_path)
-        if new_entry.linux:
-            if not new_entry.drive.is_mounted:
-                self.log.debug(
-                    'Mounting linux entry drive %s to %s',
-                    new_entry.drive.node,
-                    new_entry.drive.mount_point
-                )
-                new_entry.drive.mount_drive()
-        new_entry.save_entry(esp_path=self.config.esp_path)
-        self.safe_unmount(new_entry.drive)
+        if not self.nosave:
+            new_entry.save_config(config_path=self.config.config_path)
+            if new_entry.linux:
+                if not new_entry.drive.is_mounted:
+                    self.log.debug(
+                        'Mounting linux entry drive %s to %s',
+                        new_entry.drive.node,
+                        new_entry.drive.mount_point
+                    )
+                    new_entry.drive.mount_drive()
+            new_entry.save_entry(esp_path=self.config.esp_path)
+            self.safe_unmount(new_entry.drive)
 
-        self.log.info(
-            "New entry created: %s", 
-            mktable(new_entry.print_config, 15)
-        )
-        
-        if self.args.set_default:
-            self.config.default_entry = new_entry.entry_id
-            self.log.info('Entry %s set as default', new_entry.index)
+            self.log.info(
+                "New entry created: %s", 
+                mktable(new_entry.print_config, 15)
+            )
+            
+            if self.args.set_default:
+                self.config.default_entry = new_entry.entry_id
+                self.log.info('Entry %s set as default', new_entry.index)
 
     def lst(self):
         """ List all entries"""
