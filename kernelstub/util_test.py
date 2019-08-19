@@ -59,7 +59,7 @@ class UtilTestCase(unittest.TestCase):
         good_name = util.clean_names(bad_name)
         expected_name = 'This_is-a_Badname_whee'
         
-        self.assertIs(good_name, expected_name)
+        self.assertEqual(good_name, expected_name)
     
     def test_strip_quotes(self):
         bad_string1 = '"This has quotes"'
@@ -68,8 +68,8 @@ class UtilTestCase(unittest.TestCase):
         good_string2 = util.strip_quotes(bad_string2)
         expected_string = 'This has quotes'
 
-        self.assertIs(good_string1, expected_string)
-        self.assertIs(good_string2, expected_string)
+        self.assertEqual(good_string1, expected_string)
+        self.assertEqual(good_string2, expected_string)
     
     def test_parse_options(self):
         raw_options1 = 'default="true statement" acpi.osname="Linux" nvidia-drm.modeset=1 parsed="true"'
