@@ -166,7 +166,7 @@ class Kernelstub:
         if self.args.preserve_live_mode and self.args.enable_live_mode:
             self.log.info('Enabling live mode.')
             self.config.live_mode = True
-            self.log.warn(
+            self.log.warning(
                 'All automatic kernelstub functionality has been disabled until '
                 'live mode is disabled (by running kernelstub without the '
                 '--preserve-live-mode flag). This means your kernel will not be '
@@ -180,7 +180,7 @@ class Kernelstub:
             self.log.info('Disabling live mode')
             self.config.live_mode = False
         if self.args.preserve_live_mode and not self.config.live_mode:
-            self.log.warn(
+            self.log.warning(
                 'Live mode is not active, --preserve-live-mode is ignored'
             )
         
@@ -277,7 +277,7 @@ class Kernelstub:
         
         entry_dir = os.path.join(self.config.config_path, 'entries.d')
         if not os.path.exists(entry_dir):
-            self.log.warn('No entries in %s', entry_dir)
+            self.log.warning('No entries in %s', entry_dir)
             return
         entries = []
         for file in os.listdir(entry_dir):

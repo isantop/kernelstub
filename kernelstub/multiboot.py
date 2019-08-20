@@ -214,7 +214,7 @@ class Entry:
                 path[1]
             )
             if not os.path.exists(path[0]):
-                self.log.warn(
+                self.log.warning(
                     'Two executables supplied, but kernel %s does not exist!',
                     path[0]
                 ) 
@@ -228,8 +228,8 @@ class Entry:
             self.linux = True
             return
         else:
-            self.log.warn('Too many items in `exec_path`, got %s items.', len(path))
-            self.log.warn('Try `kernelstub update %s` to save the repair.', self.index)
+            self.log.warning('Too many items in `exec_path`, got %s items.', len(path))
+            self.log.warning('Try `kernelstub update %s` to save the repair.', self.index)
             self.log.info('Trying to remove the last item: %s', path[-1])
             path.pop()
             self.exec_path = path
@@ -373,7 +373,7 @@ class Entry:
         """
         self.log.debug('Saving configuration of %s', self.entry_id)
         if not os.path.exists(os.path.join(config_path, 'entries.d')):
-            self.log.warn(
+            self.log.warning(
                 'Configuration directory %s not found, creating it...',
                 f'{config_path}/entries.d'
             )
@@ -427,7 +427,7 @@ class Entry:
         self.log.debug('Saving the entry %s to disk', self.entry_id)
         
         if not os.path.exists(os.path.join(esp_path, entry_dir)):
-            self.log.warn('Entry path not found, creating it.')
+            self.log.warning('Entry path not found, creating it.')
             os.makedirs(os.path.join(esp_path, entry_dir))
         entry_path = os.path.join(esp_path, entry_dir, f'{self.entry_id}.conf')
 

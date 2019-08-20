@@ -91,7 +91,7 @@ class SystemConfiguration:
                 f'Could not load config with esp path {self.esp_path}. Trying '
                 f'to reset to default /boot/efi.'
             )
-            self.log.warn(bad_esp_error)
+            self.log.warning(bad_esp_error)
             self.esp_path = '/boot/efi'
             self.esp = drive.Drive(mount_point=self.esp_path)
 
@@ -223,14 +223,14 @@ class SystemConfiguration:
         self.log.debug('Loading configuration from %s', self.config_file)
 
         if not os.path.exists(self.config_path):
-            self.log.warn('No configuration directory %s, creating it', self.config_path)
+            self.log.warning('No configuration directory %s, creating it', self.config_path)
             os.makedirs(self.config_path)
 
         try: 
             with open(self.config_file) as config_file:
                 self.config = json.load(config_file)
         except FileNotFoundError:
-            self.log.warn(
+            self.log.warning(
                 'No configuration found in %s, setting defaults.',
                 self.config_path
             )
@@ -255,7 +255,7 @@ class SystemConfiguration:
         """ Save the configuration to the loader configuration."""
         loader_conf_dir = os.path.join(self.esp_path, 'loader')
         if not os.path.exists(loader_conf_dir):
-            self.log.warn(
+            self.log.warning(
                 'No loader config path exists, creating it at %s', 
                 loader_conf_dir
             )
