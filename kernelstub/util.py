@@ -33,6 +33,7 @@ TODO:
 import argparse
 import logging
 from logging import handlers
+import os
 import platform
 
 # Try detecting systemd support
@@ -534,3 +535,41 @@ def setup_logging(verbosity, log_file_path):
     log.setLevel(logging.DEBUG)
 
     return log
+
+def detect_kernel_initrd_paths(prefix='/'):
+    """ Detect the path to the kernel and initramfs images.
+
+    Attempts to detect the path where the kernel image and initramfs image are
+    stored, given a common list of paths.
+
+    Arguments:
+        prefix (str, optional): The path to the root filesystem we're looking 
+            on. Default is '/'.
+    
+    Returns:
+        A :obj:`tuple` with the kernel path, followed by the initramfs path. Or 
+            False if no paths were detected.
+    """
+    kernel_ver = platform.uname().release
+    common_kernel_paths = [
+        '/vmlinuz',
+        '/boot/vmlinuz',
+        f'/boot/vmlinuz-{kernel_ver}'
+    ]
+    common_initrd_paths = [
+        '/initrd.img',
+        '/boot/initrd.img',
+        f'/boot/initrd.img-{kernel_ver}'
+    ]
+
+    for kpath in common_kernel_paths:
+        if os.path.exists(kpath):
+            kernel_path = kpath
+            initrd_path = kpath.replace('vmlinuz', 'initrd.img')
+            if os.path.exists(initrd_path):
+                return (kernel_path, initrd_path)
+            else:
+                for ipath in common_initrd_paths:
+                    if os.path.exists(ipath):
+                        return (kernel_path, ipath)
+    return False
