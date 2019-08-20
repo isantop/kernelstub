@@ -4,6 +4,8 @@ kernelstub (4.0.0) UNRELEASED; urgency=medium
   * Add entries for multiple kernels, a single kernel or other OSs.
   * Entries don't need to be OSs, like the EFI Shell
   * Entries are kept up to date automatically.
+  * System will auto-detect the kernel and initrd paths, if they aren't supplied.
+  * Unit Tests!
 
  -- Ian Santopietro <isantop@gmail.com>  Thu, 08 Aug 2019 10:44:44 -0600
 
