@@ -4,35 +4,31 @@
 set -e
 bootctl install --path=/boot/efi
 
+if [ -f /vmlinuz.old ]; then
+	KERNEL_PATH=/vmlinuz.old
+	INITRD_PATH=/initrd.img.old
+elif [ -f /boot/vmlinuz.old ]; then
+	KERNEL_PATH=/boot/vmlinuz.old
+	INITRD_PATH=/boot/initrd.img.old
+else
+	KERNEL_PATH=0
+fi
+
 kernelstub system \
 	--menu-timeout 0
 	--esp '/boot/efi'
 
-if [ ! -f /boot/vmlinuz ]; then
-	ln -s /vmlinuz /boot/vmlinuz
-fi
-if [ ! -f /boot/vmlinuz.old ]; then
-	ln -s /vmlinuz.old /boot/vmlinuz.old
-fi
-
-if [ ! -f /boot/initrd.img ]; then
-	ln -s /initrd.img /boot/initrd.img
-fi
-if [ ! -f /boot/initrd.img.old ]; then
-	ln -s /initrd.img.old /boot/initrd.img.old
-fi
-
 kernelstub create \
 	--mount-point '/' \
-	--exec-path /boot/vmlinuz \
-	--initrd-path /boot/initrd.img \
 	--options 'quiet splash loglevel=0 systemd.show_status=false' \
 	--index system \
 	--set-default
 
-kernelstub create \
-	--mount-point '/' \
-	--exec-path /boot/vmlinuz.old \
-	--initrd-path /boot/initrd.img.old \
-	--options 'quiet splash loglevel=0 systemd.show_status=false' \
-	--index oldkern 
+if [ ! $KERNEL_PATH == 0 ]; then
+	kernelstub create \
+		--mount-point '/' \
+		--exec-path $KERNEL_PATH \
+		--initrd-path $INITRD_PATH \
+		--options 'quiet splash loglevel=0 systemd.show_status=false' \
+		--index oldkern 
+fi
