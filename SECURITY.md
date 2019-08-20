@@ -8,7 +8,9 @@ The following versions of Kernelstub currently receive updates for security:
 | 4.0.x   | :heavy_plus_sign:        |
 | 3.2.x   | :white_check_mark:       |
 | 3.1.x   | :heavy_exclamation_mark: |
-| < 3.1   | :x:                      |
+| 3.0.x   | :x:                      |
+| 2.x     | :x:                      |
+| 1.x     | :x:                      |
 
 ##### Key
 :white_check_mark: - Currently supported; top-priority
