@@ -11,10 +11,9 @@ The following versions of Kernelstub currently receive updates for security:
 | < 3.1   | :x:                      |
 
 ##### Key
-:white_check_mark: - Currently supported; Top-priority
+:white_check_mark: - Currently supported; top-priority
 
-
-:heavy_plus_sign: - Pre-release; supported, low-priority
+:heavy_plus_sign: - Pre-release; supported, medium-priority
 
 :heavy_exclamation_mark: - Deprecated release, supported, low-priority
 
