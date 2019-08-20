@@ -26,6 +26,8 @@ This is a unit testcase for the Util module
 TODO:
 """
 
+import os
+import platform
 import subprocess
 import unittest
 
@@ -89,3 +91,17 @@ class UtilTestCase(unittest.TestCase):
         ]
 
         self.assertListEqual(util.parse_options(raw_options2), raw_options2)
+    
+    @unittest.skipUnless(platform.system() == 'Linux', 'Can\'t test on non-linux')
+    def test_kernel_autodetect(self):
+        linuxfile = util.detect_kernel_initrd_paths()[0]
+        
+        if linuxfile:
+            initrdfile = util.detect_kernel_initrd_paths()[1]
+        else:
+            self.fail(
+                msg='Should have a linux path, check test and system paths.'
+            )
+        
+        self.assertTrue(os.path.exists(linuxfile))
+        self.assertTrue(os.path.exists(initrdfile))
