@@ -168,7 +168,17 @@ class Entry:
         should be two elements, one for the kernel image to boot and one for the
         initrd image (both relative to this OS's filesystem root).
         """
-        return self._exec_path    
+        try:
+            return self._exec_path    
+        except AttributeError:
+            self._exec_path = util.detect_kernel_initrd_paths(self.mount_point)
+            if self._exec_path:
+                return self._exec_path
+            else:
+                raise EntryError(
+                    'No exec path specified, and no autodetection possible. '
+                    'Please specify paths manually.'
+                )
     @exec_path.setter
     def exec_path(self, path):
         """ If we have one item in this list, we are doing an efi entry and 
