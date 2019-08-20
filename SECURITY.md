@@ -3,11 +3,12 @@
 ## Supported Versions
 The following versions of Kernelstub currently receive updates for security:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 3.2.0   | :white_check_mark: |
-| 3.1.x   | :white_check_mark: |
-| < 3.1   | :x:                |
+| Version | Supported                |
+| ------- | -------------------------|
+| 4.0.0   | :green:                  |
+| 3.2.0   | :white_check_mark:       |
+| 3.1.x   | :heavy_exclamation_mark: |
+| < 3.1   | :x:                      |
 
 ## Reporting a Vulnerability
 
