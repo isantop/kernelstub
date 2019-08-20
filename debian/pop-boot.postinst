@@ -8,17 +8,31 @@ kernelstub system \
 	--menu-timeout 0
 	--esp '/boot/efi'
 
+if [ ! -f /boot/vmlinuz ]; then
+	ln -s /vmlinuz /boot/vmlinuz
+fi
+if [ ! -f /boot/vmlinuz.old ]; then
+	ln -s /vmlinuz.old /boot/vmlinuz.old
+fi
+
+if [ ! -f /boot/initrd.img ]; then
+	ln -s /initrd.img /boot/initrd.img
+fi
+if [ ! -f /boot/initrd.img.old ]; then
+	ln -s /initrd.img.old /boot/initrd.img.old
+fi
+
 kernelstub create \
 	--mount-point '/' \
-	--exec-path /vmlinuz \
-	--initrd-path /initrd.img \
+	--exec-path /boot/vmlinuz \
+	--initrd-path /boot/initrd.img \
 	--options 'quiet splash loglevel=0 systemd.show_status=false' \
 	--index system \
 	--set-default
 
 kernelstub create \
 	--mount-point '/' \
-	--exec-path /vmlinuz.old \
-	--initrd-path /initrd.img.old \
+	--exec-path /boot/vmlinuz.old \
+	--initrd-path /boot/initrd.img.old \
 	--options 'quiet splash loglevel=0 systemd.show_status=false' \
 	--index oldkern 
