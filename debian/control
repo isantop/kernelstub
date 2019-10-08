@@ -5,13 +5,9 @@ Priority: optional
 Build-Depends: python3-all, pyflakes3, debhelper (>= 7.4.3)
 Standards-Version: 3.9.1
 
-
-
-
-
 Package: kernelstub
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, efibootmgr, util-linux
+Depends: ${misc:Depends}, ${python3:Depends}, efibootmgr, python3-debian, util-linux
 Recommends: python3-systemd
 Description: Automatic kernel efistub manager for UEFI
 
