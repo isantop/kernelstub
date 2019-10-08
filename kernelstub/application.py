@@ -148,6 +148,8 @@ class Kernelstub():
         if args.root_path:
             root_path = args.root_path
 
+        boot_path = os.path.join(root_path, 'boot')
+
         opsys = Opsys.OS()
 
         if args.kernel_path:
@@ -156,7 +158,7 @@ class Kernelstub():
                 '               %s' % args.kernel_path)
             opsys.kernel_path = args.kernel_path
         else:
-            opsys.kernel_path = os.path.join(root_path, 'boot', opsys.kernel_name)
+            opsys.kernel_path = os.path.join(boot_path, opsys.kernel_name)
             if not os.path.exists(opsys.kernel_path):
                 opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
 
@@ -166,7 +168,7 @@ class Kernelstub():
                 '               %s' % args.initrd_path)
             opsys.initrd_path = args.initrd_path
         else:
-            opsys.initrd_path = os.path.join(root_path, 'boot', opsys.initrd_name)
+            opsys.initrd_path = os.path.join(boot_path, opsys.initrd_name)
             if not os.path.exists(opsys.initrd_path):
                 opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
