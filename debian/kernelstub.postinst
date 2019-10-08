@@ -1,0 +1,5 @@
+#!/bin/bash
+
+kernelstub \
+  --verbose \
+  --preserve-live-mode
