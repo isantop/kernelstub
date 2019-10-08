@@ -56,6 +56,7 @@ from . import nvram as Nvram
 from . import opsys as Opsys
 from . import installer as Installer
 from . import config as Config
+from . import kernel_option as KernelOption
 
 class CmdLineError(Exception):
     pass
@@ -149,6 +150,7 @@ class Kernelstub():
             root_path = args.root_path
 
         boot_path = os.path.join(root_path, 'boot')
+        latest_option = KernelOption.latest_option(boot_path)
 
         opsys = Opsys.OS()
 
@@ -157,6 +159,8 @@ class Kernelstub():
                 'Manually specified kernel path:\n ' +
                 '               %s' % args.kernel_path)
             opsys.kernel_path = args.kernel_path
+        elif latest_option:
+            opsys.kernel_path = latest_option['kernel']
         else:
             opsys.kernel_path = os.path.join(boot_path, opsys.kernel_name)
             if not os.path.exists(opsys.kernel_path):
@@ -167,6 +171,8 @@ class Kernelstub():
                 'Manually specified initrd path:\n ' +
                 '               %s' % args.initrd_path)
             opsys.initrd_path = args.initrd_path
+        elif latest_option:
+            opsys.initrd_path = latest_option['initrd']
         else:
             opsys.initrd_path = os.path.join(boot_path, opsys.initrd_name)
             if not os.path.exists(opsys.initrd_path):
