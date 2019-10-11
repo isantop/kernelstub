@@ -1,3 +1,15 @@
+kernelstub (3.1.2) eoan; urgency=medium
+
+  * Use latest kernel option if no kernel parameter is provided
+
+ -- Jeremy Soller <jeremy@system76.com>  Tue, 08 Oct 2019 15:10:55 -0600
+
+kernelstub (3.1.1) eoan; urgency=medium
+
+  * Check for vmlinuz and initrd.img links in /boot
+
+ -- Jeremy Soller <jeremy@system76.com>  Wed, 07 Aug 2019 13:00:38 -0600
+
 kernelstub (3.1.0) bionic; urgency=medium
 
   * Add logging to systemd journald

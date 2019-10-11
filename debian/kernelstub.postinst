@@ -1,8 +1,5 @@
 #!/bin/bash
 
-KERNEL="/boot/vmlinuz-$1"
-INITRD="$2"
-
 kernelstub \
   --verbose \
   --preserve-live-mode

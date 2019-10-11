@@ -56,6 +56,7 @@ from . import nvram as Nvram
 from . import opsys as Opsys
 from . import installer as Installer
 from . import config as Config
+from . import kernel_option as KernelOption
 
 class CmdLineError(Exception):
     pass
@@ -148,6 +149,9 @@ class Kernelstub():
         if args.root_path:
             root_path = args.root_path
 
+        boot_path = os.path.join(root_path, 'boot')
+        latest_option = KernelOption.latest_option(boot_path)
+
         opsys = Opsys.OS()
 
         if args.kernel_path:
@@ -155,25 +159,33 @@ class Kernelstub():
                 'Manually specified kernel path:\n ' +
                 '               %s' % args.kernel_path)
             opsys.kernel_path = args.kernel_path
+        elif latest_option:
+            opsys.kernel_path = latest_option['kernel']
         else:
-            opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
+            opsys.kernel_path = os.path.join(boot_path, opsys.kernel_name)
+            if not os.path.exists(opsys.kernel_path):
+                opsys.kernel_path = os.path.join(root_path, opsys.kernel_name)
 
         if args.initrd_path:
             log.debug(
                 'Manually specified initrd path:\n ' +
                 '               %s' % args.initrd_path)
             opsys.initrd_path = args.initrd_path
+        elif latest_option:
+            opsys.initrd_path = latest_option['initrd']
         else:
-            opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
+            opsys.initrd_path = os.path.join(boot_path, opsys.initrd_name)
+            if not os.path.exists(opsys.initrd_path):
+                opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
 
         if not os.path.exists(opsys.kernel_path):
-            log.exception('Can\'t find the kernel image! \n\n'
+            log.exception('Can\'t find the kernel image \'' + opsys.kernel_path + '\'! \n\n'
                          'Please use the --kernel-path option to specify '
                          'the path to the kernel image')
             exit(0)
 
         if not os.path.exists(opsys.initrd_path):
-            log.exception('Can\'t find the initrd image! \n\n'
+            log.exception('Can\'t find the initrd image \'' + opsys.initrd_path + '\'! \n\n'
                          'Please use the --initrd-path option to specify '
                          'the path to the initrd image')
             exit(0)
@@ -328,4 +340,3 @@ class Kernelstub():
         log.debug('Setup complete!\n\n')
 
         return 0
-
