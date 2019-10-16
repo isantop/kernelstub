@@ -24,6 +24,7 @@ terms.
 
 import os
 import logging
+import subprocess
 
 class NoBlockDevError(Exception):
     """No Block Device Found Exception"""
@@ -62,7 +63,7 @@ class Drive():
             self.esp_fs = self.get_part_dev(self.esp_path)
             self.drive_name = self.get_drive_dev(self.esp_fs)
             self.esp_num = self.esp_fs[-1]
-            self.root_uuid = self.get_uuid(self.root_fs[5:])
+            self.root_uuid = self.get_uuid(self.root_path)
             self.uuid_name = self.root_uuid.split('-')
             self.uuid_name = self.uuid_name[0]
         except NoBlockDevError as e_e:
@@ -118,15 +119,13 @@ class Drive():
         self.log.debug('ESP is a partition on /dev/%s', disk_name)
         return disk_name
 
-    def get_uuid(self, filesystem):
-        """Get a UUID for a filesystem."""
-        all_uuids = os.listdir('/dev/disk/by-uuid')
-        self.log.debug('Looking for UUID for %s', filesystem)
-        self.log.debug('List of UUIDs:\n%s', all_uuids)
-
-        for uuid in all_uuids:
-            uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
-            if filesystem in os.path.realpath(uuid_path):
-                return uuid
-
-        raise UUIDNotFoundError
+    def get_uuid(self, path):
+        self.log.debug('Looking for UUID for path %s' % path)
+        try:
+            args = ['findmnt', '-n', '-o', 'uuid', '--mountpoint', path]
+            result = subprocess.run(args, stdout=subprocess.PIPE)
+            uuid = result.stdout.decode('ASCII')
+            uuid = uuid.strip()
+            return uuid
+        except OSError as e:
+            raise UUIDNotFoundError from e
