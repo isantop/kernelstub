@@ -6,12 +6,9 @@
 %:
 	dh $@ --with python3 --buildsystem=python_distutils
 
-
 override_dh_auto_clean:
 	python3 setup.py clean -a
 	find . -name \*.pyc -exec rm {} \;
-
-
 
 override_dh_auto_build:
 	python3 setup.py build --force
@@ -21,16 +18,12 @@ override_dh_auto_test:
 	    $$python -Werror setup.py test; \
 	done
 
-
-
 override_dh_auto_install:
-	python3 setup.py install --force --root=debian/kernelstub --no-compile -O0 --install-layout=deb  
+	python3 setup.py install --force --root=debian/kernelstub --no-compile -O0 --install-layout=deb
 
-
+override_dh_installdeb:
+	dh_installdeb
+	cp debian/conffiles debian/kernelstub/DEBIAN/conffiles
 
 override_dh_python2:
 	dh_python2 --no-guessing-versions
-
-
-
-
