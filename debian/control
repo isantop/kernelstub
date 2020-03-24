@@ -2,7 +2,7 @@ Source: kernelstub
 Maintainer: Ian Santopietro <isantop@gmail.com>
 Section: python
 Priority: optional
-Build-Depends: python3-all, pyflakes3, debhelper (>= 7.4.3)
+Build-Depends: python3-all, pyflakes3, debhelper (>= 7.4.3), dh-python
 Standards-Version: 3.9.1
 
 Package: kernelstub
