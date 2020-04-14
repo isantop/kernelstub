@@ -150,7 +150,7 @@ class Kernelstub():
             root_path = args.root_path
 
         boot_path = os.path.join(root_path, 'boot')
-        latest_option = KernelOption.latest_option(boot_path)
+        latest_option, previous_option = KernelOption.latest_option(boot_path)
 
         opsys = Opsys.OS()
 
@@ -177,6 +177,22 @@ class Kernelstub():
             opsys.initrd_path = os.path.join(boot_path, opsys.initrd_name)
             if not os.path.exists(opsys.initrd_path):
                 opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
+        
+        if previous_option:
+            opsys.old_kernel_path = previous_option['kernel']
+            opsys.old_initrd_path = previous_option['initrd']
+        else:
+            # We use the default location in / before overwriting to /boot/
+            # Then we can use the existing fallbacks in installer.
+            if not os.path.exists(opsys.old_kernel_path):
+                opsys.old_kernel_path = os.path.join(
+                    boot_path, opsys.old_kernel_name
+                )
+
+            if not os.path.exists(opsys.old_initrd_path):
+                opsys.old_initrd_path = os.path.join(
+                    boot_path, opsys.old_initrd_name
+                )
 
         if not os.path.exists(opsys.kernel_path):
             log.exception('Can\'t find the kernel image \'' + opsys.kernel_path + '\'! \n\n'

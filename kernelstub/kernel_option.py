@@ -26,10 +26,11 @@ def options(path):
 
     return items
 
-def latest_option(path):
+def get_newest_option(opts):
     latest_version = None
     latest_option = None
-    for version, option in options(path).items():
+
+    for version, option in opts.items():
         # If option is not complete, skip
         if 'kernel' not in option or 'initrd' not in option:
             continue
@@ -38,8 +39,19 @@ def latest_option(path):
         if latest_version is None or Version(version) > Version(latest_version):
             latest_version = version
             latest_option = option
+    
+    return latest_option, latest_version
 
-    return latest_option
+def latest_option(path):
+    opts = options(path)
+    latest_option, latest_version = get_newest_option(opts)
+    
+    opts.pop(latest_version)
+    previous_option = None
+    if len(opts) > 0:
+        previous_option, latest_version = get_newest_option(opts)
+
+    return latest_option, previous_option
 
 if __name__ == "__main__":
     print(latest_option("/boot"))

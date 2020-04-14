@@ -32,9 +32,13 @@ class OS():
     cmdline = ['quiet', 'splash']
     kernel_name = 'vmlinuz'
     initrd_name = 'initrd.img'
+    old_kernel_name = 'vmlinuz.old'
+    old_initrd_name = 'initrd.img.old'
     kernel_release = platform.release()
     kernel_path = '/vmlinuz'
     initrd_path = '/initrd.img'
+    old_kernel_path = '/vmlinuz.old'
+    old_initrd_path = '/initrd.img.old'
 
     def __init__(self):
         self.name_pretty = self.get_os_name()
