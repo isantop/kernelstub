@@ -1,3 +1,9 @@
+kernelstub (3.1.4) bionic; urgency=medium
+
+  * Do live mode check immediately after parsing config
+
+ -- Jeremy Soller <jeremy@system76.com>  Wed, 15 Apr 2020 09:15:19 -0600
+
 kernelstub (3.1.3) eoan; urgency=medium
 
   * Redo the old-version detection.  (fix #38)

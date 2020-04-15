@@ -142,6 +142,20 @@ class Kernelstub():
         config = Config.Config()
         configuration = config.config['user']
 
+        if args.preserve_live and configuration['live_mode']:
+            configuration['live_mode'] = True
+            log.warning(
+                'Live mode is enabled!\n'
+                'Kernelstub is running in live environment mode. This usually '
+                'means that you are running a live disk, and kernelstub should '
+                'not run. We are thus exiting with 0.\n'
+                'If you are not running a live disk, please run '
+                '`sudo kernelstub` to disable live mode.'
+            )
+            exit(0)
+
+        configuration['live_mode'] = False
+
         if args.esp_path:
             configuration['esp_path'] = args.esp_path
 
@@ -177,7 +191,7 @@ class Kernelstub():
             opsys.initrd_path = os.path.join(boot_path, opsys.initrd_name)
             if not os.path.exists(opsys.initrd_path):
                 opsys.initrd_path = os.path.join(root_path, opsys.initrd_name)
-        
+
         if previous_option:
             opsys.old_kernel_path = previous_option['kernel']
             opsys.old_initrd_path = previous_option['initrd']
@@ -223,20 +237,6 @@ class Kernelstub():
                 exit(168)
 
         log.debug(config.print_config())
-
-        if args.preserve_live and configuration['live_mode']:
-            configuration['live_mode'] = True
-            log.warning(
-                'Live mode is enabled!\n'
-                'Kernelstub is running in live environment mode. This usually '
-                'means that you are running a live disk, and kernelstub should '
-                'not run. We are thus exiting with 0.\n'
-                'If you are not running a live disk, please run '
-                '`sudo kernelstub` to disable live mode.'
-            )
-            exit(0)
-
-        configuration['live_mode'] = False
 
         if args.setup_loader:
             configuration['setup_loader'] = True
