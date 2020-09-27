@@ -105,7 +105,7 @@ class Drive():
     def get_uuid(self, path):
         self.log.debug('Looking for UUID for path %s' % path)
         try:
-            args = ['findmnt', '-n', '-o', 'uuid', '--mountpoint', path]
+            args = ['findmnt', '-n', '-o', 'UUID', '--mountpoint', path]
             result = subprocess.run(args, stdout=subprocess.PIPE)
             uuid = result.stdout.decode('ASCII')
             uuid = uuid.strip()
