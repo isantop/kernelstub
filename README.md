@@ -16,7 +16,7 @@ python packaging. If kernelstub is packaged in your distro's repositories, you
 can install kernelstub through the `kernelstub` package. To build a debian
 package locally, use these commands:
 ```
-git clone https://github.com/isantop/kernelstub
+git clone https://github.com/pop-os/kernelstub
 cd kernelstub
 debuild -b -us -uc
 sudo dpkg -i ../kernelstub*.deb
@@ -24,9 +24,9 @@ sudo dpkg -i ../kernelstub*.deb
 For installation on non-debian systems, or if you prefer to use Python
 packaging, use:
 ```
-git clone https://github.com/isantop/kernelstub
+git clone https://github.com/pop-os/kernelstub
 cd kernelstub
-sudo python3 setup.py install --record > installed_files.txt
+sudo python3 setup.py install --record=installed_files.txt
 ```
 For your convenience, this will create a list of all files installed on the
 system in the `installed_files.txt` file, so that you can easily remove the
