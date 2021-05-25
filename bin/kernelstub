@@ -148,7 +148,7 @@ def main(options=None): # Do the thing
     parser.add_argument(
         '-d',
         dest = 'remove_options',
-        metavar = "OPTIONS",
+        metavar = '"OPTIONS"',
         help = ''
     )
     parser.add_argument(
