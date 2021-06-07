@@ -1,10 +1,21 @@
 #!/bin/bash
 
-kernelstub \
-	--esp-path "/boot/efi" \
-	--options "quiet loglevel=0" \
-	--loader \
-	--manage-only \
-	--verbose
+DISTRO_EFI_PATH=/boot/efi
+DISTRO_LOADER_CONF_PATH=$DISTRO_EFI_PATH/loader/loader.conf
+DISTRO_DFAULT_KERNEL_OPTIONS=quiet splash loglevel=0
 
-bootctl install --path=/boot/efi
+if [ ! -f $DISTRO_LOADER_CONF_PATH ]; then
+	kernelstub \
+		--esp-path "$DISTRO_EFI_PATH" \
+		--options "$DISTRO_DEFAULT_KERNEL_OPTIONS" \
+		--loader \
+		--manage-only \
+		--verbose
+
+	bootctl install --path=$DISTRO_EFI_PATH
+
+else
+	echo "Loader configuration found in $DISTRO_LOADER_CONF_PATH, not \
+performing initial config"
+
+fi
