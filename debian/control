@@ -10,8 +10,3 @@ Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, efibootmgr, python3-debian, util-linux
 Recommends: python3-systemd
 Description: Automatic kernel efistub manager for UEFI
-
-Package: pop-boot
-Architecture: all
-Depends: kernelstub, systemd
-Description: The fancy, magical, automatic boot package for Pop!_OS
