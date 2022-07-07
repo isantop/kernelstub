@@ -46,7 +46,8 @@ def latest_option(path):
     opts = options(path)
     latest_option, latest_version = get_newest_option(opts)
     
-    opts.pop(latest_version)
+    if latest_version is not None:
+        opts.pop(latest_version)
     previous_option = None
     if len(opts) > 0:
         previous_option, latest_version = get_newest_option(opts)
