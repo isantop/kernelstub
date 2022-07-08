@@ -19,8 +19,8 @@ Portions of test-related code authored by Jason DeRose <jason@system76.com>
 """
 
 
-from distutils.core import setup
-from distutils.cmd import Command
+from setuptools import setup
+from setuptools import Command
 import os, subprocess, sys
 
 TREE = os.path.dirname(os.path.abspath(__file__))
