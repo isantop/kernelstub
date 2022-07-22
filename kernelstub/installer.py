@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, shutil, logging
+import os, shutil, logging, platform, gzip
 
 from pathlib import Path
 
@@ -118,10 +118,17 @@ class Installer():
         self.log.debug('kernel being copied to %s' % self.kernel_dest)
 
         try:
-            self.copy_files(
-                self.opsys.kernel_path,
-                self.kernel_dest,
-                simulate=simulate)
+            arch = platform.machine()
+            if arch == "arm64" or arch == "aarch64":
+                self.gunzip_files(
+                    self.opsys.kernel_path,
+                    self.kernel_dest,
+                    simulate=simulate)
+            else:
+                self.copy_files(
+                    self.opsys.kernel_path,
+                    self.kernel_dest,
+                    simulate=simulate)
 
         except FileOpsError as e:
             self.log.exception(
@@ -236,6 +243,23 @@ class Installer():
                 self.log.exception('Couldn\'t make sure %s exists.' % directory)
                 self.log.debug(e)
                 return False
+
+    def gunzip_files(self, src, dest, simulate): # Decompress file src to dest
+        if simulate:
+            self.log.info('Simulate decompressing: %s => %s' % (src, dest))
+            return True
+        else:
+            try:
+                self.log.debug('Decompressing: %s => %s' % (src, dest))
+                with gzip.open(src, 'rb') as in_obj:
+                    with open(dest, 'wb') as out_obj:
+                        shutil.copyfileobj(in_obj, out_obj)
+                return True
+            except Exception as e:
+                self.log.debug(e)
+                raise FileOpsError("Could not decompress one or more files.")
+                return False
+
 
     def copy_files(self, src, dest, simulate): # Copy file src into dest
         if simulate:
