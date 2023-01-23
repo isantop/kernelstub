@@ -48,7 +48,6 @@ class NVRAM():
     def get_nvram(self):
         self.log.debug('Getting NVRAM data')
         command = [
-            '/usr/bin/sudo',
             'efibootmgr'
         ]
         try:
@@ -78,7 +77,6 @@ class NVRAM():
         entry_linux = '\\EFI\\%s-%s\\vmlinuz.efi' % (this_os.name, this_drive.root_uuid)
         entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
         command = [
-            '/usr/bin/sudo',
             'efibootmgr',
             '-c',
             '-d', device,
@@ -105,8 +103,7 @@ class NVRAM():
 
     def delete_boot_entry(self, index, simulate):
         self.log.info('Deleting old boot entry: %s' % index)
-        command = ['/usr/bin/sudo',
-                   'efibootmgr',
+        command = ['efibootmgr',
                    '-B',
                    '-b', str(index)]
         self.log.debug('NVRAM command:\n%s' % command)
