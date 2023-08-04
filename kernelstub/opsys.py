@@ -28,6 +28,7 @@ class OS():
 
     name_pretty = "Linux"
     name = "Linux"
+    like = ["Linux"]
     version = "1.0"
     cmdline = ['quiet', 'splash']
     kernel_name = 'vmlinuz'
@@ -43,6 +44,7 @@ class OS():
     def __init__(self):
         self.name_pretty = self.get_os_name()
         self.name = self.clean_names(self.name_pretty)
+        self.like = self.get_os_like()
         self.version = self.get_os_version()
         self.cmdline = self.get_os_cmdline()
 
@@ -116,6 +118,14 @@ class OS():
             if item.startswith('VERSION_ID='):
                 version =  item.split('=')[1]
                 return self.strip_quotes(version[:-1])
+    
+    def get_os_like(self):
+        os_release = self.get_os_release()
+        for item in os_release:
+            if item.startswith('ID_LIKE='):
+                like = item.split('=')[1]
+                like = self.strip_quotes(like)
+                return like.split()
 
     def strip_quotes(self, value):
         new_value = value
