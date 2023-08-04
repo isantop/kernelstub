@@ -40,6 +40,7 @@ class OS():
     initrd_path = '/initrd.img'
     old_kernel_path = '/vmlinuz.old'
     old_initrd_path = '/initrd.img.old'
+    os_mode = 'debian'
 
     def __init__(self):
         self.name_pretty = self.get_os_name()
@@ -47,6 +48,7 @@ class OS():
         self.like = self.get_os_like()
         self.version = self.get_os_version()
         self.cmdline = self.get_os_cmdline()
+        self.set_os_mode()
 
     def clean_names(self, name):
         # This is a list of characters we can't/don't want to have in technical
@@ -134,6 +136,12 @@ class OS():
         if value.endswith('"'):
             new_value = new_value[:-1]
         return new_value
+    
+    def set_os_mode(self):
+        if 'debian' in self.like:
+            self.os_mode = 'debian'
+        elif 'fedora' in self.like:
+            self.os_mode = 'fedora'
 
     def get_os_release(self):
         try:
