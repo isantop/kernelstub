@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import platform
+import logging, platform
 
 class OS():
 
@@ -43,6 +43,7 @@ class OS():
     os_mode = 'debian'
 
     def __init__(self):
+        self.log = logging.getLogger('kernelstub.Opsys')
         self.name_pretty = self.get_os_name()
         self.name = self.clean_names(self.name_pretty)
         self.like = self.get_os_like()
