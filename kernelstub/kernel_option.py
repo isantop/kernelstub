@@ -1,6 +1,18 @@
 #!/usr/bin/python3
 
-from debian.changelog import Version
+try:
+    from debian.changelog import Version
+    def vCompare(version1:str, version2:str):
+        if Version(version1) > Version(version2):
+            return True
+        return False
+        
+except ImportError:
+    from rpm import versionCompare as Version
+    def vCompare(version1:str, version2:str):
+        if versionCompare(version1, version2) == 1:
+            return True
+        return False
 import os
 import os.path
 
@@ -11,6 +23,8 @@ def options(path):
         if name.startswith("vmlinuz-"):
             key = "kernel"
         elif name.startswith("initrd.img-"):
+            key = "initrd"
+        elif name.startswith("initramfs"):
             key = "initrd"
 
         if key is None:
@@ -36,7 +50,7 @@ def get_newest_option(opts):
             continue
 
         # If this option is newer, store this option and continue
-        if latest_version is None or Version(version) > Version(latest_version):
+        if latest_version is None or vCompare (version, latest_version):
             latest_version = version
             latest_option = option
     

@@ -1,8 +1,21 @@
 #!/bin/bash
 
-KERNEL="/boot/vmlinuz-$1"
-INITRD="$2"
+# Grab OS information to figure out how to operate
+source /etc/os-release
+
+# Determine how to handle kernel paths:
+if [[ "$ID_LIKE" == *"fedora"* ]]; then
+  echo "Operating in Fedora-mode (initramfs, /boot)"
+  INITRD="/boot/initramfs-$1.img"
+  KERNEL="/boot/vmlinuz-$1"
+elif [[ "$ID_LIKE" == *"ubuntu"* ]]; then
+  echo "Operating in Ubuntu-mode (initrd.img, /symlinks)"
+  INITRD="/initrd.img"
+  KERNEL="/vmlinuz"
+fi
 
 kernelstub \
   --verbose \
-  --preserve-live-mode
+  --preserve-live-mode \
+  --kernel-path $KERNEL \
+  --initrd-path $INITRD
