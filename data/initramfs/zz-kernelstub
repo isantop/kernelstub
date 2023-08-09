@@ -3,13 +3,18 @@
 # Grab OS information to figure out how to operate
 source /etc/os-release
 
+# If ID_LIKE is empty, use ID instead. Base Distros don't always use ID_LIKE
+if [[ "$ID_LIKE" == "" ]]; then 
+  ID_LIKE="$ID"
+fi
+
 # Determine how to handle kernel paths:
 if [[ "$ID_LIKE" == *"fedora"* ]]; then
   echo "Operating in Fedora-mode (initramfs, /boot)"
   INITRD="/boot/initramfs-$1.img"
-  KERNEL="/boot/vmlinuz-$1"
-elif [[ "$ID_LIKE" == *"ubuntu"* ]]; then
-  echo "Operating in Ubuntu-mode (initrd.img, /symlinks)"
+  KERNEL="$2"
+elif [[ "$ID_LIKE" == *"debian"* ]]; then
+  echo "Operating in Debian-mode (initrd.img, /symlinks)"
   INITRD="/initrd.img"
   KERNEL="/vmlinuz"
 fi
