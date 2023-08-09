@@ -13,8 +13,8 @@ if [[ "$ID_LIKE" == *"fedora"* ]]; then
   echo "Operating in Fedora-mode (initramfs, /boot)"
   INITRD="/boot/initramfs-$1.img"
   KERNEL="$2"
-elif [[ "$ID_LIKE" == *"ubuntu"* ]]; then
-  echo "Operating in Ubuntu-mode (initrd.img, /symlinks)"
+elif [[ "$ID_LIKE" == *"debian"* ]]; then
+  echo "Operating in Debian-mode (initrd.img, /symlinks)"
   INITRD="/initrd.img"
   KERNEL="/vmlinuz"
 fi
