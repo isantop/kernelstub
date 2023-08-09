@@ -129,6 +129,13 @@ class OS():
                 like = item.split('=')[1]
                 like = self.strip_quotes(like)
                 return like.split()
+            
+        # Fallback on ID= if we aren't on a derivative
+        for item in os_release:
+            if item.startswith('ID='):
+                like = item.split('=')[1]
+                like = self.strip_quotes(like)
+                return like.split()
 
     def strip_quotes(self, value):
         new_value = value
