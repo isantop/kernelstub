@@ -22,12 +22,13 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import platform
+import logging, platform
 
 class OS():
 
     name_pretty = "Linux"
     name = "Linux"
+    like = ["Linux"]
     version = "1.0"
     cmdline = ['quiet', 'splash']
     kernel_name = 'vmlinuz'
@@ -39,12 +40,16 @@ class OS():
     initrd_path = '/initrd.img'
     old_kernel_path = '/vmlinuz.old'
     old_initrd_path = '/initrd.img.old'
+    os_mode = 'debian'
 
     def __init__(self):
+        self.log = logging.getLogger('kernelstub.Opsys')
         self.name_pretty = self.get_os_name()
         self.name = self.clean_names(self.name_pretty)
+        self.like = self.get_os_like()
         self.version = self.get_os_version()
         self.cmdline = self.get_os_cmdline()
+        self.set_os_mode()
 
     def clean_names(self, name):
         # This is a list of characters we can't/don't want to have in technical
@@ -116,6 +121,21 @@ class OS():
             if item.startswith('VERSION_ID='):
                 version =  item.split('=')[1]
                 return self.strip_quotes(version[:-1])
+    
+    def get_os_like(self):
+        os_release = self.get_os_release()
+        for item in os_release:
+            if item.startswith('ID_LIKE='):
+                like = item.split('=')[1]
+                like = self.strip_quotes(like)
+                return like.split()
+            
+        # Fallback on ID= if we aren't on a derivative
+        for item in os_release:
+            if item.startswith('ID='):
+                like = item.split('=')[1]
+                like = self.strip_quotes(like)
+                return like.split()
 
     def strip_quotes(self, value):
         new_value = value
@@ -124,6 +144,12 @@ class OS():
         if value.endswith('"'):
             new_value = new_value[:-1]
         return new_value
+    
+    def set_os_mode(self):
+        if 'debian' in self.like:
+            self.os_mode = 'debian'
+        elif 'fedora' in self.like:
+            self.os_mode = 'fedora'
 
     def get_os_release(self):
         try:
