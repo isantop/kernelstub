@@ -200,7 +200,7 @@ class Installer():
 
 
 
-    def setup_stub(self, kernel_opts, simulate=False):
+    def setup_stub(self, kernel_opts, preserve_boot_order=False, simulate=False):
         self.log.info("Setting up Kernel EFISTUB loader...")
         self.copy_cmdline(simulate=simulate)
         self.nvram.update()
@@ -212,7 +212,13 @@ class Installer():
         else:
             self.log.debug("No old entry found, skipping removal.")
 
-        self.nvram.add_entry(self.opsys, self.drive, kernel_opts, simulate)
+        self.nvram.add_entry(
+            self.opsys,
+            self.drive,
+            kernel_opts,
+            preserve_boot_order=preserve_boot_order,
+            simulate=simulate
+        )
         self.nvram.update()
         nvram_lines = "\n".join(self.nvram.nvram)
         self.log.info('NVRAM configured, new values: \n\n%s\n' % nvram_lines)

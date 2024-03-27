@@ -37,9 +37,10 @@ class Config():
             'esp_path': "/boot/efi",
             'setup_loader': False,
             'manage_mode': False,
+            'preserve_boot_order': False,
             'force_update' : False,
             'live_mode' : False,
-            'config_rev' : 3
+            'config_rev' : 4
         }
     }
 
@@ -120,8 +121,11 @@ class Config():
                 config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
             if type(config['default']['kernel_options']) is str:
                 config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
-        config['user']['config_rev'] = 3
-        config['default']['config_rev'] = 3
+        if config['user']['config_rev'] < 4:
+            config['user']['preserve_boot_order'] = False
+            config['default']['preserve_boot_order'] = False
+        config['user']['config_rev'] = 4
+        config['default']['config_rev'] = 4
         return config
 
     def parse_options(self, options):

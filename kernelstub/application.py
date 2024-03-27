@@ -248,6 +248,9 @@ class Kernelstub():
         if args.manage_mode:
             configuration['manage_mode'] = True
 
+        if args.preserve_boot_order:
+            configuration['preserve_boot_order'] = True
+        preserve_boot_order = configuration["preserve_boot_order"] == True
 
         log.debug('Checking configuration integrity...')
         try:
@@ -315,6 +318,7 @@ class Kernelstub():
             all_config = (
                 '   ESP Location:..................%s\n' % configuration['esp_path'] +
                 '   Management Mode:...............%s\n' % configuration['manage_mode'] +
+                '   Preserve NVRAM boot order (if not in management mode):..%s\n' % configuration['preserve_boot_order'] +
                 '   Install Loader configuration:..%s\n' % configuration['setup_loader'] +
                 '   Configuration version:.........%s\n' % configuration['config_rev'])
             log.info('Configuration details: \n\n%s' % all_config)
@@ -346,7 +350,7 @@ class Kernelstub():
         installer.copy_cmdline(simulate=no_run)
 
         if not manage_mode:
-            installer.setup_stub(kopts, simulate=no_run)
+            installer.setup_stub(kopts, preserve_boot_order=preserve_boot_order, simulate=no_run)
 
         log.debug('Saving configuration to file')
 
