@@ -69,8 +69,9 @@ class NVRAM():
                 return find_index
 
 
-    def add_entry(self, this_os, this_drive, kernel_opts, simulate=False):
+    def add_entry(self, this_os, this_drive, kernel_opts, preserve_boot_order=False, simulate=False):
         self.log.info('Creating NVRAM entry')
+        create_cmd = "-c" if not preserve_boot_order else "-C"
         device = '/dev/%s' % this_drive.drive_name
         esp_num = this_drive.esp_num
         entry_label = '%s %s' % (this_os.name, this_os.version)
@@ -78,7 +79,7 @@ class NVRAM():
         entry_initrd = 'EFI/%s-%s/initrd.img' % (this_os.name, this_drive.root_uuid)
         command = [
             'efibootmgr',
-            '-c',
+            create_cmd,
             '-d', device,
             '-p', esp_num,
             '-L', '%s' % entry_label,

@@ -99,6 +99,7 @@ There are other options as well, as detailed below:
 |`-l`, `--loader`                           | Create a `systemd-boot`-compatible loader config.*     |
 |`-n`, `--no-loader`		                | Turns off creating the loader configuration.	         |
 |`-s`, `--stub`                             | Set up NVRAM entries for the copied kernel.            |
+|`--preserve-boot-order`                    | Do not change the boot order when updating NVRAM.      |
 |`-m`, `--manage-only`	                    | Don't set up any NVRAM entries.*                       |
 |`-f`, `--force-update`                     | Forcefully update the main loader.conf.**              |
 
