@@ -31,15 +31,28 @@ dh-python
 
 Then use these commands to build the package:
 ```
-git clone https://github.com/pop-os/kernelstub
+git clone https://github.com/isantop/kernelstub
 cd kernelstub
 dpkg-buildpackage -b -us -uc
 sudo dpkg -i ../kernelstub*.deb
 ```
-For installation on non-debian systems, or if you prefer to use Python
+
+For installation on RPM-based systems (Fedora, RHEL, etc.), the Python packaging
+can automatically build an RPM package for use on your system:
+```
+git clone https://github.com/isantop/kernelstub
+cd kernelstub
+python3 setup.py bdist_rpm
+```
+After this, you can install the resulting RPM package directly:
+```
+sudo rpm -i dist/kernelstub-*.rpm
+```
+
+For installation on other systems, or if you prefer to use Python
 packaging, use:
 ```
-git clone https://github.com/pop-os/kernelstub
+git clone https://github.com/isantop/kernelstub
 cd kernelstub
 sudo python3 setup.py install --record=installed_files.txt
 ```

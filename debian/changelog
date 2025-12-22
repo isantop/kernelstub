@@ -1,3 +1,9 @@
+kernelstub (4.0.1) bionic; urgency=medium
+
+  * Add support for Fedora-like kernel setups
+
+ -- Ian Santopietro <isantop@gmail.com>  Wed, 09 Aug 2023 17:18:19 -0600
+
 kernelstub (3.1.4) bionic; urgency=medium
 
   * Do live mode check immediately after parsing config
