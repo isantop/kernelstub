@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, logging, subprocess
+import os, logging, subprocess, re
 
 class NoBlockDevError(Exception):
     pass
@@ -104,12 +104,41 @@ class Drive():
 
     def get_uuid(self, path):
         self.log.debug('Looking for UUID for path %s' % path)
+        
+        # 1. Try findmnt for UUID directly
         try:
             args = ['findmnt', '-n', '-o', 'UUID', '--mountpoint', path]
             result = subprocess.run(args, stdout=subprocess.PIPE)
-            uuid = result.stdout.decode('ASCII')
-            uuid = uuid.strip()
-            return uuid
-        except OSError as e:
-            raise UUIDNotFoundError from e
+            uuid = result.stdout.decode('ASCII').strip()
+            if uuid:
+                return uuid
+        except OSError:
+            pass
+
+        # 2. Try findmnt SOURCE -> blkid
+        try:
+            args = ['findmnt', '-n', '-o', 'SOURCE', '--mountpoint', path]
+            result = subprocess.run(args, stdout=subprocess.PIPE)
+            src = result.stdout.decode('ASCII').strip()
+            if src:
+                args = ['blkid', '-s', 'UUID', '-o', 'value', src]
+                result = subprocess.run(args, stdout=subprocess.PIPE)
+                uuid = result.stdout.decode('ASCII').strip()
+                if uuid:
+                    return uuid
+        except OSError:
+            pass
+
+        # 3. If path is root, try /proc/cmdline
+        if path == '/':
+            try:
+                with open("/proc/cmdline", "r") as f:
+                    cmdline = f.read()
+                match = re.search(r"\broot=UUID=([0-9a-fA-F-]{36})\b", cmdline)
+                if match:
+                    return match.group(1)
+            except Exception:
+                pass
+
+        raise UUIDNotFoundError('Could not determine UUID for %s' % path)
 
