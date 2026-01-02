@@ -196,6 +196,13 @@ def main(options=None): # Do the thing
         help = 'Set up NVRAM entries for the copied kernel'
     )
 
+    parser.add_argument(
+        '--preserve-boot-order',
+        action = 'store_true',
+        dest = 'preserve_boot_order',
+        help = 'Do not change the boot order when updating NVRAM.'
+    )
+
     loader_stub.add_argument(
         '-m',
         '--manage-only',
